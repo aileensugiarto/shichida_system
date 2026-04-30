@@ -1,8 +1,29 @@
 from flask import render_template, session
 from db import mysql
+from datetime import datetime
+
 
 def model_director_schedule():
     cur = mysql.connection.cursor()
+
+    # =========================
+    # GET CURRENT DATE INFO
+    # =========================
+    now = datetime.now()
+    month = now.month
+    year = now.year
+
+    # Determine term automatically
+    if 1 <= month <= 3:
+        term = 1
+    elif 4 <= month <= 6:
+        term = 2
+    elif 7 <= month <= 9:
+        term = 3
+    else:
+        term = 4
+
+    month_name = now.strftime("%B")
 
     # =========================
     # MAIN SCHEDULE QUERY
@@ -25,7 +46,7 @@ def model_director_schedule():
         JOIN tbl_level l ON m.id_level = l.id_level
         JOIN tbl_admin a ON m.id_admin = a.id_admin
         JOIN tbl_branch b ON a.id_branch = b.id_branch
-        WHERE a.id_director = %s AND st.is_trial=0
+        WHERE a.id_director = %s AND st.is_trial = 0
         ORDER BY b.branch_name, m.start_date, m.class_day, m.start_time
     """, (session['id_director'],))
 
@@ -59,5 +80,8 @@ def model_director_schedule():
         'director/schedule/schedule.html',
         data_schedule=schedules,
         branches=branches,
-        teachers=teachers
+        teachers=teachers,
+        filter_term=term,
+        filter_year=year,
+        month_name=month_name
     )
