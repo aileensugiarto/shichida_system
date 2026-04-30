@@ -546,6 +546,12 @@
       // Init dynamic year (current year ±1)
       renderYearOptions(currentYear);
 
+      // ✅ AUTO SET TERM FROM FLASK
+      const defaultTerm = "{{ filter_term }}";
+      if (defaultTerm) {
+        document.getElementById("termFilter").value = defaultTerm;
+      }
+
       // Event listeners
       document.querySelectorAll("select, input").forEach(el => {
         if (el.id === "yearFilter") {
