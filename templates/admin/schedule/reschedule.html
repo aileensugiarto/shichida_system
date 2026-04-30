@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&family=Quicksand:wght@300..700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <title>Reschedule</title>
+    <style>
+        body {
+            overflow-x: hidden;
+        }
+
+        #sidebar {
+            min-height: 100vh;
+            transition: width 0.3s;
+        }
+
+        #sidebar.collapsed {
+            width: 70px !important;
+        }
+
+        #sidebar .nav-link span {
+            transition: opacity 0.3s;
+        }
+
+        #sidebar.collapsed .nav-link span {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .navbar .dropdown-menu {
+            position: absolute !important;
+            top: 100%;
+            right: 0;
+            left: auto;
+            z-index: 1050;
+        }
+    </style>
+</head>
+
+<body style="font-family: Quicksand;">
+
+    <!-- TOP NAVBAR -->
+    <nav class="navbar navbar-light shadow-sm px-4 d-flex align-items-center">
+        <span class="navbar-brand mb-0 h4 fw-bold">
+            Administration System
+        </span>
+
+        <ul class="navbar-nav ms-auto d-flex align-items-center">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle fw-bold" href="#" id="userDropdown" role="button"
+                    data-bs-toggle="dropdown" aria-expanded="false" style="color: black;">
+                    Hi, {{session.name}}
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                        <a class="dropdown-item text-danger" href="/login">
+                            <i class="fa-solid fa-right-from-bracket me-2"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+
+
+    <div class="d-flex">
+
+        <!-- SIDEBAR -->
+        <div id="sidebar" class="text-white p-3" style="width: 200px; background-color: #032a53;">
+
+            <button id="toggle-btn" class="btn btn-outline-light w-100 mb-4">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+            <ul class="nav nav-pills flex-column mb-auto">
+                <!-- Dashboard -->
+                <li class="nav-item mb-2">
+                    <a href="/dashboard" class="nav-link text-white">
+                        <i class="fa-solid fa-gauge-high me-2"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <!-- Levels -->
+                <li class="nav-item mb-2">
+                    <a href="/level" class="nav-link text-white">
+                        <i class="fa-solid fa-level-up me-2"></i>
+                        <span>Levels</span>
+                    </a>
+                </li>
+                <!-- Students -->
+                <li class="nav-item mb-2">
+                    <a href="/student" class="nav-link text-white">
+                        <i class="fa-solid fa-users me-2"></i>
+                        <span>Students</span>
+                    </a>
+                </li>
+                <!-- Teachers -->
+                <li class="nav-item mb-2">
+                    <a href="/teacher" class="nav-link text-white">
+                        <i class="fa-solid fa-chalkboard-user me-2"></i>
+                        <span>Teachers</span>
+                    </a>
+                </li>
+                <!-- Schedule -->
+                <li class="nav-item mb-2">
+                    <a href="/schedule" class="nav-link text-white">
+                        <i class="fa-solid fa-calendar-days me-2"></i>
+                        <span>Schedule</span>
+                    </a>
+                </li>
+                <!-- Payment -->
+                <li class="nav-item mb-2">
+                    <a href="/payment" class="nav-link text-white">
+                        <i class="fa-solid fa-money-bill me-2"></i>
+                        <span>Payment</span>
+                    </a>
+                </li>
+                <!-- Recap -->
+                <li class="nav-item mb-2">
+                    <a href="/recap" class="nav-link text-white">
+                        <i class="fa-solid fa-file-lines me-2"></i>
+                        <span>Recap</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="flex-grow-1 p-4" style="background-color: #f4f6f9;">
+            <div class="d-flex justify-content-center align-items-center">
+                <form action="/process_reschedule" method="POST" id="rescheduleForm" class="bg-white p-4 shadow"
+                    style="border-radius: 10px; width: 450px;">
+                    <input type="hidden" name="id_schedule" class="form-control" value="{{data_schedule[0]}}">
+                    <h3 class="mb-3 fw-bold">Reschedule Class</h3>
+                    <div class="bg-light shadow-sm p-2" style="border-radius: 10px;">
+                        <span style="font-weight: 500; font-size: 15px;"><b>Student:</b>
+                            {{ data_schedule[16] }}</span><br>
+                        <span style="font-weight: 500; font-size: 15px;"><b>Original Date:</b>
+                            {{ data_schedule[4] }}</span><br>
+                        <span style="font-weight: 500; font-size: 15px;"><b>Original Time:</b> {{ data_schedule[1] }} -
+                            {{ data_schedule[2] }}</span><br>
+                        <span style="font-weight: 500; font-size: 15px;"><b>Level:</b>
+                            {{ data_schedule[15] }}</span><br>
+                        <span style="font-weight: 500; font-size: 15px;"><b>Teacher:</b> {{ data_schedule[14] }}</span>
+                    </div>
+
+                    {% if data_schedule[8] %} {# rescheduled_from is not null #}
+                    <div class="form-check mt-3 mb-3">
+                        <input class="form-check-input" type="checkbox" name="cancel_reschedule" id="cancelReschedule">
+                        <label class="form-check-label fw-bold text-danger" for="cancelReschedule">
+                            Cancel this reschedule (undo)
+                        </label>
+                    </div>
+                    {% endif %}
+
+                    <!-- New Date -->
+                    <div class="form-group mb-3">
+                        <label style="font-weight: 500; font-size: 15px;" class="mb-1">New Date</label>
+                        <input type="date" name="new_date" class="form-control" required
+                            value="{{reschedule_copy[1] if reschedule_copy else ''}}" autocomplete="off"
+                            style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+                    </div>
+
+                    <!-- Start Time & End Time -->
+                    <div class="form-group mb-3 row">
+                        <div class="col-6">
+                            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Start Time</label>
+                            <input type="time" name="start_time" class="form-control"
+                                value="{{ reschedule_copy[2] if reschedule_copy else '' }}" required
+                                style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+                        </div>
+                        <div class="col-6">
+                            <label style="font-weight: 500; font-size: 15px;" class="mb-1">End Time</label>
+                            <input type="time" name="end_time" class="form-control"
+                                value="{{ reschedule_copy[3] if reschedule_copy else '' }}" required
+                                style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+                        </div>
+                    </div>
+                    <!-- Teacher -->
+                    <div class="form-group mb-3">
+                        <label style="font-weight: 500; font-size: 15px;" class="mb-1">Teacher</label>
+                        <select name="teacher" class="form-select" required
+                            style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+                            {% for t in teachers %}
+                            <option value="{{ t[0] }}" {% if reschedule_copy and t[0] == reschedule_copy[4] %} selected
+                                {% elif not reschedule_copy and t[0] == data_schedule[3] %} selected {% endif %}>
+                                {{ t[1] }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <input type="submit" value="CONFIRM" class="btn btn-warning btn-sm w-100 fw-bold"
+                            style="border-radius: 5px;">
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('.select2').select2();
+        });
+    </script>
+
+    <script>
+        const toggleBtn = document.getElementById("toggle-btn");
+        const sidebar = document.getElementById("sidebar");
+
+        toggleBtn.addEventListener("click", () => {
+            sidebar.classList.toggle("collapsed");
+        });
+    </script>
+
+</body>
+
+</html>

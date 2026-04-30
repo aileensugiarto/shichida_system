@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&family=Quicksand:wght@300..700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- Lexend -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet">
+  <title>Edit Student</title>
+  <style>
+    body {
+      overflow-x: hidden;
+    }
+
+    #sidebar {
+      min-height: 100vh;
+      transition: width 0.3s;
+      border-right: 1px solid #ebebeb;
+    }
+
+    #sidebar.collapsed {
+      width: 80px !important;
+    }
+
+    #sidebar .nav-link span {
+      transition: opacity 0.3s;
+    }
+
+    #sidebar.collapsed .nav-link span {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #sidebar .nav-item span {
+      font-family: Lexend;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+      color: #4b5563;
+      position: relative;
+      transition: color 0.3s ease;
+    }
+
+    #sidebar .nav-item i {
+      color: #e84100;
+    }
+
+    .navbar .dropdown-menu {
+      position: absolute !important;
+      top: 100%;
+      right: 0;
+      left: auto;
+      z-index: 1050;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+    }
+
+    .navbar .dropdown-menu li a {
+      transition: 0.2s;
+    }
+
+    .navbar .dropdown-menu li a:hover {
+      background-color: #fff2be;
+    }
+
+    #toggle-btn {
+      color: #4b5563;
+      border: 2px solid #ff946a;
+      background-color: #fff2be;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+
+<body style="font-family: Quicksand;">
+
+  <!-- TOP NAVBAR -->
+  <nav class="navbar shadow-sm d-flex align-items-center justify-content-between px-5" style="background-color: white;">
+
+    <div class="d-flex align-items-center">
+      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmE-Dw16YtDbRtAC1Wnz6lO6d92UoklLpp_w&s"
+        alt="Shichida Logo" style="height:70px; margin-right: 15px; width: auto;">
+
+      <div style="display:flex; flex-direction:column; line-height:1.1;">
+        <span
+          style="font-family: 'Lexend', sans-serif; font-weight:700; font-size: 11px; color:#ff682d; text-transform: uppercase; letter-spacing: 1.3px;">
+          Shichida Indonesia
+        </span>
+        <span style="font-family: 'Lexend', sans-serif; font-weight:600; font-size: 20px; color:#333;">
+          Admin System
+        </span>
+      </div>
+
+      {% if session.branch_name %}
+      <div class="ms-4" style="
+        padding: 6px 15px;
+        border-radius: 999px;
+        font-family: Lexend;
+        font-size: 14.5px;
+        font-weight: 600;
+        color: #ff682d;
+        background: rgba(254, 161, 1, 0.15);
+        border: 1px solid rgba(255, 104, 45, 0.3);
+        backdrop-filter: blur(8px);
+      ">
+        <i class="fa-solid fa-location-dot me-1"></i>
+        {{ session.branch_name }}
+      </div>
+      {% endif %}
+    </div>
+
+    <ul class="navbar-nav d-flex align-items-center">
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown"
+          aria-expanded="false" style="color: #333; font-family:'Lexend'; font-weight:500; font-size: 18px;">
+          Hi, {{session.name}}
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end shadow">
+          <li>
+            <a class="dropdown-item" href="{{url_for('edit_account')}}">
+              <i class="fa-solid fa-user-pen me-2" style="color: #e84100; font-size: 13px;"></i>
+              <span
+                style="font-family: Lexend; font-weight: 600; text-transform: uppercase; color: #333; font-size: 12px; letter-spacing: 1.1px;">
+                Edit Account
+              </span>
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="/login" style="color: #e84100; font-size: 13px;">
+              <i class="fa-solid fa-right-from-bracket me-2"></i>
+              <span
+                style="font-family: Lexend; font-weight: 600; text-transform: uppercase; color: #333; font-size: 12px; letter-spacing: 1.1px;">
+                Logout
+              </span>
+            </a>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="d-flex">
+
+    <!-- SIDEBAR -->
+    <div id="sidebar" class="text-white p-3" style="width: 200px; background-color: white;">
+
+      <button id="toggle-btn" class="btn btn-outline-light w-100 mb-4">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+      <ul class="nav nav-pills flex-column mb-auto">
+        <!-- Dashboard -->
+        <li class="nav-item mb-2">
+          <a href="/dashboard" class="nav-link text-white">
+            <i class="fa-solid fa-gauge-high me-2"></i>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <!-- Levels -->
+        <li class="nav-item mb-2">
+          <a href="/level" class="nav-link text-white">
+            <i class="fa-solid fa-level-up me-2"></i>
+            <span>Levels</span>
+          </a>
+        </li>
+        <!-- Teachers -->
+        <li class="nav-item mb-2">
+          <a href="/teacher" class="nav-link text-white">
+            <i class="fa-solid fa-chalkboard-user me-2"></i>
+            <span>Teachers</span>
+          </a>
+        </li>
+        <!-- Students -->
+        <li class="nav-item mb-2">
+          <a href="/student" class="nav-link text-white">
+            <i class="fa-solid fa-users me-2"></i>
+            <span>Students</span>
+          </a>
+        </li>
+        <!-- Schedule -->
+        <li class="nav-item mb-2">
+          <a href="/schedule" class="nav-link text-white">
+            <i class="fa-solid fa-calendar-days me-2"></i>
+            <span>Schedule</span>
+          </a>
+        </li>
+        <!-- Payment -->
+        <li class="nav-item mb-2">
+          <a href="/payment" class="nav-link text-white">
+            <i class="fa-solid fa-money-bill me-2"></i>
+            <span>Payment</span>
+          </a>
+        </li>
+        <!-- Recap -->
+        <li class="nav-item mb-2">
+          <a href="/recap" class="nav-link text-white">
+            <i class="fa-solid fa-file-lines me-2"></i>
+            <span>Recap</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="flex-grow-1 p-4" style="background-color: #f4f6f9;">
+
+      <div class="d-flex justify-content-center align-items-center">
+        <form action="/process_edit_student" method="POST" class="bg-white p-4 shadow needs-validation"
+          style="border-radius: 10px; width: 450px;">
+          <h3 class="mb-4 fw-bold">Edit Student</h3>
+
+          <input type="hidden" name="form_id_student" class="form-control" value="{{data_student[0]}}">
+
+          <!-- PERIOD -->
+          <div class="form-group mb-3 p-3 rounded-3"
+            style="background-color: #fff8e1; border-left: 5px solid #ff9800;">
+            <label style="font-weight: bold;" class="mb-2">Period</label>
+            <div class="row g-2">
+              <!-- Year -->
+              <div class="col-4">
+                <select name="form_year" id="yearSelect" class="form-select fw-bold"
+                  style="height: auto; border-radius: 8px; font-size: 14px;" required>
+                </select>
+              </div>
+
+              <!-- Term -->
+              <div class="col-4">
+                <select name="form_term" id="termSelect" class="form-select fw-bold"
+                  style="height: auto; border-radius: 8px; font-size: 14px;" required>
+                  <option value="1">Term 1</option>
+                  <option value="2">Term 2</option>
+                  <option value="3">Term 3</option>
+                  <option value="4">Term 4</option>
+                </select>
+              </div>
+
+              <!-- Month -->
+              <div class="col-4">
+                <select name="form_month" id="monthSelect" class="form-select fw-bold"
+                  style="height: auto; border-radius: 8px; font-size: 14px;" required>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Name -->
+          <div class="form-group mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Name</label>
+            <input type="text" name="form_name" class="form-control" placeholder="Enter student's name" required
+              value="{{data_student[1]}}" autocomplete="off"
+              style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+          </div>
+
+          <!-- Date of Birth -->
+          <div class="row mb-3">
+            <div class="col-6 form-group">
+              <label style="font-weight: 500; font-size: 15px;" class="mb-1">Date of Birth</label>
+              <input type="date" name="form_dob" class="form-control" required value="{{data_student[2]}}"
+                autocomplete="off" style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+            </div>
+
+            <div class="col-6 form-group">
+              <label style="font-weight: 500; font-size: 15px;" class="mb-1">Age</label>
+              <input type="text" name="form_age" class="form-control" id="age"
+                style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+            </div>
+          </div>
+
+          <!-- Level -->
+          <div class="form-group mb-3">
+            <label class="mb-1" style="font-weight: 500; font-size: 15px;">Level</label>
+            <select name="form_id_level" class="form-select" required
+              style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+              <option value="" disabled>Select level</option>
+              {% for level in data_level %}
+              <option value="{{ level[0] }}" data-age-range="{{ level[2] }}"
+                {% if level[0]|string == period_level_id|string %}selected{% endif %}>
+                {{ level[1] }} ({{ level[2] }})
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Teacher -->
+          <div class="form-group mb-3">
+            <label class="mb-1" style="font-weight: 500; font-size: 15px;">Teacher</label>
+            <select name="form_id_teacher" class="form-select" required
+              style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+              <option value="" disabled>Select teacher</option>
+              {% for teacher in data_teacher %}
+              <option value="{{ teacher[0] }}" {% if teacher[0] == period_teacher_id %}selected{% endif %}>
+                {{ teacher[1] }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Class -->
+          <div class="form-group mb-3">
+            <label class="mb-1" style="font-weight: 500; font-size: 15px;">
+              Class
+            </label>
+            <select name="form_class_type" class="form-select" required
+              style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+              <option value="weekday" {% if period_class_type == "weekday" %}selected{% endif %}>
+                Weekday Class
+              </option>
+              <option value="weekend" {% if period_class_type == "weekend" %}selected{% endif %}>
+                Weekend Class
+              </option>
+            </select>
+          </div>
+
+          <!-- Parent Name -->
+          <div class="form-group mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Parent</label>
+            <input type="text" name="form_parent_name" class="form-control" placeholder="Enter the parent's name"
+              required value="{{data_student[5]}}" autocomplete="off"
+              style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+          </div>
+
+          <!-- Parent Telp -->
+          <div class="form-group mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Phone Number</label>
+            <input type="text" name="form_parent_telp" class="form-control"
+              placeholder="Enter the parent's phone number" value="{{data_student[6]}}" autocomplete="off"
+              style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+          </div>
+
+          <!-- Address -->
+          <div class="form-group mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Address</label>
+            <input type="text" name="form_address" class="form-control" placeholder="Enter the address"
+              value="{{data_student[7]}}" autocomplete="off"
+              style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+          </div>
+
+          <!-- Join Date -->
+          <div class="form-group mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Join Date</label>
+            <input type="date" name="form_join_date" class="form-control" required value="{{data_student[4]}}"
+              autocomplete="off" style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+          </div>
+
+          <!-- Status (PER PERIOD) -->
+          <div class="form-group mb-3">
+            <label class="mb-1" style="font-weight: 500; font-size: 15px;">Status</label>
+            <select name="form_status" class="form-select" required
+              style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+              <option value="Current Student" {% if period_status == "Current Student" %}selected{% endif %}>
+                Current Student
+              </option>
+              <option value="Waiting List" {% if period_status == "Waiting List" %}selected{% endif %}>
+                Waiting List
+              </option>
+              <option value="Past Student" {% if period_status == "Past Student" %}selected{% endif %}>
+                Past Student
+              </option>
+            </select>
+          </div>
+          <div>
+            <input type="submit" value="EDIT STUDENT" class="btn btn-sm w-100 fw-bold"
+              style="border-radius: 5px; background-color: #ffd555;">
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+  // ===== SIDEBAR TOGGLE =====
+  const toggleBtn = document.getElementById("toggle-btn");
+  const sidebar = document.getElementById("sidebar");
+
+  toggleBtn.addEventListener("click", () => {
+    sidebar.classList.toggle("collapsed");
+  });
+
+  // ===== AGE CALCULATION =====
+  const dobInput = document.querySelector('input[name="form_dob"]');
+  const ageInput = document.querySelector('input[name="form_age"]');
+
+  function calculateAge() {
+    if (!dobInput.value) {
+      ageInput.value = '';
+      return;
+    }
+
+    const dob = new Date(dobInput.value);
+    const today = new Date();
+
+    let years = today.getFullYear() - dob.getFullYear();
+    let months = today.getMonth() - dob.getMonth();
+
+    if (today.getDate() < dob.getDate()) months--;
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+
+    ageInput.value = `${years}.${months.toString().padStart(2, '0')}`;
+  }
+
+  dobInput.addEventListener('input', calculateAge);
+  calculateAge();
+
+  // ===== PERIOD: YEAR, TERM, MONTH =====
+  const yearSelect = document.getElementById('yearSelect');
+  const termSelect = document.getElementById('termSelect');
+  const monthSelect = document.getElementById('monthSelect');
+
+  // Selected values from Flask
+  let selectedYear = {{ selected_year | default(2026) }};
+  let selectedTerm = {{ selected_term | default(1) }};
+  let selectedMonth = {{ selected_month | default(0) }};
+
+  // --- Dynamic Year Dropdown ---
+  function updateYearOptions(centerYear) {
+    yearSelect.innerHTML = '';
+    for (let y = centerYear - 1; y <= centerYear + 1; y++) {
+      const opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = y;
+      if (y === centerYear) opt.selected = true;
+      yearSelect.appendChild(opt);
+    }
+  }
+  updateYearOptions(selectedYear);
+
+  yearSelect.addEventListener('change', function () {
+    selectedYear = parseInt(this.value);
+    updateYearOptions(selectedYear);
+  });
+
+  // --- Term Months Mapping ---
+  const termMonths = {
+    1: [{value:1,label:"January"}, {value:2,label:"February"}, {value:3,label:"March"}],
+    2: [{value:4,label:"April"}, {value:5,label:"May"}, {value:6,label:"June"}],
+    3: [{value:7,label:"July"}, {value:8,label:"August"}, {value:9,label:"September"}],
+    4: [{value:10,label:"October"}, {value:11,label:"November"}, {value:12,label:"December"}]
+  };
+
+  // --- Populate Month Dropdown ---
+  function updateMonths(term) {
+    monthSelect.innerHTML = '';
+    termMonths[term].forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.value;
+      opt.textContent = m.label;
+      if (m.value === selectedMonth) opt.selected = true;
+      monthSelect.appendChild(opt);
+    });
+  }
+
+  // Initialize Term & Month
+  termSelect.value = selectedTerm;  // preselect saved term
+  updateMonths(selectedTerm);       // populate months for that term
+
+  // Update month when term changes
+  termSelect.addEventListener('change', function() {
+    selectedTerm = parseInt(this.value);
+    // default to first month of new term when changing term
+    selectedMonth = termMonths[selectedTerm][0].value;
+    updateMonths(selectedTerm);
+  });
+</script>
+
+</body>
+
+</html>

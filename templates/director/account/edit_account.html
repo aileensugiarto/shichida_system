@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&family=Quicksand:wght@300..700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- Lexend -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet">
+  <title>Edit Director Account</title>
+  <style>
+    body {
+      overflow-x: hidden;
+    }
+
+    #sidebar {
+      min-height: 100vh;
+      transition: width 0.3s;
+      border-right: 1px solid #ebebeb;
+    }
+
+    #sidebar.collapsed {
+      width: 80px !important;
+    }
+
+    #sidebar .nav-link span {
+      transition: opacity 0.3s;
+    }
+
+    #sidebar.collapsed .nav-link span {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #sidebar .nav-item span {
+      font-family: Lexend;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+      color: #4b5563;
+      position: relative;
+      transition: color 0.3s ease;
+    }
+
+    #sidebar .nav-item i {
+      color: #e84100;
+    }
+
+    .navbar .dropdown-menu {
+      position: absolute !important;
+      top: 100%;
+      right: 0;
+      left: auto;
+      z-index: 1050;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+    }
+    .navbar .dropdown-menu li a {
+      transition: 0.2s;
+    }
+    .navbar .dropdown-menu li a:hover {
+      background-color: #fff2be;
+    }
+
+    #toggle-btn {
+      color: #4b5563;
+      border: 2px solid #ff946a;
+      background-color: #fff2be;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+
+<body style="font-family: Quicksand;">
+
+  <!-- TOP NAVBAR -->
+  <nav class="navbar shadow-sm d-flex align-items-center justify-content-between px-5" style="background-color: white;">
+
+    <div class="d-flex align-items-center">
+      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmE-Dw16YtDbRtAC1Wnz6lO6d92UoklLpp_w&s"
+        alt="Shichida Logo" style="height:70px; margin-right: 15px; width: auto;">
+
+      <div style="display:flex; flex-direction:column; line-height:1.1;">
+        <span
+          style="font-family: 'Lexend', sans-serif; font-weight:700; font-size: 11px; color:#ff682d; text-transform: uppercase; letter-spacing: 1.3px;">
+          Shichida Indonesia
+        </span>
+        <span style="font-family: 'Lexend', sans-serif; font-weight:600; font-size: 20px; color:#333;">
+          Director System
+        </span>
+      </div>
+    </div>
+
+    <ul class="navbar-nav d-flex align-items-center">
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown"
+          aria-expanded="false" style="color: #333; font-family:'Lexend'; font-weight:500; font-size: 18px;">
+          Hi, {{session.director_name}}
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end shadow">
+          <li>
+            <a class="dropdown-item" href="/edit_director_account">
+              <i class="fa-solid fa-user-pen me-2" style="color: #e84100; font-size: 13px;"></i>
+              <span style="font-family: Lexend; font-weight: 600; text-transform: uppercase; color: #333; font-size: 12px; letter-spacing: 1.1px;">
+                Edit Account
+              </span>
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="/director_login" style="color: #e84100; font-size: 13px;">
+              <i class="fa-solid fa-right-from-bracket me-2"></i>
+              <span style="font-family: Lexend; font-weight: 600; text-transform: uppercase; color: #333; font-size: 12px; letter-spacing: 1.1px;">
+                Logout
+              </span>
+            </a>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="d-flex">
+
+    <!-- SIDEBAR -->
+    <div id="sidebar" class="text-white p-3" style="width: 200px; background-color: white;">
+
+      <button id="toggle-btn" class="btn btn-outline-light w-100 mb-4">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+      <ul class="nav nav-pills flex-column mb-auto">
+        <!-- Dashboard -->
+        <li class="nav-item mb-2">
+          <a href="/director_dashboard" class="nav-link text-white">
+            <i class="fa-solid fa-gauge-high me-2"></i>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <!-- Branches -->
+        <li class="nav-item mb-2">
+          <a href="/branch" class="nav-link text-white">
+            <i class="fa-solid fa-school me-2"></i>
+            <span>Branches</span>
+          </a>
+        </li>
+        <!-- Admins -->
+        <li class="nav-item mb-2">
+          <a href="/admin" class="nav-link text-white">
+            <i class="fa-solid fa-circle-user me-2"></i>
+            <span>Admins</span>
+          </a>
+        </li>
+        <!-- Teachers -->
+        <li class="nav-item mb-2">
+          <a href="/director_teacher" class="nav-link text-white">
+            <i class="fa-solid fa-chalkboard-user me-2"></i>
+            <span>Teachers</span>
+          </a>
+        </li>
+        <!-- Students -->
+        <li class="nav-item mb-2">
+          <a href="/director_student" class="nav-link text-white">
+            <i class="fa-solid fa-users me-2"></i>
+            <span>Students</span>
+          </a>
+        </li>
+        <!-- Schedule -->
+        <li class="nav-item mb-2">
+          <a href="/director_schedule" class="nav-link text-white">
+            <i class="fa-solid fa-calendar-days me-2"></i>
+            <span>Schedule</span>
+          </a>
+        </li>
+        <!-- Payment -->
+        <li class="nav-item mb-2">
+          <a href="/director_payment" class="nav-link text-white">
+            <i class="fa-solid fa-money-bill me-2"></i>
+            <span>Payment</span>
+          </a>
+        </li>
+
+      </ul>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="flex-grow-1 p-4" style="background-color: #f4f6f9;">
+
+      <div class="d-flex justify-content-center align-items-center">
+        <form action="{{ url_for('process_edit_director_account') }}" method="POST" class="bg-white p-4 shadow needs-validation"
+          style="border-radius: 10px; width: 450px;">
+          <h3 class="mb-4 fw-bold">Edit Director Account</h3>
+          <!-- Name -->
+          <div class="form-group mb-3">
+            <input type="hidden" class="form-control" value="{{data_director.id_director}}">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Name</label>
+            <input type="text" name="form_name" class="form-control" placeholder="Enter name" required value="{{data_director[3]}}"
+              autocomplete="off" style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+          </div>
+
+          <!-- Username -->
+          <div class="form-group mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Username</label>
+            <input type="text" name="form_username" class="form-control" placeholder="Enter username" required value="{{data_director[1]}}"
+              autocomplete="off" style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+          </div>
+
+          <!-- Password -->
+          <div class="form-group mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Password</label>
+            <input type="text" name="form_password" class="form-control" placeholder="Enter password" required value="{{data_director[2]}}"
+              autocomplete="off" style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+          </div>
+
+          <div>
+            <input type="submit" value="EDIT DIRECTOR ACCOUNT" class="btn btn-sm w-100 fw-bold"
+              style="border-radius: 5px; background-color: #ffd555;">
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    const toggleBtn = document.getElementById("toggle-btn");
+    const sidebar = document.getElementById("sidebar");
+
+    toggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("collapsed");
+    });
+  </script>
+
+</body>
+
+</html>

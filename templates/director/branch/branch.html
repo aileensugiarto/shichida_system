@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&family=Quicksand:wght@300..700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- Lexend -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet">
+  <title>Branches</title>
+  <style>
+    body {
+      overflow-x: hidden;
+    }
+
+    #sidebar {
+      min-height: 100vh;
+      transition: width 0.3s;
+      border-right: 1px solid #ebebeb;
+    }
+
+    #sidebar.collapsed {
+      width: 80px !important;
+    }
+
+    #sidebar .nav-link span {
+      transition: opacity 0.3s;
+    }
+
+    #sidebar.collapsed .nav-link span {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #sidebar .nav-item span {
+      font-family: Lexend;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+      color: #4b5563;
+      position: relative;
+      transition: color 0.3s ease;
+    }
+
+    #sidebar .nav-item i {
+      color: #e84100;
+    }
+
+    .navbar .dropdown-menu {
+      position: absolute !important;
+      top: 100%;
+      right: 0;
+      left: auto;
+      z-index: 1050;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+    }
+    .navbar .dropdown-menu li a {
+      transition: 0.2s;
+    }
+    .navbar .dropdown-menu li a:hover {
+      background-color: #fff2be;
+    }
+
+    #toggle-btn {
+      color: #4b5563;
+      border: 2px solid #ff946a;
+      background-color: #fff2be;
+      border-radius: 10px;
+    }
+
+    /* TABLE */
+    .table-responsive thead {
+      background-color: #ffe066;
+    }
+
+    .table-responsive thead th {
+      font-family: Lexend;
+      font-size: 13px;
+      text-transform: uppercase;
+      color: #333;
+      letter-spacing: 1px;
+      border-bottom: 1px solid #dee2e6 !important;
+      position: sticky;
+      z-index: 10;
+      top: 0;
+    }
+
+    .table thead th:hover {
+      background-color: #ffe066 !important;
+    }
+
+    .table thead tr:hover {
+      background-color: #ffe066 !important;
+    }
+
+    .table-responsive tbody td {
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .table-responsive tbody tr:hover {
+      background-color: #fff7f2;
+    }
+
+    .table-responsive {
+      max-height: 75vh;
+      overflow-y: auto;
+      position: relative;
+    }
+  </style>
+</head>
+
+<body style="font-family: Quicksand;">
+
+  <!-- TOP NAVBAR -->
+  <nav class="navbar shadow-sm d-flex align-items-center justify-content-between px-5" style="background-color: white;">
+
+    <div class="d-flex align-items-center">
+      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmE-Dw16YtDbRtAC1Wnz6lO6d92UoklLpp_w&s"
+        alt="Shichida Logo" style="height:70px; margin-right: 15px; width: auto;">
+
+      <div style="display:flex; flex-direction:column; line-height:1.1;">
+        <span
+          style="font-family: 'Lexend', sans-serif; font-weight:700; font-size: 11px; color:#ff682d; text-transform: uppercase; letter-spacing: 1.3px;">
+          Shichida Indonesia
+        </span>
+        <span style="font-family: 'Lexend', sans-serif; font-weight:600; font-size: 20px; color:#333;">
+          Director System
+        </span>
+      </div>
+    </div>
+
+    <ul class="navbar-nav d-flex align-items-center">
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown"
+          aria-expanded="false" style="color: #333; font-family:'Lexend'; font-weight:500; font-size: 18px;">
+          Hi, {{session.director_name}}
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end shadow">
+          <li>
+            <a class="dropdown-item" href="/edit_director_account">
+              <i class="fa-solid fa-user-pen me-2" style="color: #e84100; font-size: 13px;"></i>
+              <span style="font-family: Lexend; font-weight: 600; text-transform: uppercase; color: #333; font-size: 12px; letter-spacing: 1.1px;">
+                Edit Account
+              </span>
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="/director_login" style="color: #e84100; font-size: 13px;">
+              <i class="fa-solid fa-right-from-bracket me-2"></i>
+              <span style="font-family: Lexend; font-weight: 600; text-transform: uppercase; color: #333; font-size: 12px; letter-spacing: 1.1px;">
+                Logout
+              </span>
+            </a>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="d-flex">
+
+    <!-- SIDEBAR -->
+    <div id="sidebar" class="text-white p-3" style="width: 200px; background-color: white;">
+
+      <button id="toggle-btn" class="btn btn-outline-light w-100 mb-4">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+      <ul class="nav nav-pills flex-column mb-auto">
+        <!-- Dashboard -->
+        <li class="nav-item mb-2">
+          <a href="/director_dashboard" class="nav-link text-white">
+            <i class="fa-solid fa-gauge-high me-2"></i>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <!-- Branches -->
+        <li class="nav-item mb-2">
+          <a href="/branch" class="nav-link text-white">
+            <i class="fa-solid fa-school me-2"></i>
+            <span>Branches</span>
+          </a>
+        </li>
+        <!-- Admins -->
+        <li class="nav-item mb-2">
+          <a href="/admin" class="nav-link text-white">
+            <i class="fa-solid fa-circle-user me-2"></i>
+            <span>Admins</span>
+          </a>
+        </li>
+        <!-- Teachers -->
+        <li class="nav-item mb-2">
+          <a href="/director_teacher" class="nav-link text-white">
+            <i class="fa-solid fa-chalkboard-user me-2"></i>
+            <span>Teachers</span>
+          </a>
+        </li>
+        <!-- Students -->
+        <li class="nav-item mb-2">
+          <a href="/director_student" class="nav-link text-white">
+            <i class="fa-solid fa-users me-2"></i>
+            <span>Students</span>
+          </a>
+        </li>
+        <!-- Schedule -->
+        <li class="nav-item mb-2">
+          <a href="/director_schedule" class="nav-link text-white">
+            <i class="fa-solid fa-calendar-days me-2"></i>
+            <span>Schedule</span>
+          </a>
+        </li>
+        <!-- Payment -->
+        <li class="nav-item mb-2">
+          <a href="/director_payment" class="nav-link text-white">
+            <i class="fa-solid fa-money-bill me-2"></i>
+            <span>Payment</span>
+          </a>
+        </li>
+
+      </ul>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="flex-grow-1 p-4" style="background-color: #f4f6f9;">
+      <h2 class="mb-4 fw-bold">Branches</h2>
+
+      <!-- Popup -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      {% for category, message in messages %}
+      <div class="alert alert-{{category}} alert-dismissible fade show">
+        <div class="alert-body">
+          {{ message }}
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+      {% endfor %}
+      {% endif %}
+      {% endwith %}
+
+      <a href="/add_branch" class="btn fw-bold mb-3" style="background-color: #ff682d; color: white;">Add Branch</a>
+
+      <div class="table-responsive">
+        <table class="table align-middle bg-white text-center">
+          <thead>
+            <tr class="text-nowrap">
+              <th scope="col">No</th>
+              <th scope="col">Branch Name</th>
+              <th scope="col">Total Students</th>
+              <th scope="col">Total Teachers</th>
+              <th scope="col">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in data_branch %}
+            <tr>
+              <td>{{loop.index}}</td>
+              <td>{{row[1]}}</td>
+              <td>{{row[2]}}</td>
+              <td>{{row[3]}}</td>
+              <td>
+                <a href="/edit_branch/{{row[0]}}" class="btn btn-warning btn-sm fw-bold">
+                  <i class="fa-solid fa-pen" style="font-size: 13px;"></i>
+                </a>
+                <!-- Delete Button -->
+                <button type="button" class="btn btn-danger btn-sm fw-bold" data-bs-toggle="modal"
+                  data-bs-target="#deleteModal{{row[0]}}">
+                  <i class="fa-solid fa-trash" style="font-size: 13px;"></i>
+                </button>
+                <!-- Delete Confirmation Modal -->
+                <div class="modal fade" id="deleteModal{{row[0]}}" tabindex="-1"
+                  aria-labelledby="deleteModalLabel{{row[0]}}" aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="deleteModalLabel{{row[0]}}">Confirm Delete</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body">
+                        Are you sure you want to delete this branch?
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <a href="/delete_branch/{{row[0]}}" class="btn btn-danger">Confirm</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    const toggleBtn = document.getElementById("toggle-btn");
+    const sidebar = document.getElementById("sidebar");
+
+    toggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("collapsed");
+    });
+  </script>
+
+</body>
+
+</html>

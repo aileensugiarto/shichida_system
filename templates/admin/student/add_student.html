@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&family=Quicksand:wght@300..700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- Lexend -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet">
+  <title>Add Student</title>
+  <style>
+    body {
+      overflow-x: hidden;
+    }
+
+    #sidebar {
+      min-height: 100vh;
+      transition: width 0.3s;
+      border-right: 1px solid #ebebeb;
+    }
+
+    #sidebar.collapsed {
+      width: 80px !important;
+    }
+
+    #sidebar .nav-link span {
+      transition: opacity 0.3s;
+    }
+
+    #sidebar.collapsed .nav-link span {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #sidebar .nav-item span {
+      font-family: Lexend;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+      color: #4b5563;
+      position: relative;
+      transition: color 0.3s ease;
+    }
+
+    #sidebar .nav-item i {
+      color: #e84100;
+    }
+
+    .navbar .dropdown-menu {
+      position: absolute !important;
+      top: 100%;
+      right: 0;
+      left: auto;
+      z-index: 1050;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+    }
+
+    .navbar .dropdown-menu li a {
+      transition: 0.2s;
+    }
+
+    .navbar .dropdown-menu li a:hover {
+      background-color: #fff2be;
+    }
+
+    #toggle-btn {
+      color: #4b5563;
+      border: 2px solid #ff946a;
+      background-color: #fff2be;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+
+<body style="font-family: Quicksand;">
+
+  <!-- TOP NAVBAR -->
+  <nav class="navbar shadow-sm d-flex align-items-center justify-content-between px-5" style="background-color: white;">
+
+    <div class="d-flex align-items-center">
+      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmE-Dw16YtDbRtAC1Wnz6lO6d92UoklLpp_w&s"
+        alt="Shichida Logo" style="height:70px; margin-right: 15px; width: auto;">
+
+      <div style="display:flex; flex-direction:column; line-height:1.1;">
+        <span
+          style="font-family: 'Lexend', sans-serif; font-weight:700; font-size: 11px; color:#ff682d; text-transform: uppercase; letter-spacing: 1.3px;">
+          Shichida Indonesia
+        </span>
+        <span style="font-family: 'Lexend', sans-serif; font-weight:600; font-size: 20px; color:#333;">
+          Admin System
+        </span>
+      </div>
+
+      {% if session.branch_name %}
+      <div class="ms-4" style="
+        padding: 6px 15px;
+        border-radius: 999px;
+        font-family: Lexend;
+        font-size: 14.5px;
+        font-weight: 600;
+        color: #ff682d;
+        background: rgba(254, 161, 1, 0.15);
+        border: 1px solid rgba(255, 104, 45, 0.3);
+        backdrop-filter: blur(8px);
+      ">
+        <i class="fa-solid fa-location-dot me-1"></i>
+        {{ session.branch_name }}
+      </div>
+      {% endif %}
+    </div>
+
+    <ul class="navbar-nav d-flex align-items-center">
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown"
+          aria-expanded="false" style="color: #333; font-family:'Lexend'; font-weight:500; font-size: 18px;">
+          Hi, {{session.name}}
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end shadow">
+          <li>
+            <a class="dropdown-item" href="{{url_for('edit_account')}}">
+              <i class="fa-solid fa-user-pen me-2" style="color: #e84100; font-size: 13px;"></i>
+              <span
+                style="font-family: Lexend; font-weight: 600; text-transform: uppercase; color: #333; font-size: 12px; letter-spacing: 1.1px;">
+                Edit Account
+              </span>
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="/login" style="color: #e84100; font-size: 13px;">
+              <i class="fa-solid fa-right-from-bracket me-2"></i>
+              <span
+                style="font-family: Lexend; font-weight: 600; text-transform: uppercase; color: #333; font-size: 12px; letter-spacing: 1.1px;">
+                Logout
+              </span>
+            </a>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="d-flex">
+
+    <!-- SIDEBAR -->
+    <div id="sidebar" class="text-white p-3" style="width: 200px; background-color: white;">
+
+      <button id="toggle-btn" class="btn btn-outline-light w-100 mb-4">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+      <ul class="nav nav-pills flex-column mb-auto">
+        <!-- Dashboard -->
+        <li class="nav-item mb-2">
+          <a href="/dashboard" class="nav-link text-white">
+            <i class="fa-solid fa-gauge-high me-2"></i>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <!-- Levels -->
+        <li class="nav-item mb-2">
+          <a href="/level" class="nav-link text-white">
+            <i class="fa-solid fa-level-up me-2"></i>
+            <span>Levels</span>
+          </a>
+        </li>
+        <!-- Teachers -->
+        <li class="nav-item mb-2">
+          <a href="/teacher" class="nav-link text-white">
+            <i class="fa-solid fa-chalkboard-user me-2"></i>
+            <span>Teachers</span>
+          </a>
+        </li>
+        <!-- Students -->
+        <li class="nav-item mb-2">
+          <a href="/student" class="nav-link text-white">
+            <i class="fa-solid fa-users me-2"></i>
+            <span>Students</span>
+          </a>
+        </li>
+        <!-- Schedule -->
+        <li class="nav-item mb-2">
+          <a href="/schedule" class="nav-link text-white">
+            <i class="fa-solid fa-calendar-days me-2"></i>
+            <span>Schedule</span>
+          </a>
+        </li>
+        <!-- Payment -->
+        <li class="nav-item mb-2">
+          <a href="/payment" class="nav-link text-white">
+            <i class="fa-solid fa-money-bill me-2"></i>
+            <span>Payment</span>
+          </a>
+        </li>
+        <!-- Recap -->
+        <li class="nav-item mb-2">
+          <a href="/recap" class="nav-link text-white">
+            <i class="fa-solid fa-file-lines me-2"></i>
+            <span>Recap</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="flex-grow-1 p-4" style="background-color: #f4f6f9;">
+
+      <div class="d-flex justify-content-center align-items-center">
+        <form action="" method="POST" class="bg-white p-4 shadow needs-validation"
+          style="border-radius: 10px; width: 450px;">
+          <h3 class="mb-4 fw-bold">Add Student</h3>
+          <!-- Name -->
+          <div class="form-group mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Name</label>
+            <input type="text" name="form_name" class="form-control" placeholder="Enter student's name" required
+              autocomplete="off" style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+          </div>
+          <!-- DOB & Age -->
+          <div class="row mb-3">
+            <div class="col-6 form-group">
+              <label style="font-weight: 500; font-size: 15px;" class="mb-1">Date of Birth</label>
+              <input type="date" name="form_dob" class="form-control" required autocomplete="off"
+                style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+            </div>
+            <div class="col-6 form-group">
+              <label style="font-weight: 500; font-size: 15px;" class="mb-1">
+              Age
+            </label>
+            <input type="text" name="form_age" class="form-control" autocomplete="off" placeholder="Enter student's age"
+              style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+            </div>
+          </div>
+          <!-- Level -->
+          <div class="form-group mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Level</label>
+            <select name="form_id_level" class="form-select" required
+              style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+              <option value="" disabled selected>Select level</option>
+              {% for level in data_level %}
+              <option value="{{ level[0] }}">
+                {{ level[1] }} ({{ level[2] }})
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <!-- Teacher -->
+          <div class="form-group mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Teacher</label>
+            <select name="form_id_teacher" class="form-select" required
+              style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+              <option value="" disabled selected>Select teacher</option>
+              {% for teacher in data_teacher %}
+              <option value="{{teacher[0]}}">
+                {{teacher[1]}}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <!-- Class Type -->
+          <div class="form-group mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Class</label>
+            <select name="form_class_type" class="form-select" required
+              style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+              <option value="" disabled selected>Select class</option>
+              <option value="weekday">Weekday Class</option>
+              <option value="weekend">Weekend Class</option>
+            </select>
+          </div>
+          <!-- Parent Name -->
+          <div class="form-group mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Parent</label>
+            <input type="text" name="form_parent_name" class="form-control" placeholder="Enter the parent's name"
+              required autocomplete="off" style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+          </div>
+          <!-- Parent Telp -->
+          <div class="form-group mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Phone Number</label>
+            <input type="tel" name="form_parent_telp" class="form-control" placeholder="Enter the parent's phone number"
+              autocomplete="off" style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+          </div>
+          <!-- Address -->
+          <div class="form-group mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Address</label>
+            <input type="tel" name="form_address" class="form-control" placeholder="Enter the address"
+              autocomplete="off" style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+          </div>
+          <!-- Join Date -->
+          <div class="form-group mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Join Date</label>
+            <input type="date" name="form_join_date" class="form-control" required autocomplete="off"
+              style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+          </div>
+          <!-- Status -->
+          <div class="form-group mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Status</label>
+            <select name="form_status" class="form-select" required
+              style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+              <option value="" disabled selected>Select student status</option>
+              <option value="Current Student">Current Student</option>
+              <option value="Waiting List">Waiting List</option>
+              <option value="Past Student">Past Student</option>
+            </select>
+          </div>
+
+          <div>
+            <input type="submit" value="ADD STUDENT" class="btn btn-sm w-100 fw-bold"
+              style="border-radius: 5px; background-color: #ff682d; color: white;">
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    const toggleBtn = document.getElementById("toggle-btn");
+    const sidebar = document.getElementById("sidebar");
+
+    toggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("collapsed");
+    });
+  </script>
+
+  <script>
+    const dobInput = document.querySelector('input[name="form_dob"]');
+    const ageInput = document.querySelector('input[name="form_age"]');
+
+    function calculateAge() {
+      if (!dobInput.value) {
+        ageInput.value = '';
+        return;
+      }
+
+      const dob = new Date(dobInput.value);
+      const today = new Date();
+
+      let years = today.getFullYear() - dob.getFullYear();
+      let months = today.getMonth() - dob.getMonth();
+
+      if (today.getDate() < dob.getDate()) months--;
+      if (months < 0) {
+        years--;
+        months += 12;
+      }
+
+      ageInput.value = `${years}.${months.toString().padStart(2, '0')}`;
+    }
+
+    dobInput.addEventListener('input', calculateAge);
+    calculateAge();
+  </script>
+
+</body>
+
+</html>

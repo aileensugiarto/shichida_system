@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&family=Quicksand:wght@300..700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- Lexend -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet">
+  <title>Add Payment</title>
+  <style>
+    body {
+      overflow-x: hidden;
+    }
+
+    #sidebar {
+      min-height: 100vh;
+      transition: width 0.3s;
+      border-right: 1px solid #ebebeb;
+    }
+
+    #sidebar.collapsed {
+      width: 80px !important;
+    }
+
+    #sidebar .nav-link span {
+      transition: opacity 0.3s;
+    }
+
+    #sidebar.collapsed .nav-link span {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #sidebar .nav-item span {
+      font-family: Lexend;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+      color: #4b5563;
+      position: relative;
+      transition: color 0.3s ease;
+    }
+
+    #sidebar .nav-item i {
+      color: #e84100;
+    }
+
+    .navbar .dropdown-menu {
+      position: absolute !important;
+      top: 100%;
+      right: 0;
+      left: auto;
+      z-index: 1050;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+    }
+
+    .navbar .dropdown-menu li a {
+      transition: 0.2s;
+    }
+
+    .navbar .dropdown-menu li a:hover {
+      background-color: #fff2be;
+    }
+
+    #toggle-btn {
+      color: #4b5563;
+      border: 2px solid #ff946a;
+      background-color: #fff2be;
+      border-radius: 10px;
+    }
+
+    #paymentSummaryBox {
+      font-size: 13px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+
+<body style="font-family: Quicksand;">
+
+  <!-- TOP NAVBAR -->
+  <nav class="navbar shadow-sm d-flex align-items-center justify-content-between px-5" style="background-color: white;">
+
+    <div class="d-flex align-items-center">
+      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmE-Dw16YtDbRtAC1Wnz6lO6d92UoklLpp_w&s"
+        alt="Shichida Logo" style="height:70px; margin-right: 15px; width: auto;">
+
+      <div style="display:flex; flex-direction:column; line-height:1.1;">
+        <span
+          style="font-family: 'Lexend', sans-serif; font-weight:700; font-size: 11px; color:#ff682d; text-transform: uppercase; letter-spacing: 1.3px;">
+          Shichida Indonesia
+        </span>
+        <span style="font-family: 'Lexend', sans-serif; font-weight:600; font-size: 20px; color:#333;">
+          Admin System
+        </span>
+      </div>
+
+      {% if session.branch_name %}
+      <div class="ms-4" style="
+        padding: 6px 15px;
+        border-radius: 999px;
+        font-family: Lexend;
+        font-size: 14.5px;
+        font-weight: 600;
+        color: #ff682d;
+        background: rgba(254, 161, 1, 0.15);
+        border: 1px solid rgba(255, 104, 45, 0.3);
+        backdrop-filter: blur(8px);
+      ">
+        <i class="fa-solid fa-location-dot me-1"></i>
+        {{ session.branch_name }}
+      </div>
+      {% endif %}
+    </div>
+
+    <ul class="navbar-nav d-flex align-items-center">
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown"
+          aria-expanded="false" style="color: #333; font-family:'Lexend'; font-weight:500; font-size: 18px;">
+          Hi, {{session.name}}
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end shadow">
+          <li>
+            <a class="dropdown-item" href="{{url_for('edit_account')}}">
+              <i class="fa-solid fa-user-pen me-2" style="color: #e84100; font-size: 13px;"></i>
+              <span
+                style="font-family: Lexend; font-weight: 600; text-transform: uppercase; color: #333; font-size: 12px; letter-spacing: 1.1px;">
+                Edit Account
+              </span>
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="/login" style="color: #e84100; font-size: 13px;">
+              <i class="fa-solid fa-right-from-bracket me-2"></i>
+              <span
+                style="font-family: Lexend; font-weight: 600; text-transform: uppercase; color: #333; font-size: 12px; letter-spacing: 1.1px;">
+                Logout
+              </span>
+            </a>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="d-flex">
+
+    <!-- SIDEBAR -->
+    <div id="sidebar" class="text-white p-3" style="width: 200px; background-color: white;">
+
+      <button id="toggle-btn" class="btn btn-outline-light w-100 mb-4">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+      <ul class="nav nav-pills flex-column mb-auto">
+        <!-- Dashboard -->
+        <li class="nav-item mb-2">
+          <a href="/dashboard" class="nav-link text-white">
+            <i class="fa-solid fa-gauge-high me-2"></i>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <!-- Levels -->
+        <li class="nav-item mb-2">
+          <a href="/level" class="nav-link text-white">
+            <i class="fa-solid fa-level-up me-2"></i>
+            <span>Levels</span>
+          </a>
+        </li>
+        <!-- Teachers -->
+        <li class="nav-item mb-2">
+          <a href="/teacher" class="nav-link text-white">
+            <i class="fa-solid fa-chalkboard-user me-2"></i>
+            <span>Teachers</span>
+          </a>
+        </li>
+        <!-- Students -->
+        <li class="nav-item mb-2">
+          <a href="/student" class="nav-link text-white">
+            <i class="fa-solid fa-users me-2"></i>
+            <span>Students</span>
+          </a>
+        </li>
+        <!-- Schedule -->
+        <li class="nav-item mb-2">
+          <a href="/schedule" class="nav-link text-white">
+            <i class="fa-solid fa-calendar-days me-2"></i>
+            <span>Schedule</span>
+          </a>
+        </li>
+        <!-- Payment -->
+        <li class="nav-item mb-2">
+          <a href="/payment" class="nav-link text-white">
+            <i class="fa-solid fa-money-bill me-2"></i>
+            <span>Payment</span>
+          </a>
+        </li>
+        <!-- Recap -->
+        <li class="nav-item mb-2">
+          <a href="/recap" class="nav-link text-white">
+            <i class="fa-solid fa-file-lines me-2"></i>
+            <span>Recap</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="flex-grow-1 p-4" style="background-color: #f4f6f9;">
+      <div class="d-flex justify-content-center align-items-center">
+        <form action="" method="POST" class="bg-white p-4 shadow needs-validation" id="paymentForm"
+          style="border-radius: 10px; width: 450px;">
+          <h3 class="mb-4 fw-bold">Add Payment</h3>
+
+          <!-- Year -->
+          <div class="form-group mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Year</label>
+            <select id="yearSelect" name="form_year" class="form-select"
+              style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;"></select>
+          </div>
+
+          <!-- Term -->
+          <div class="form-group mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Term (can select multiple)</label><br>
+            <input type="checkbox" name="form_term" value="1"> <span style="font-size: 15px;">Term 1</span><br>
+            <input type="checkbox" name="form_term" value="2"> <span style="font-size: 15px;">Term 2</span><br>
+            <input type="checkbox" name="form_term" value="3"> <span style="font-size: 15px;">Term 3</span><br>
+            <input type="checkbox" name="form_term" value="4"> <span style="font-size: 15px;">Term 4</span><br>
+          </div>
+
+          <!-- Student -->
+          <div class="form-group mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Student</label>
+            <select name="form_id_student" class="form-select" required
+              style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+              <option value="" disabled selected>Select Student</option>
+              {% for student in data_student %}
+              <option value="{{student[0]}}">{{student[1]}}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Tuition Fee -->
+          <div class="form-group mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Tuition Fee</label>
+            <input type="text" id="tuitionFee" name="form_tuition_fee" class="form-control" required
+              style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+          </div>
+
+          <!-- Registration Fee -->
+          <div class="mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Registration Fee</label>
+            <select id="regFee" name="form_registration_fee" class="form-select"
+              style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+              <option value="no">No</option>
+              <option value="yes">Yes</option>
+              <option value="free">Free</option>
+              <option value="already_paid">Already Paid</option>
+            </select>
+          </div>
+
+          <!-- REGISTRATION AMOUNT (HIDDEN BY DEFAULT) -->
+          <div class="mb-3" id="regFeeAmountContainer" style="display:none;">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Registration Amount</label>
+            <input type="text" id="regFeeAmount" name="form_registration_amount" class="form-control"
+              placeholder="Enter amount" style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+          </div>
+
+          <div class="form-group mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Discount Type</label>
+            <select name="form_discount_type" class="form-select"
+              style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+              <option value="">None</option>
+              <option value="pro-rate">Pro Rate</option>
+              <option value="sibling">Sibling</option>
+              <option value="bring-friend">Bring Friend</option>
+            </select>
+          </div>
+
+
+          <!-- Payment Method -->
+          <div class="form-group mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Payment Method</label>
+            <select name="form_payment_method" class="form-select"
+              style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+              <option value="cash" selected>Cash</option>
+              <option value="transfer">Transfer</option>
+              <option value="credit/debit card">Credit/Debit Card</option>
+            </select>
+          </div>
+
+          <!-- Payment Date -->
+          <div class="form-group mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Payment Date</label>
+            <input type="date" name="form_payment_date" class="form-control" required autocomplete="off"
+              style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+          </div>
+
+          <!-- Total Payment -->
+          <div class="form-group mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1 fw-bold">Total Payment</label>
+            <input type="text" id="totalPayment" name="form_total_payment" class="form-control"
+              style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px; background-color: #f1f1f1;">
+          </div>
+
+          <div>
+            <input type="submit" value="ADD PAYMENT" class="btn btn-sm w-100 fw-bold"
+              style="border-radius: 5px; background-color: #ff682d; color: white;">
+          </div>
+        </form>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    const toggleBtn = document.getElementById("toggle-btn");
+    const sidebar = document.getElementById("sidebar");
+
+    toggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("collapsed");
+    });
+  </script>
+
+  <script>
+    const studentSelect = document.querySelector("select[name='form_id_student']");
+
+    studentSelect.addEventListener("change", function () {
+      const studentId = this.value;
+
+      fetch(`/check_registration_status?id_student=${studentId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.already_paid) {
+  // 🔴 ONLY SHOW "Already Paid"
+  regFee.innerHTML = `<option value="already_paid" selected>Already Paid</option>`;
+  regFeeContainer.style.display = "none";
+} else {
+  // 🟢 NORMAL OPTIONS
+  regFee.innerHTML = `
+    <option value="no">No</option>
+    <option value="yes">Yes</option>
+    <option value="free">Free</option>
+  `;
+  regFee.value = "no";
+}
+calculateTotal();
+
+          calculateTotal();
+        });
+    });
+    // ================= YEAR DYNAMIC =================
+    const yearSelect = document.getElementById("yearSelect");
+
+    let currentYear = new Date().getFullYear();
+
+    function renderYears(centerYear) {
+      yearSelect.innerHTML = "";
+
+      const years = [centerYear - 1, centerYear, centerYear + 1];
+
+      years.forEach(year => {
+        const option = document.createElement("option");
+        option.value = year;
+        option.textContent = year;
+
+        if (year === centerYear) option.selected = true;
+
+        yearSelect.appendChild(option);
+      });
+    }
+
+    // INIT
+    renderYears(currentYear);
+
+    // SHIFT WINDOW
+    yearSelect.addEventListener("change", function () {
+      renderYears(parseInt(this.value));
+    });
+
+
+    // ================= ELEMENTS =================
+    const tuitionFee = document.getElementById("tuitionFee");
+    const regFee = document.getElementById("regFee");
+    const regFeeAmount = document.getElementById("regFeeAmount");
+    const regFeeContainer = document.getElementById("regFeeAmountContainer");
+
+    const discountType = document.querySelector("select[name='form_discount_type']");
+    const discountInputContainer = document.createElement("div");
+    discountInputContainer.classList.add("mb-3");
+    discountInputContainer.style.display = "none";
+
+    discountInputContainer.innerHTML = `
+  <label style="font-weight: 500; font-size: 15px;" class="mb-1">Discount Amount</label>
+  <input type="text" id="discountFee" name="form_discount_fee" class="form-control" value="0"
+    style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+`;
+
+    discountType.parentNode.after(discountInputContainer);
+
+    const totalPayment = document.getElementById("totalPayment");
+
+    // CREATE SUMMARY BOX
+    const summaryBox = document.createElement("div");
+    summaryBox.id = "paymentSummaryBox";
+    summaryBox.classList.add("mb-3", "p-3", "bg-light", "rounded");
+    summaryBox.innerHTML = "<b>Payment Summary</b><br>";
+    totalPayment.parentNode.before(summaryBox);
+
+
+    // ================= REGISTRATION LOGIC =================
+    regFee.addEventListener("change", function () {
+      if (this.value === "yes") {
+        regFeeContainer.style.display = "block";
+      } else {
+        regFeeContainer.style.display = "none";
+        regFeeAmount.value = 0;
+      }
+      calculateTotal();
+    });
+
+
+    // ================= DISCOUNT LOGIC =================
+    discountType.addEventListener("change", function () {
+      if (this.value !== "") {
+        discountInputContainer.style.display = "block";
+      } else {
+        discountInputContainer.style.display = "none";
+        document.getElementById("discountFee").value = 0;
+      }
+      calculateTotal();
+    });
+
+    // ================= FORMAT =================
+    function formatRupiah(num) {
+      let number_string = num.toString().replace(/[^,\d]/g, '');
+      let split = number_string.split(',');
+      let sisa = split[0].length % 3;
+      let rupiah = split[0].substr(0, sisa);
+      let ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+      if (ribuan) {
+        let separator = sisa ? ',' : '';
+        rupiah += separator + ribuan.join(',');
+      }
+
+      return rupiah ? 'Rp ' + rupiah : '';
+    }
+
+    function getNumber(value) {
+      return parseInt(value.replace(/[^0-9]/g, '')) || 0;
+    }
+    // ================= CALCULATION =================
+    function calculateTotal() {
+      let tuition = getNumber(tuitionFee.value);
+      let reg = 0;
+      let discount = 0;
+
+      const discountField = document.getElementById("discountFee");
+      if (discountField) {
+        discount = getNumber(discountField.value || "0");
+      }
+
+      let total = tuition;
+
+      if (regFee.value === "yes") {
+        reg = getNumber(regFeeAmount.value);
+        total += reg;
+      }
+
+      total -= discount;
+      if (total < 0) total = 0;
+
+      totalPayment.value = "Rp " + total.toLocaleString("id-ID");
+
+      // ✅ DEFINE FIRST
+      let summaryHTML = "<b>Payment Summary</b><br>";
+      summaryHTML += "Tuition: Rp " + tuition.toLocaleString("id-ID") + "<br>";
+
+      if (regFee.value === "yes") {
+        summaryHTML += "Registration: Rp " + reg.toLocaleString("id-ID") + "<br>";
+      } else if (regFee.value === "free") {
+        summaryHTML += "Registration: FREE<br>";
+      } else if (regFee.value === "already_paid") {
+        summaryHTML += "Registration: ALREADY PAID<br>";
+      }
+
+      if (discountType.value !== "") {
+        summaryHTML += "Discount (" + discountType.value + "): -Rp " + discount.toLocaleString("id-ID") + "<br>";
+      }
+
+      summaryHTML += "<hr><b>Total: Rp " + total.toLocaleString("id-ID") + "</b>";
+
+      summaryBox.innerHTML = summaryHTML;
+    }
+    // ================= EVENTS =================
+    tuitionFee.addEventListener("input", calculateTotal);
+    regFeeAmount.addEventListener("input", calculateTotal);
+    document.addEventListener("input", function (e) {
+      if (e.target.id === "discountFee") calculateTotal();
+    });
+
+    // ================= LIVE FORMAT =================
+    [tuitionFee, regFeeAmount].forEach(input => {
+      input.addEventListener("input", function () {
+        let number = getNumber(this.value);
+        this.value = formatRupiah(number);
+        calculateTotal();
+      });
+    });
+
+    document.addEventListener("input", function (e) {
+      if (e.target.id === "discountFee") {
+        let number = getNumber(e.target.value);
+        e.target.value = formatRupiah(number);
+        calculateTotal();
+      }
+    });
+  </script>
+
+</body>
+
+</html>
