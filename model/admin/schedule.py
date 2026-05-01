@@ -63,7 +63,7 @@ def model_schedule():
         FROM tbl_schedule s
         JOIN tbl_teacher t ON s.id_teacher = t.id_teacher
         LEFT JOIN tbl_level l ON s.id_level = l.id_level
-        JOIN tbl_attendance a ON s.id_schedule = a.id_schedule
+        LEFT JOIN tbl_attendance a ON s.id_schedule = a.id_schedule   -- ✅ FIX HERE
         LEFT JOIN tbl_student st ON a.id_student = st.id_student
         WHERE DATE(s.date) = %s
         AND s.id_admin = %s
@@ -298,15 +298,10 @@ def model_add_schedule():
         end_time = request.form['form_end_time']
         teacher = int(request.form['form_teacher'])
 
-        term = request.form['form_term']
-
         if term == "TRIAL":
             term = 0
             student_name = request.form['form_trial_student_name']
             dob = request.form['form_trial_dob']
-
-            # ✅ DO NOT insert into tbl_student
-            # Instead: store name directly in schedule
 
             cur.execute("""
                 INSERT INTO tbl_student (name, dob, is_trial, id_admin)
@@ -347,10 +342,12 @@ def model_add_schedule():
 
         target_weekday = day_map[class_day]
 
-        # ===== 4. FIND FIRST VALID CLASS DATE =====
+        # ===== 4. FIND FIRST CLASS DATE (🔥 IMPORTANT)
         current_date = start_date
         while current_date.weekday() != target_weekday:
             current_date += timedelta(days=1)
+
+        first_class_date = current_date  # ✅ SAVE THIS
 
         # ===== 5. GENERATE WEEKLY SCHEDULES =====
         for _ in range(total_meetings):
@@ -371,21 +368,26 @@ def model_add_schedule():
 
             id_schedule = cur.lastrowid
 
-            # Link student attendance
             cur.execute("""
                 INSERT INTO tbl_attendance
                 (id_schedule, id_student, id_admin)
                 VALUES (%s,%s,%s)
             """, (id_schedule, student, session['id_admin']))
 
-            # Move to next week
             current_date += timedelta(days=7)
 
         mysql.connection.commit()
         cur.close()
 
         flash("Schedule successfully added", "success")
-        return redirect(url_for('schedule'))
+
+        # =========================
+        # 🔥 REDIRECT TO CORRECT DATE
+        # =========================
+        return redirect(url_for(
+            'schedule',
+            date=first_class_date.strftime("%Y-%m-%d")
+        ))
 
     return render_template(
         'admin/schedule/add_schedule.html',
@@ -393,8 +395,6 @@ def model_add_schedule():
         data_student=updated_students,
         data_level=levels
     )
-
-
 # EDIT SCHEDULE
 def model_edit_schedule(id):
   cur = mysql.connection.cursor()
@@ -458,7 +458,7 @@ def model_process_edit_schedule():
   cur.close()
 
   flash("Schedule successfully updated", "success")
-  return redirect(url_for("schedule"))
+  return redirect(url_for("schedule", date=date))
 
 
 # EDIT MASTER SCHEDULE
@@ -515,14 +515,10 @@ def model_process_edit_master_schedule():
     student = int(request.form['form_student'])
     total_meetings = int(request.form['form_total_meetings'])
 
-    if total_meetings < 1:
-        flash("Total meetings must be at least 1", "danger")
-        return redirect(url_for("schedule"))
-
     cur = mysql.connection.cursor()
 
     # =========================
-    # 1️⃣ UPDATE MASTER SCHEDULE
+    # 1️⃣ UPDATE MASTER
     # =========================
     cur.execute("""
         UPDATE tbl_master_schedule
@@ -538,174 +534,130 @@ def model_process_edit_master_schedule():
         WHERE id_master_schedule=%s AND id_admin=%s
     """, (
         term, start_date, class_day, level,
-        start_time, end_time, teacher, student,
-        total_meetings, id_master, session['id_admin']
+        start_time, end_time, teacher,
+        student, total_meetings,
+        id_master, session['id_admin']
     ))
 
     # =========================
-    # 2️⃣ GET ALL SCHEDULES + STATUS
+    # 2️⃣ GET EXISTING SCHEDULES
     # =========================
     cur.execute("""
-        SELECT s.id_schedule, s.date, a.status
-        FROM tbl_schedule s
-        JOIN tbl_attendance a ON s.id_schedule = a.id_schedule
-        WHERE s.id_master_schedule=%s AND s.id_admin=%s
-        ORDER BY s.date ASC
+        SELECT id_schedule, date
+        FROM tbl_schedule
+        WHERE id_master_schedule=%s AND id_admin=%s
+        ORDER BY date ASC, id_schedule ASC
     """, (id_master, session['id_admin']))
 
     schedules = cur.fetchall()
 
-    # =========================
-    # 3️⃣ SPLIT LOCKED / EDITABLE
-    # =========================
-    locked = []
-    editable = []
-
+    enriched = []
     for s in schedules:
-        if s[2]:  # has status (present/absent)
-            locked.append(s)
+        enriched.append({
+            "id": s[0],
+            "date": s[1]
+        })
+
+    current_count = len(enriched)
+
+    # =========================
+    # 3️⃣ HANDLE REDUCE
+    # =========================
+    if total_meetings < current_count:
+
+        to_delete = enriched[total_meetings:]
+
+        for s in to_delete:
+            sched_id = s["id"]
+
+            cur.execute("""
+                DELETE FROM tbl_attendance
+                WHERE id_schedule=%s AND id_admin=%s
+            """, (sched_id, session['id_admin']))
+
+            cur.execute("""
+                DELETE FROM tbl_schedule
+                WHERE id_schedule=%s AND id_admin=%s
+            """, (sched_id, session['id_admin']))
+
+    # =========================
+    # 4️⃣ HANDLE ADD
+    # =========================
+    elif total_meetings > current_count:
+
+        # map day
+        day_map = {
+            'MON': 0,
+            'TUE': 1,
+            'WED': 2,
+            'THU': 3,
+            'FRI': 4,
+            'SAT': 5
+        }
+
+        target_weekday = day_map[class_day]
+
+        # determine last date
+        if enriched:
+            last_date = enriched[-1]["date"]
         else:
-            editable.append(s)
+            last_date = start_date
+            while last_date.weekday() != target_weekday:
+                last_date += timedelta(days=1)
+
+        new_needed = total_meetings - current_count
+
+        for _ in range(new_needed):
+
+            last_date += timedelta(days=7)
+
+            cur.execute("""
+                INSERT INTO tbl_schedule
+                (date, start_time, end_time, id_teacher,
+                 id_level, id_master_schedule, id_admin)
+                VALUES (%s,%s,%s,%s,%s,%s,%s)
+            """, (
+                last_date,
+                start_time,
+                end_time,
+                teacher,
+                level,
+                id_master,
+                session['id_admin']
+            ))
+
+            new_schedule_id = cur.lastrowid
+
+            cur.execute("""
+                INSERT INTO tbl_attendance
+                (id_schedule, id_student, id_admin)
+                VALUES (%s,%s,%s)
+            """, (new_schedule_id, student, session['id_admin']))
 
     # =========================
-    # 4️⃣ LIMIT TOTAL MEETINGS
+    # 5️⃣ UPDATE REMAINING SCHEDULES
     # =========================
-    final_schedules = locked + editable
-    final_schedules = final_schedules[:total_meetings]
-
-    locked_ids = {s[0] for s in locked}
-    kept_ids = {s[0] for s in final_schedules}
-
-    # =========================
-    # 5️⃣ DELETE EXTRA (ONLY EDITABLE)
-    # =========================
-    for s in schedules:
-        if s[0] not in kept_ids and s[0] not in locked_ids:
-            cur.execute("DELETE FROM tbl_attendance WHERE id_schedule=%s AND id_admin=%s",
-                        (s[0], session['id_admin']))
-            cur.execute("DELETE FROM tbl_schedule WHERE id_schedule=%s AND id_admin=%s",
-                        (s[0], session['id_admin']))
-
-    # =========================
-    # 6️⃣ RECALCULATE DATES FOR EDITABLE
-    # =========================
-    day_map = {'MON': 0, 'TUE': 1, 'WED': 2, 'THU': 3, 'FRI': 4, 'SAT': 5}
-    target_day = day_map[class_day]
-
-    # =========================
-    # 🧠 NEW: FIND LAST ATTENDED DATE
-    # =========================
-    last_attended_date = None
-
-    if locked:
-        last_attended_date = max(s[1] for s in locked)
-
-    # =========================
-    # 🧠 NEW: DETERMINE START POINT
-    # =========================
-    if last_attended_date:
-        # 👉 Move to NEXT WEEK (your rule)
-        next_week_start = last_attended_date + timedelta(days=(7 - last_attended_date.weekday()))
-    else:
-        # No attendance yet → fallback to original start_date
-        next_week_start = start_date
-
-    # =========================
-    # 🧠 NEW: ALIGN TO TARGET DAY (IN NEXT WEEK)
-    # =========================
-    current_date = next_week_start
-
-    while current_date.weekday() != target_day:
-        current_date += timedelta(days=1)
-
-    # Collect locked dates so we don't overwrite them
-    locked_dates = {s[1] for s in locked}
-
-    updated_count = 0
-
-    for s in final_schedules:
-        sched_id = s[0]
-
-        # SKIP LOCKED
-        if sched_id in locked_ids:
-            continue
-
-        # Find next available date (skip locked dates)
-        while current_date in locked_dates:
-            current_date += timedelta(days=7)
-
-        # UPDATE THIS SCHEDULE
-        cur.execute("""
-            UPDATE tbl_schedule
-            SET date=%s,
-                start_time=%s,
-                end_time=%s,
-                id_teacher=%s,
-                id_level=%s
-            WHERE id_schedule=%s AND id_admin=%s
-        """, (
-            current_date,
-            start_time,
-            end_time,
-            teacher,
-            level,
-            sched_id,
-            session['id_admin']
-        ))
-
-        current_date += timedelta(days=7)
-        updated_count += 1
-
-    # =========================
-    # 7️⃣ ADD MISSING SCHEDULES
-    # =========================
-    existing_count = len(final_schedules)
-    to_add = total_meetings - existing_count
-
-    for _ in range(to_add):
-        while current_date in locked_dates:
-            current_date += timedelta(days=7)
-
-        cur.execute("""
-            INSERT INTO tbl_schedule
-            (date, start_time, end_time, id_teacher,
-             id_level, id_master_schedule, id_admin)
-            VALUES (%s,%s,%s,%s,%s,%s,%s)
-        """, (
-            current_date,
-            start_time,
-            end_time,
-            teacher,
-            level,
-            id_master,
-            session['id_admin']
-        ))
-
-        new_schedule_id = cur.lastrowid
-
-        cur.execute("""
-            INSERT INTO tbl_attendance
-            (id_schedule, id_student, id_admin)
-            VALUES (%s,%s,%s)
-        """, (new_schedule_id, student, session['id_admin']))
-
-        current_date += timedelta(days=7)
+    cur.execute("""
+        UPDATE tbl_schedule
+        SET start_time=%s,
+            end_time=%s,
+            id_teacher=%s,
+            id_level=%s
+        WHERE id_master_schedule=%s AND id_admin=%s
+    """, (
+        start_time,
+        end_time,
+        teacher,
+        level,
+        id_master,
+        session['id_admin']
+    ))
 
     mysql.connection.commit()
     cur.close()
 
     flash("Master schedule updated successfully", "success")
     return redirect(url_for("schedule"))
-
-# DELETE SCHEDULE
-# def model_delete_schedule(id):
-#   cur = mysql.connection.cursor()
-#   cur.execute("DELETE FROM tbl_schedule WHERE id_schedule = %s AND id_admin=%s", (id, session['id_admin'], ))
-#   mysql.connection.commit()
-#   cur.close()
-
-#   flash("Schedule successfully deleted", "success")
-#   return redirect(url_for("schedule"))
 
 def model_delete_schedule(id):
     cur = mysql.connection.cursor()
