@@ -141,6 +141,11 @@ def model_student():
                     (join_date.year == filter_year and join_date.month > month)
                 )
 
+            # ✅ HIDE students not yet joined
+            # ONLY for single term/month filter
+            if not is_all_terms and not joined:
+                continue
+
             # =========================
             # ✅ FINAL STATUS LOGIC
             # =========================
@@ -250,18 +255,30 @@ def model_add_student():
             # ===== 1️⃣ INSERT STUDENT (GLOBAL) =====
             cur.execute("""
                 INSERT INTO tbl_student
-                (name, dob, id_level, is_manual_level, class_type, id_admin, join_date, parent_name, parent_telp, address)
-                VALUES (%s,%s,%s,1,%s,%s,%s,%s,%s,%s)
+                (
+                    name,
+                    dob,
+                    address,
+                    parent_name,
+                    parent_telp,
+                    id_level,
+                    class_type,
+                    id_admin,
+                    join_date,
+                    is_trial
+                )
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             """, (
                 name,
                 dob,
+                address,
+                parent_name,
+                parent_telp,
                 id_level,
                 class_type,
                 session['id_admin'],
                 join_date,
-                parent_name,
-                parent_telp,
-                address
+                0
             ))
 
             id_student = cur.lastrowid
@@ -442,21 +459,23 @@ def model_process_edit_student():
             SET
                 name=%s,
                 dob=%s,
-                class_type=%s,
-                join_date=%s,
+                address=%s,
                 parent_name=%s,
                 parent_telp=%s,
-                address=%s
+                id_level=%s,
+                class_type=%s,
+                join_date=%s
             WHERE id_student=%s
-              AND id_admin=%s
+            AND id_admin=%s
         """, (
             name,
             dob,
-            class_type,
-            join_date,
+            address,
             parent_name,
             parent_telp,
-            address,
+            id_level,
+            class_type,
+            join_date,
             id_student,
             session["id_admin"]
         ))

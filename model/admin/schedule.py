@@ -635,23 +635,75 @@ def model_process_edit_master_schedule():
             """, (new_schedule_id, student, session['id_admin']))
 
     # =========================
-    # 5️⃣ UPDATE REMAINING SCHEDULES
+    # 5️⃣ REGENERATE DATES
     # =========================
+
+    # map day
+    day_map = {
+        'MON': 0,
+        'TUE': 1,
+        'WED': 2,
+        'THU': 3,
+        'FRI': 4,
+        'SAT': 5
+    }
+
+    target_weekday = day_map[class_day]
+
+    # find first valid class date
+    current_date = start_date
+
+    while current_date.weekday() != target_weekday:
+        current_date += timedelta(days=1)
+
+    # get all schedules again
     cur.execute("""
-        UPDATE tbl_schedule
-        SET start_time=%s,
-            end_time=%s,
-            id_teacher=%s,
-            id_level=%s
-        WHERE id_master_schedule=%s AND id_admin=%s
-    """, (
-        start_time,
-        end_time,
-        teacher,
-        level,
-        id_master,
-        session['id_admin']
-    ))
+        SELECT id_schedule
+        FROM tbl_schedule
+        WHERE id_master_schedule=%s
+        AND id_admin=%s
+        ORDER BY date ASC, id_schedule ASC
+    """, (id_master, session['id_admin']))
+
+    schedule_ids = cur.fetchall()
+
+    # update every schedule sequentially
+    for row in schedule_ids:
+
+        sched_id = row[0]
+
+        cur.execute("""
+            UPDATE tbl_schedule
+            SET
+                date=%s,
+                start_time=%s,
+                end_time=%s,
+                id_teacher=%s,
+                id_level=%s
+            WHERE id_schedule=%s
+            AND id_admin=%s
+        """, (
+            current_date,
+            start_time,
+            end_time,
+            teacher,
+            level,
+            sched_id,
+            session['id_admin']
+        ))
+
+        # ✅ RESET ATTENDANCE STATUS
+        cur.execute("""
+            UPDATE tbl_attendance
+            SET status = NULL
+            WHERE id_schedule=%s
+            AND id_admin=%s
+        """, (
+            sched_id,
+            session['id_admin']
+        ))
+
+        current_date += timedelta(days=7)
 
     mysql.connection.commit()
     cur.close()
