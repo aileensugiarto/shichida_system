@@ -141,37 +141,44 @@ def model_student():
                     (join_date.year == filter_year and join_date.month > month)
                 )
 
-            # ✅ HIDE students not yet joined
-            # ONLY for single term/month filter
+            # =========================
+            # HANDLE NOT JOINED
+            # =========================
+
+            # Single month view:
+            # completely hide future students
             if not is_all_terms and not joined:
                 continue
 
-            # =========================
-            # ✅ FINAL STATUS LOGIC
-            # =========================
+            # All terms view:
+            # show "Not Joined"
             if not joined:
                 display_status = "Not Joined"
                 teacher_name = ""
                 level_name = ""
                 class_type = ""
 
+            # =========================
+            # JOINED STUDENTS
+            # =========================
             else:
                 if period:
                     status, id_teacher, id_level, class_type, teacher_name = period
 
-                    # ✅ KEY FIX: USE DB STATUS DIRECTLY
                     display_status = status if status else "Current Student"
                     teacher_name = teacher_name if teacher_name else ""
 
-                    # 🔹 GET LEVEL NAME
+                    # GET LEVEL NAME
                     if id_level:
                         cur.execute("""
                             SELECT level_name
                             FROM tbl_level
                             WHERE id_level = %s
                         """, (id_level,))
+
                         lvl = cur.fetchone()
                         level_name = lvl[0] if lvl else ""
+
                     else:
                         level_name = ""
 
