@@ -209,6 +209,7 @@ def model_student():
         filter_month_name=filter_month_name,
         levels=levels
     )
+
 # ADD STUDENT
 def model_add_student():
     cur = mysql.connection.cursor()
@@ -264,6 +265,10 @@ def model_add_student():
             ))
 
             id_student = cur.lastrowid
+
+            # ✅ Guard against bad lastrowid
+            if not id_student:
+                raise Exception("INSERT into tbl_student failed — lastrowid is 0 or None")
 
             # ===== 2️⃣ INSERT STUDENT PERIOD =====
             cur.execute("""

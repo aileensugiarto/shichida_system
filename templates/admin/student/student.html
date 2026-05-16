@@ -518,6 +518,7 @@
         <table class="table align-middle bg-white text-center">
           <thead class="sticky-top">
             <tr class="text-nowrap">
+              <th>No</th>
               {% if filter_term == "all" %}
               <th>Term</th>
               <th>Month</th>
@@ -539,6 +540,7 @@
           <tbody>
             {% for s in data_student %}
             <tr data-level="{{s.level}}" data-age="{{s.age}}" data-status="{{s.status|lower}}">
+              <td class="row-number">{{loop.index}}</td>
               {% if filter_term == "all" %}
               <td>{{ s.term }}</td>
               <td>{{ s.month_name[:3] | upper }}</td>
@@ -791,6 +793,16 @@
         }
 
         row.style.display = show ? "" : "none";
+      });
+
+      let visibleIndex = 1;
+      rows.forEach(row => {
+        if (row.style.display !== "none") {
+          const numberCell = row.querySelector(".row-number");
+          if (numberCell) {
+            numberCell.textContent = visibleIndex++;
+          }
+        }
       });
     }
 
