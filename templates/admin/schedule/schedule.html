@@ -27,24 +27,41 @@
       min-height: 100vh;
       transition: width 0.3s;
       border-right: 1px solid #ebebeb;
-      width: 200px !important;
-      min-width: 200px !important;
+      width: 200px;
+      min-width: 200px;
       flex-shrink: 0;
       background-color: white;
     }
 
     #sidebar.collapsed {
       width: 80px !important;
-      min-width: 80px;
+      min-width: 80px !important;
     }
 
     #sidebar .nav-link span {
       transition: opacity 0.3s;
     }
 
+    #sidebar.collapsed .nav-link {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 12px 0;
+    }
+
     #sidebar.collapsed .nav-link span {
-      opacity: 0;
-      pointer-events: none;
+      display: none;
+    }
+
+    #sidebar.collapsed .nav-link i {
+      margin-right: 0 !important;
+      font-size: 18px;
+    }
+
+    #sidebar.collapsed .nav-item {
+      width: 100%;
+      display: flex;
+      justify-content: center;
     }
 
     #sidebar .nav-item span {
