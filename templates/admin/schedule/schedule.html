@@ -105,20 +105,18 @@
     }
 
     /* TABLE */
-    .table-responsive thead {
-      background-color: #ffe066;
-    }
-
     .table-responsive thead th {
+      background-color: #ffe066 !important;
       font-family: Lexend;
       font-size: 13px;
       text-transform: uppercase;
       color: #333;
       letter-spacing: 1px;
       border-bottom: 1px solid #dee2e6 !important;
+
       position: sticky;
-      z-index: 10;
       top: 0;
+      z-index: 20; /* higher so it stays above rows */
     }
 
     .table-responsive thead th:hover {
