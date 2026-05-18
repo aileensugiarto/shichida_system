@@ -308,7 +308,7 @@
           </div>
 
           <!-- Start Time & End Time -->
-          <div class="form-group mb-3 row">
+          <!-- <div class="form-group mb-3 row">
             <div class="col-6">
               <label style="font-weight: 500; font-size: 15px;" class="mb-1">Start Time</label>
               <input type="time" name="form_start_time" class="form-control" required
@@ -319,6 +319,25 @@
               <input type="time" name="form_end_time" class="form-control" required
                 style="height: 33px; border-radius: 8px; font-size: 14px;">
             </div>
+          </div> -->
+
+          <div class="form-group mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Class Time</label>
+            <select name="form_time_slot" class="form-select" required
+              style="height: 38px; border-radius: 8px; font-size: 14px;">
+
+              <option value="" selected disabled>Select time slot</option>
+
+              <option value="09:00|10:00">09:00 - 10:00</option>
+              <option value="10:00|11:00">10:00 - 11:00</option>
+              <option value="11:00|12:00">11:00 - 12:00</option>
+              <option value="12:00|13:00">12:00 - 13:00</option>
+              <option value="13:00|14:00">13:00 - 14:00</option>
+              <option value="14:00|15:00">14:00 - 15:00</option>
+              <option value="15:00|16:00">15:00 - 16:00</option>
+              <option value="16:00|17:00">16:00 - 17:00</option>
+
+            </select>
           </div>
 
           <!-- Total Meetings -->
@@ -347,31 +366,31 @@
     });
   </script>
 
-<script>
-  const termSelect = document.getElementById("termSelect");
-  const termStudent = document.getElementById("termStudentGroup");
-  const trialStudent = document.getElementById("trialStudentGroup");
-  const trialDob = document.getElementById("trialDobGroup");
-  const totalMeetings = document.getElementById("totalMeetings");
+  <script>
+    const termSelect = document.getElementById("termSelect");
+    const termStudent = document.getElementById("termStudentGroup");
+    const trialStudent = document.getElementById("trialStudentGroup");
+    const trialDob = document.getElementById("trialDobGroup");
+    const totalMeetings = document.getElementById("totalMeetings");
 
-  termSelect.addEventListener("change", function () {
-    if (this.value === "TRIAL") {
-      termStudent.classList.add("d-none");
-      trialStudent.classList.remove("d-none");
-      trialDob.classList.remove("d-none");
+    termSelect.addEventListener("change", function () {
+      if (this.value === "TRIAL") {
+        termStudent.classList.add("d-none");
+        trialStudent.classList.remove("d-none");
+        trialDob.classList.remove("d-none");
 
-      totalMeetings.value = 1;
-      totalMeetings.readOnly = true;
-    } else {
-      termStudent.classList.remove("d-none");
-      trialStudent.classList.add("d-none");
-      trialDob.classList.add("d-none");
+        totalMeetings.value = 1;
+        totalMeetings.readOnly = true;
+      } else {
+        termStudent.classList.remove("d-none");
+        trialStudent.classList.add("d-none");
+        trialDob.classList.add("d-none");
 
-      totalMeetings.readOnly = false;
-      totalMeetings.value = "";
-    }
-  });
-</script>
+        totalMeetings.readOnly = false;
+        totalMeetings.value = "";
+      }
+    });
+  </script>
 
   <script>
     const toggleBtn = document.getElementById("toggle-btn");

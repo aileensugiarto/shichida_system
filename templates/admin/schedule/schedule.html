@@ -634,15 +634,15 @@
           <div class="card h-100 shadow-sm">
 
             <div class="card-header fw-bold text-center" style="
-  background: white;
-color: #333;
-border-bottom: 3px solid #f97316;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  font-family: lexend;
-  font-weight: bold;
-  font-size: 15px;
-">
+              background: white;
+              color: #333;
+              border-bottom: 3px solid #f97316;
+              letter-spacing: 1px;
+              text-transform: uppercase;
+              font-family: lexend;
+              font-weight: bold;
+              font-size: 15px;
+            ">
               {{ data.teacher_name }}
             </div>
 
@@ -792,9 +792,6 @@ border-bottom: 3px solid #f97316;
           </span>
           <input type="text" id="attendanceStudentFilter" class="form-control w-25" placeholder="Search student">
         </div>
-
-
-
       </div>
 
       <!-- ATTENDANCE TABLE -->
@@ -823,7 +820,8 @@ border-bottom: 3px solid #f97316;
               <td>
                 <div style="display:flex; flex-wrap:wrap; gap:6px; justify-content:center;">
                   {% for meeting in row.meetings %}
-                  <div data-bs-toggle="tooltip" title="Class: {{ meeting.date }}" style="
+                  <div data-bs-toggle="tooltip" title="Class: {{ meeting.date }}" onclick="openAttendanceByAttendanceId({{ meeting.id_attendance }})"
+                  style="
                     width:28px;
                     height:28px;
                     display:flex;
@@ -867,7 +865,7 @@ border-bottom: 3px solid #f97316;
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Mark Attendance</h5>
+          <h5 class="modal-title" id="attendanceModalTitle">Mark Attendance</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
@@ -1058,6 +1056,7 @@ border-bottom: 3px solid #f97316;
     // =====================================================
     let currentScheduleId = null;
 
+    // OPEN ATTENDANCE (TEACHER TABLE)
     function openAttendance(scheduleId) {
 
       currentScheduleId = scheduleId;
@@ -1065,6 +1064,19 @@ border-bottom: 3px solid #f97316;
       fetch(`/get_attendance/${scheduleId}`)
         .then(res => res.json())
         .then(data => {
+
+          if (data.length > 0) {
+            const dateObj = new Date(data[0].date);
+            const shortDay = dateObj.toLocaleDateString('en-US', {
+              weekday: 'short'
+            });
+            const formattedDate = dateObj.toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric"
+            });
+            document.getElementById('attendanceModalTitle').innerHTML = `Mark Attendance - ${shortDay}, ${formattedDate}`;
+          }
 
           const container = document.getElementById("attendanceList");
           container.innerHTML = "";
@@ -1093,22 +1105,77 @@ border-bottom: 3px solid #f97316;
 
     }
 
+    // OPEN ATTENDANCE BY ATTENDANC ID (ATTENDANCE TABLE)
+    function openAttendanceByAttendanceId(attendanceId) {
+    fetch(`/get_attendance_by_attendance/${attendanceId}`)
+      .then(res => res.json())
+      .then(data => {
+
+        if (data.length > 0) {
+            const dateObj = new Date(data[0].date);
+            const shortDay = dateObj.toLocaleDateString('en-US', {
+              weekday: 'short'
+            });
+            const formattedDate = dateObj.toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric"
+            });
+            document.getElementById('attendanceModalTitle').innerHTML = `Mark Attendance - ${shortDay}, ${formattedDate}`;
+        }
+
+        const container = document.getElementById("attendanceList");
+        container.innerHTML = "";
+
+        data.forEach(s => {
+
+          container.innerHTML += `
+            <div class="row align-items-center mb-2">
+              <div class="col-6">${s.name}</div>
+
+              <div class="col-6 text-center">
+                <select class="form-select form-select-sm"
+                  data-id="${s.id_ss}">
+
+                  <option value=""
+                    ${!s.status ? 'selected' : ''}>
+                    --
+                  </option>
+
+                  <option value="present"
+                    ${s.status === 'present' ? 'selected' : ''}>
+                    Present
+                  </option>
+
+                  <option value="absent"
+                    ${s.status === 'absent' ? 'selected' : ''}>
+                    Absent
+                  </option>
+
+                </select>
+              </div>
+            </div>
+          `;
+        });
+
+        new bootstrap.Modal(
+          document.getElementById("attendanceModal")
+        ).show();
+
+      });
+
+  }
+
     function saveAttendance() {
 
       const selects = document.querySelectorAll("#attendanceList select");
       const attendance = [];
 
       selects.forEach(sel => {
-
-        if (sel.value) {
-
-          attendance.push({
-            id_ss: sel.dataset.id,
-            status: sel.value
-          });
-
-        }
-
+        attendance.push({
+          id_ss: sel.dataset.id,
+          status: sel.value || null
+        });
       });
 
       fetch("/update_attendance", {

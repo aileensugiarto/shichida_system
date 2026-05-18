@@ -292,18 +292,56 @@
             </select>
           </div>
 
-          <!-- Start Time & End Time -->
-          <div class="form-group mb-3 row">
-            <div class="col-6">
-              <label style="font-weight: 500; font-size: 15px;" class="mb-1">Start Time</label>
-              <input type="time" name="form_start_time" class="form-control" required
-                value="{{data_master_schedule[5]}}" style="height: 33px; border-radius: 8px; font-size: 14px;">
-            </div>
-            <div class="col-6">
-              <label style="font-weight: 500; font-size: 15px;" class="mb-1">End Time</label>
-              <input type="time" name="form_end_time" class="form-control" required value="{{data_master_schedule[6]}}"
-                style="height: 33px; border-radius: 8px; font-size: 14px;">
-            </div>
+          <!-- TIME SLOT -->
+          <div class="form-group mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">
+              Class Time
+            </label>
+
+            <select name="form_time_slot" class="form-select" required
+              style="height: 33px; border-radius: 8px; font-size: 14px;">
+
+              <option value="09:00|10:00"
+                {% if data_master_schedule[5] == "09:00" and data_master_schedule[6] == "10:00" %}selected{% endif %}>
+                09:00 - 10:00
+              </option>
+
+              <option value="10:00|11:00"
+                {% if data_master_schedule[5] == "10:00" and data_master_schedule[6] == "11:00" %}selected{% endif %}>
+                10:00 - 11:00
+              </option>
+
+              <option value="11:00|12:00"
+                {% if data_master_schedule[5] == "11:00" and data_master_schedule[6] == "12:00" %}selected{% endif %}>
+                11:00 - 12:00
+              </option>
+
+              <option value="12:00|13:00"
+                {% if data_master_schedule[5] == "12:00" and data_master_schedule[6] == "13:00" %}selected{% endif %}>
+                12:00 - 13:00
+              </option>
+
+              <option value="13:00|14:00"
+                {% if data_master_schedule[5] == "13:00" and data_master_schedule[6] == "14:00" %}selected{% endif %}>
+                13:00 - 14:00
+              </option>
+
+              <option value="14:00|15:00"
+                {% if data_master_schedule[5] == "14:00" and data_master_schedule[6] == "15:00" %}selected{% endif %}>
+                14:00 - 15:00
+              </option>
+
+              <option value="15:00|16:00"
+                {% if data_master_schedule[5] == "15:00" and data_master_schedule[6] == "16:00" %}selected{% endif %}>
+                15:00 - 16:00
+              </option>
+
+              <option value="16:00|17:00"
+                {% if data_master_schedule[5] == "16:00" and data_master_schedule[6] == "17:00" %}selected{% endif %}>
+                16:00 - 17:00
+              </option>
+
+            </select>
           </div>
 
           <!-- Total Meetings -->

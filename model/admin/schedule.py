@@ -161,7 +161,8 @@ def model_schedule():
             m.term,
             st.name,
             s.date,
-            a.status
+            a.status,
+            a.id_attendance
         FROM tbl_master_schedule m
         JOIN tbl_schedule s 
             ON m.id_master_schedule = s.id_master_schedule
@@ -185,6 +186,7 @@ def model_schedule():
         student = r[3]
         class_date = r[4]
         status = r[5]
+        id_attendnace = r[6]
 
         key = f"{master_id}_{student}"
 
@@ -198,7 +200,8 @@ def model_schedule():
 
         attendance_tracker[key]["meetings"].append({
             "date": class_date.strftime("%d %b %Y"),
-            "status": status
+            "status": status,
+            "id_attendance": id_attendnace
         })
 
     attendance_tracker = list(attendance_tracker.values())
@@ -294,8 +297,8 @@ def model_add_schedule():
 
         class_day = request.form['form_class_day'].upper().strip()
         level = int(request.form['form_level'])
-        start_time = request.form['form_start_time']
-        end_time = request.form['form_end_time']
+        time_slot = request.form['form_time_slot']
+        start_time, end_time = time_slot.split("|")
         teacher = int(request.form['form_teacher'])
 
         if term == "TRIAL":
@@ -395,6 +398,8 @@ def model_add_schedule():
         data_student=updated_students,
         data_level=levels
     )
+
+
 # EDIT SCHEDULE
 def model_edit_schedule(id):
   cur = mysql.connection.cursor()
@@ -423,7 +428,7 @@ def model_edit_schedule(id):
   current_students = [row[0] for row in current_students_data]
 
   cur.close()
-  return render_template('admin/schedule/edit_schedule.html', data_schedule=schedule, data_teacher=teachers, data_student=updated_students, data_current_student=current_students, data_level=levels)
+  return render_template('admin/schedule/edit_schedule.html', data_schedule=schedule, data_teacher=teachers, data_student=updated_students, data_current_student=current_students, data_level=levels, time_slots=TIME_SLOTS)
 
 
 # PROCESS EDIT SCHEDULE
@@ -431,8 +436,10 @@ def model_process_edit_schedule():
   id_schedule = request.form['form_id_schedule']
   date = request.form['form_date']
   level = request.form['form_level']
-  start_time = request.form['form_start_time']
-  end_time = request.form['form_end_time']
+#   start_time = request.form['form_start_time']
+#   end_time = request.form['form_end_time']
+  time_slot = request.form['form_time_slot']
+  start_time, end_time = time_slot.split('|')
   teacher = request.form['form_teacher']
   students = request.form.getlist('form_students')
 
@@ -509,8 +516,8 @@ def model_process_edit_master_schedule():
     ).date()
     class_day = request.form['form_class_day'].upper()[:3]
     level = int(request.form['form_level'])
-    start_time = request.form['form_start_time']
-    end_time = request.form['form_end_time']
+    time_slot = request.form['form_time_slot']
+    start_time, end_time = time_slot.split("|")
     teacher = int(request.form['form_teacher'])
     student = int(request.form['form_student'])
     total_meetings = int(request.form['form_total_meetings'])
@@ -693,15 +700,15 @@ def model_process_edit_master_schedule():
         ))
 
         # ✅ RESET ATTENDANCE STATUS
-        cur.execute("""
-            UPDATE tbl_attendance
-            SET status = NULL
-            WHERE id_schedule=%s
-            AND id_admin=%s
-        """, (
-            sched_id,
-            session['id_admin']
-        ))
+        # cur.execute("""
+        #     UPDATE tbl_attendance
+        #     SET status = NULL
+        #     WHERE id_schedule=%s
+        #     AND id_admin=%s
+        # """, (
+        #     sched_id,
+        #     session['id_admin']
+        # ))
 
         current_date += timedelta(days=7)
 
@@ -831,8 +838,21 @@ def calculate_age(dob):
 def model_get_attendance(id):
   cur = mysql.connection.cursor()
 
-  cur.execute("""SELECT tbl_attendance.id_attendance, tbl_student.name, tbl_attendance.status FROM tbl_attendance
-JOIN tbl_student ON tbl_attendance.id_student = tbl_student.id_student WHERE tbl_attendance.id_schedule=%s AND tbl_attendance.id_admin=%s""", (id, session['id_admin'], ))
+  cur.execute("""
+    SELECT
+        tbl_attendance.id_attendance,
+        tbl_student.name,
+        tbl_attendance.status,
+        tbl_schedule.date
+    FROM tbl_attendance
+    JOIN tbl_student
+        ON tbl_attendance.id_student = tbl_student.id_student
+    JOIN tbl_schedule
+        ON tbl_attendance.id_schedule = tbl_schedule.id_schedule
+    WHERE tbl_attendance.id_schedule=%s
+    AND tbl_attendance.id_admin=%s
+    """, (id, session['id_admin']))
+
   data = cur.fetchall()
   cur.close()
 
@@ -843,8 +863,46 @@ JOIN tbl_student ON tbl_attendance.id_student = tbl_student.id_student WHERE tbl
       'id_ss': row[0],
       'name': row[1],
       'status': row[2],
+      'date': row[3].strftime("%A, %d %B %Y")
     })
   return jsonify(students)
+
+
+# GET ATTENDANCE BY ATTENDANCE ID
+def model_get_attendance_by_attendance(id_attendance):
+
+    cur = mysql.connection.cursor()
+
+    cur.execute("""
+        SELECT
+            tbl_attendance.id_attendance,
+            tbl_student.name,
+            tbl_attendance.status,
+            tbl_schedule.date
+        FROM tbl_attendance
+        JOIN tbl_student
+            ON tbl_attendance.id_student = tbl_student.id_student
+        JOIN tbl_schedule
+            ON tbl_attendance.id_schedule = tbl_schedule.id_schedule
+        WHERE tbl_attendance.id_attendance=%s
+        AND tbl_attendance.id_admin=%s
+    """, (id_attendance, session['id_admin']))
+
+    data = cur.fetchall()
+
+    cur.close()
+
+    students = []
+
+    for row in data:
+        students.append({
+            'id_ss': row[0],
+            'name': row[1],
+            'status': row[2],
+            'date': row[3].strftime("%A, %d %B %Y")
+        })
+
+    return jsonify(students)
 
 # UPDATE ATTENDANCE
 def model_update_attendance():
