@@ -242,7 +242,9 @@
                     {% endif %}
 
                     {{ students[i].student_name }}
-
+                    {% if students[i].age %}
+                    ({{ students[i].age }})
+                    {% endif %}
                   </td>
 
                   <td>
