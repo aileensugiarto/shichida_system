@@ -105,14 +105,20 @@ def dashboard():
     # Total Classes Today
     # cur.execute("SELECT COUNT(id_schedule) FROM tbl_schedule WHERE date=%s AND id_admin=%s", (today, session['id_admin'], ))
     cur.execute("""
-        SELECT COUNT(DISTINCT id_master_schedule)
-        FROM tbl_schedule
-        WHERE date=%s
-        AND id_admin=%s
-    """, (
-        today,
-        session['id_admin']
+    SELECT COUNT(DISTINCT CONCAT(
+        start_time,
+        end_time,
+        id_teacher,
+        id_level,
+        date
     ))
+    FROM tbl_schedule
+    WHERE date=%s
+    AND id_admin=%s
+""", (
+    today,
+    session['id_admin']
+))
     data_classes_today = cur.fetchone()[0]
 
     cur.close()
