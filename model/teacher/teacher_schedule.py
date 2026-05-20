@@ -1,6 +1,6 @@
 from flask import render_template, request
 from db import mysql
-from datetime import date
+from datetime import date, datetime, timedelta
 
 TIME_SLOTS = [
     ("09:00", "10:00"),
@@ -184,6 +184,32 @@ def calculate_age(dob):
 
     today = date.today()
 
+    years = today.year - dob.year
+    months = today.month - dob.month
+
+    if today.day < dob.day:
+        months -= 1
+
+    if months < 0:
+        years -= 1
+        months += 12
+
+    return f"{years}.{months:02d}"
+
+
+
+# CALCULATE AGE
+def calculate_age(dob):
+
+    if not dob:
+        return "-"
+
+    if isinstance(dob, str):
+        if dob.strip() == "":
+            return "-"
+        dob = datetime.strptime(dob, "%Y-%m-%d").date()
+
+    today = date.today()
     years = today.year - dob.year
     months = today.month - dob.month
 
