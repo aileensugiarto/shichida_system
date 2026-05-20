@@ -1,0 +1,329 @@
+<!-- templates/teacher_schedule.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+    rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Quicksand:wght@300;400;500;600;700&family=Lexend:wght@100..900&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <title>Teacher Schedule</title>
+
+  <style>
+    body {
+      background-color: #f4f6f9;
+      font-family: Quicksand;
+    }
+
+    .page-title {
+      font-family: Lexend;
+      font-weight: 700;
+      color: #333;
+    }
+
+    /* DATE DISPLAY */
+    .date-display {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-family: Lexend;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #333;
+      background: white;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .date-display:hover {
+      transform: translateY(-1px);
+    }
+
+    /* TEACHER TABLE */
+    .table-teacher {
+      max-height: 70vh;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .table-teacher thead th {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background-color: #f8fafc;
+      color: #374151;
+      font-weight: 700;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-family: Lexend;
+    }
+
+    .table-teacher tbody td {
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .slot-row {
+      vertical-align: middle;
+    }
+
+    .slot-row td {
+      padding-top: 2px;
+      padding-bottom: 2px;
+      height: 26px;
+      font-size: 14px;
+      line-height: 1.1;
+    }
+
+    .slot-row td[rowspan] {
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+
+    /* TIME PILL */
+    .time-pill {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 13.5px;
+      font-weight: 700;
+      background: #fff7ed;
+      color: #e84100;
+      border: 1px solid #fed7aa;
+    }
+
+    .name-box {
+      max-width: 160px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+      padding: 2px 6px;
+      margin: auto;
+      text-align: center;
+    }
+
+    .name-box::-webkit-scrollbar {
+      height: 3px;
+    }
+
+    .name-box::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 10px;
+    }
+
+    .rescheduled-class {
+      background-color: #fff3cd !important;
+    }
+
+    .trial-student {
+      background-color: #e7f3ff !important;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container-fluid py-4 px-4">
+
+    <h2 class="page-title mb-4">
+      Teacher Schedule
+    </h2>
+
+    <!-- DATE PICKER -->
+    <form method="get" class="mb-4">
+      <input
+        type="date"
+        id="scheduleDate"
+        name="date"
+        value="{{ selected_date }}"
+        class="visually-hidden"
+        onchange="this.form.submit()">
+
+      <div class="text-center">
+        <div id="dateDisplay" class="date-display shadow-sm"></div>
+      </div>
+    </form>
+
+    <!-- TEACHER TABLE -->
+    <div class="row">
+
+      {% for teacher_id, data in schedule_map.items() %}
+
+      <div class="col-12 col-md-6 mb-4">
+
+        <div class="card h-100 shadow-sm border-0">
+
+          <!-- HEADER -->
+          <div class="card-header text-center" style="
+            background: white;
+            color: #333;
+            border-bottom: 3px solid #f97316;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-family: Lexend;
+            font-weight: 700;
+            font-size: 15px;
+          ">
+            {{ data.teacher_name }}
+          </div>
+
+          <!-- TABLE -->
+          <div class="table-teacher">
+
+            <table class="table table-bordered text-center mb-0 bg-white">
+
+              <thead>
+                <tr>
+                  <th style="width:130px;">Time</th>
+                  <th>Student</th>
+                  <th>Level</th>
+                </tr>
+              </thead>
+
+              <tbody>
+
+                {% for start, end in time_slots %}
+
+                {% set slot = start ~ "-" ~ end %}
+                {% set students = data.slots[slot] %}
+
+                {% for i in range(6) %}
+
+                <tr class="slot-row
+                  {% if students|length > i and students[i].rescheduled_from %}
+                    rescheduled-class
+                  {% endif %}
+                ">
+
+                  {% if i == 0 %}
+                  <td rowspan="6" class="align-middle text-center">
+                    <span class="time-pill">
+                      {{ slot }}
+                    </span>
+                  </td>
+                  {% endif %}
+
+                  {% if students|length > i %}
+
+                  <td class="
+                    name-box
+                    {% if students[i].is_trial %}
+                      trial-student
+                    {% endif %}
+                  ">
+
+                    {% if students[i].is_rescheduled %}
+                    🔁
+                    {% elif students[i].status == 'present' %}
+                    ✅
+                    {% elif students[i].status == 'absent' %}
+                    ❌
+                    {% endif %}
+
+                    {{ students[i].student_name }}
+
+                  </td>
+
+                  <td>
+                    {{ students[i].level }}
+                  </td>
+
+                  {% else %}
+
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+
+                  {% endif %}
+
+                </tr>
+
+                {% endfor %}
+                {% endfor %}
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {% endfor %}
+
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+
+    // ==========================================
+    // DATE DISPLAY
+    // ==========================================
+    const dateInput = document.getElementById("scheduleDate");
+    const dateDisplay = document.getElementById("dateDisplay");
+
+    function formatDate(dateStr) {
+
+      const date = new Date(dateStr);
+
+      return date.toLocaleDateString("en-GB", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+      });
+
+    }
+
+    const selectedDate = "{{ selected_date }}";
+
+    dateInput.value = selectedDate;
+
+    const today = new Date().toLocaleDateString("en-CA");
+
+    const isToday = selectedDate === today;
+
+    dateDisplay.textContent = isToday
+      ? `TODAY – ${formatDate(selectedDate)}`
+      : formatDate(selectedDate);
+
+    dateDisplay.addEventListener("click", () => {
+
+      if (dateInput.showPicker) {
+        dateInput.showPicker();
+      } else {
+        dateInput.focus();
+      }
+
+    });
+
+  </script>
+
+</body>
+
+</html>

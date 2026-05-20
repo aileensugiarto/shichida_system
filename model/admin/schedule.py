@@ -436,8 +436,6 @@ def model_process_edit_schedule():
   id_schedule = request.form['form_id_schedule']
   date = request.form['form_date']
   level = request.form['form_level']
-#   start_time = request.form['form_start_time']
-#   end_time = request.form['form_end_time']
   time_slot = request.form['form_time_slot']
   start_time, end_time = time_slot.split('|')
   teacher = request.form['form_teacher']

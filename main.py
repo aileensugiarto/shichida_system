@@ -23,6 +23,8 @@ from model.director.payment import model_director_payment
 from model.director.schedule import model_director_schedule
 from model.director.account import model_edit_director_account, model_process_edit_director_account
 
+from model.teacher.teacher_schedule import model_teacher_schedule
+
 app = Flask(__name__)
 
 app.secret_key = 'aileen'
@@ -215,6 +217,12 @@ def update_attendance():
 @app.route('/get_attendance_by_attendance/<int:id>')
 def get_attendance_by_attendance(id):
     return model_get_attendance_by_attendance(id)
+
+
+# TEACHER SCHEDULE PAGE
+@app.route('/teacher_schedule/<branch_name>')
+def teacher_schedule(branch_name):
+  return model_teacher_schedule(branch_name)
 
 # PAYMENT
 @app.route('/payment')
