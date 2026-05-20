@@ -7,8 +7,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
-    rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,8 +16,7 @@
     href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Quicksand:wght@300;400;500;600;700&family=Lexend:wght@100..900&display=swap"
     rel="stylesheet">
 
-  <link rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <title>Teacher Schedule</title>
 
@@ -58,6 +56,15 @@
     .date-display:hover {
       transform: translateY(-1px);
     }
+
+    .sticky-date-bar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: #f4f6f9;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
 
     /* TEACHER TABLE */
     .table-teacher {
@@ -151,19 +158,16 @@
     </h2>
 
     <!-- DATE PICKER -->
-    <form method="get" class="mb-4">
-      <input
-        type="date"
-        id="scheduleDate"
-        name="date"
-        value="{{ selected_date }}"
-        class="visually-hidden"
-        onchange="this.form.submit()">
+    <div class="sticky-date-bar mb-4">
+      <form method="get">
+        <input type="date" id="scheduleDate" name="date" value="{{ selected_date }}" class="visually-hidden"
+          onchange="this.form.submit()">
 
-      <div class="text-center">
-        <div id="dateDisplay" class="date-display shadow-sm"></div>
-      </div>
-    </form>
+        <div class="text-center">
+          <div id="dateDisplay" class="date-display shadow-sm"></div>
+        </div>
+      </form>
+    </div>
 
     <!-- TEACHER TABLE -->
     <div class="row">
@@ -282,7 +286,6 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-
     // ==========================================
     // DATE DISPLAY
     // ==========================================
@@ -310,9 +313,9 @@
 
     const isToday = selectedDate === today;
 
-    dateDisplay.textContent = isToday
-      ? `TODAY – ${formatDate(selectedDate)}`
-      : formatDate(selectedDate);
+    dateDisplay.textContent = isToday ?
+      `TODAY – ${formatDate(selectedDate)}` :
+      formatDate(selectedDate);
 
     dateDisplay.addEventListener("click", () => {
 
@@ -323,7 +326,6 @@
       }
 
     });
-
   </script>
 
 </body>
