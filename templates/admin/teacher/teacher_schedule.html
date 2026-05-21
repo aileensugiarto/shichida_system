@@ -33,53 +33,55 @@
     }
 
     /* DATE DISPLAY */
+    .date-picker-wrapper {
+      position: relative;
+      display: block;
+      width: 100%;
+      min-height: 52px;
+      margin: 0;
+    }
+
+    .date-picker-wrapper input[type="date"] {
+      position: absolute;
+      top: 0;
+      left: 0;
+
+      width: 100%;
+      height: 100%;
+
+      opacity: 0.01;
+      cursor: pointer;
+
+      z-index: 20;
+    }
+
     .date-display {
+      position: relative;
+      z-index: 1;
+
       width: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
+
+      min-height: 52px;
       padding: 14px 20px;
+
       border-radius: 12px;
+
       font-family: Lexend;
       font-weight: 700;
       font-size: 14px;
       letter-spacing: 1px;
       text-transform: uppercase;
+
       color: #333;
       background: white;
       border: 1px solid #e5e7eb;
+
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-      cursor: pointer;
+
       transition: all 0.25s ease;
-    }
-
-    .date-display:hover {
-      transform: translateY(-1px);
-    }
-
-    .date-picker-wrapper {
-      position: relative;
-      width: 100%;
-    }
-
-    .date-picker-wrapper input[type="date"] {
-      position: absolute;
-      inset: 0;
-
-      width: 100%;
-      height: 100%;
-
-      opacity: 0;
-
-      cursor: pointer;
-
-      z-index: 10;
-    }
-
-    .sticky-date-bar {
-      position: sticky;
-      top: 0;
-      z-index: 1000;
     }
 
     /* TEACHER TABLE */
@@ -175,17 +177,18 @@
 
     <!-- DATE PICKER -->
     <!-- DATE PICKER -->
+    <!-- DATE PICKER -->
     <div class="sticky-date-bar mb-4">
 
       <form method="get">
 
-        <div class="date-picker-wrapper">
+        <label class="date-picker-wrapper">
 
           <input type="date" id="scheduleDate" name="date" value="{{ selected_date }}" onchange="this.form.submit()">
 
           <div id="dateDisplay" class="date-display shadow-sm"></div>
 
-        </div>
+        </label>
 
       </form>
 
@@ -308,57 +311,52 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-  // ==========================================
-  // DATE DISPLAY
-  // ==========================================
+    const dateInput = document.getElementById("scheduleDate");
+    const dateDisplay = document.getElementById("dateDisplay");
 
-  const dateInput = document.getElementById("scheduleDate");
-  const dateDisplay = document.getElementById("dateDisplay");
+    function formatDate(dateStr) {
 
-  function formatDate(dateStr) {
+      if (!dateStr) return "";
 
-    if (!dateStr) return "";
+      const [year, month, day] = dateStr.split("-");
 
-    const [year, month, day] = dateStr.split("-");
+      const date = new Date(
+        Number(year),
+        Number(month) - 1,
+        Number(day)
+      );
 
-    const date = new Date(
-      Number(year),
-      Number(month) - 1,
-      Number(day)
-    );
+      return date.toLocaleDateString("en-GB", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+      });
+    }
 
-    return date.toLocaleDateString("en-GB", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric"
-    });
+    function updateDateDisplay() {
 
-  }
+      const selectedDate = dateInput.value;
 
-  function updateDateDisplay() {
+      const now = new Date();
 
-    const selectedDate = dateInput.value;
+      const today =
+        now.getFullYear() + "-" +
+        String(now.getMonth() + 1).padStart(2, "0") + "-" +
+        String(now.getDate()).padStart(2, "0");
 
-    const now = new Date();
+      const isToday = selectedDate === today;
 
-    const today =
-      now.getFullYear() + "-" +
-      String(now.getMonth() + 1).padStart(2, "0") + "-" +
-      String(now.getDate()).padStart(2, "0");
+      dateDisplay.textContent = isToday ?
+        `TODAY – ${formatDate(selectedDate)}` :
+        formatDate(selectedDate);
+    }
 
-    const isToday = selectedDate === today;
+    updateDateDisplay();
 
-    dateDisplay.textContent = isToday
-      ? `TODAY – ${formatDate(selectedDate)}`
-      : formatDate(selectedDate);
-
-  }
-
-  updateDateDisplay();
-
-  dateInput.addEventListener("change", updateDateDisplay);
-</script>
+    dateInput.addEventListener("input", updateDateDisplay);
+    dateInput.addEventListener("change", updateDateDisplay);
+  </script>
 
 </body>
 
