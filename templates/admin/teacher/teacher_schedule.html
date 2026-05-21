@@ -34,61 +34,47 @@
 
     /* DATE DISPLAY */
     .custom-date-input {
-  width: 100%;
-  padding: 14px 20px;
+      position: fixed;
 
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
+      width: 1px;
+      height: 1px;
 
-  background: white;
-  color: #333;
+      opacity: 0.01;
 
-  font-family: Lexend, sans-serif;
-  font-weight: 700;
-  font-size: 14px;
+      border: none;
+      padding: 0;
+    }
 
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-
-  cursor: pointer;
-}
-
-.custom-date-input:hover {
-  transform: translateY(-1px);
-}
-
-.custom-date-input:focus {
-  outline: none;
-  border-color: #f97316;
-  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
-}
+    .custom-date-input:focus {
+      outline: none;
+      border-color: none;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
 
     .date-display {
-      position: relative;
-      z-index: 1;
-
       width: 100%;
+      padding: 16px 20px;
+
       display: flex;
-      align-items: center;
       justify-content: center;
+      align-items: center;
 
-      min-height: 52px;
-      padding: 14px 20px;
-
-      border-radius: 12px;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
 
       font-family: Lexend;
       font-weight: 700;
-      font-size: 14px;
+      font-size: 15px;
       letter-spacing: 1px;
       text-transform: uppercase;
 
-      color: #333;
-      background: white;
-      border: 1px solid #e5e7eb;
+      color: #374151;
 
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 
-      transition: all 0.25s ease;
+      cursor: pointer;
+      transition: all .2s ease;
     }
 
     /* TEACHER TABLE */
@@ -183,23 +169,16 @@
     </h2>
 
     <!-- DATE PICKER -->
-    <!-- DATE PICKER -->
-<div class="sticky-date-bar mb-4">
+    <div class="sticky-date-bar mb-4">
 
-  <form method="get">
+      <form method="get">
+        <div id="dateDisplay" class="date-display mb-2"></div>
+        <input type="date" id="scheduleDate" name="date" value="{{ selected_date }}" class="custom-date-input"
+          onchange="this.form.submit()">
 
-    <input
-      type="date"
-      id="scheduleDate"
-      name="date"
-      value="{{ selected_date }}"
-      class="custom-date-input"
-      onchange="this.form.submit()"
-    >
+      </form>
 
-  </form>
-
-</div>
+    </div>
 
     <!-- TEACHER TABLE -->
     <div class="row">
@@ -317,83 +296,139 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<script>
-  const dateInput = document.getElementById("scheduleDate");
-  const dateDisplay = document.getElementById("dateDisplay");
+  <script>
+    const dateInput = document.getElementById("scheduleDate");
+    const dateDisplay = document.getElementById("dateDisplay");
 
-  function formatDate(dateStr) {
+    // =========================
+    // Detect iPhone / iPad
+    // =========================
+    function isIOS() {
+      return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    }
 
-    if (!dateStr) return "";
+    // =========================
+    // Format Date
+    // Example:
+    // THURSDAY, 21 MAY 2026
+    // =========================
+    function formatDate(dateStr) {
 
-    const [year, month, day] = dateStr.split("-");
+      if (!dateStr) return "";
 
-    const date = new Date(
-      parseInt(year),
-      parseInt(month) - 1,
-      parseInt(day)
-    );
+      const [year, month, day] = dateStr.split("-");
 
-    return date.toLocaleDateString("en-GB", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric"
+      const date = new Date(
+        Number(year),
+        Number(month) - 1,
+        Number(day)
+      );
+
+      const weekday = date.toLocaleDateString("en-GB", {
+        weekday: "long"
+      });
+
+      const rest = date.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+      });
+
+      return `${weekday}, ${rest}`.toUpperCase();
+    }
+
+    // =========================
+    // Update Display
+    // =========================
+    function updateDateDisplay() {
+
+      const selectedDate = dateInput.value;
+
+      if (!selectedDate) {
+        dateDisplay.textContent = "";
+        return;
+      }
+
+      const today = new Date();
+
+      const todayString =
+        today.getFullYear() + "-" +
+        String(today.getMonth() + 1).padStart(2, "0") + "-" +
+        String(today.getDate()).padStart(2, "0");
+
+      if (selectedDate === todayString) {
+        dateDisplay.textContent =
+          "TODAY - " + formatDate(selectedDate);
+      } else {
+        dateDisplay.textContent =
+          formatDate(selectedDate);
+      }
+    }
+
+    // Initial load
+    updateDateDisplay();
+
+    // Update when date changes
+    dateInput.addEventListener("change", updateDateDisplay);
+
+    // =========================
+    // Open Date Picker
+    // =========================
+    dateDisplay.addEventListener("click", () => {
+
+      // iPhone / iPad Safari
+      if (isIOS()) {
+
+        dateInput.style.position = "fixed";
+        dateInput.style.top = "0";
+        dateInput.style.left = "0";
+        dateInput.style.width = "1px";
+        dateInput.style.height = "1px";
+        dateInput.style.opacity = "0.01";
+        dateInput.style.pointerEvents = "auto";
+
+        dateInput.focus();
+
+        setTimeout(() => {
+          dateInput.click();
+        }, 0);
+
+        return;
+      }
+
+      // Chrome / Edge / Android
+      if (typeof dateInput.showPicker === "function") {
+        dateInput.showPicker();
+        return;
+      }
+
+      // Generic fallback
+      dateInput.focus();
+
+      try {
+        dateInput.click();
+      } catch (e) {
+        console.log(e);
+      }
+
     });
 
-  }
+    // Keyboard accessibility
+    dateDisplay.setAttribute("tabindex", "0");
 
-  function updateDateDisplay() {
+    dateDisplay.addEventListener("keydown", (e) => {
 
-    const selectedDate = dateInput.value;
+      if (e.key === "Enter" || e.key === " ") {
 
-    if (!selectedDate) {
-      dateDisplay.textContent = "Select Date";
-      return;
-    }
+        e.preventDefault();
 
-    const now = new Date();
+        dateDisplay.click();
 
-    const today =
-      now.getFullYear() + "-" +
-      String(now.getMonth() + 1).padStart(2, "0") + "-" +
-      String(now.getDate()).padStart(2, "0");
+      }
 
-    if (selectedDate === today) {
-      dateDisplay.textContent =
-        "TODAY – " + formatDate(selectedDate);
-    } else {
-      dateDisplay.textContent =
-        formatDate(selectedDate);
-    }
-
-  }
-
-  // Initial display
-  updateDateDisplay();
-
-  // Update text when date changes
-  dateInput.addEventListener("change", updateDateDisplay);
-
-  // Open picker when clicking custom display
-  dateDisplay.addEventListener("click", function () {
-
-    // Chrome / Edge / Android
-    if (typeof dateInput.showPicker === "function") {
-      dateInput.showPicker();
-      return;
-    }
-
-    // Safari / iOS fallback
-    dateInput.focus();
-
-    try {
-      dateInput.click();
-    } catch (e) {
-      console.log(e);
-    }
-
-  });
-</script>
+    });
+  </script>
 
 </body>
 
