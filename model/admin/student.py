@@ -1,7 +1,8 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, session
 import os
 from db import mysql
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 import calendar
 
 TERM_MONTHS = {
@@ -10,6 +11,11 @@ TERM_MONTHS = {
     3: [7, 8, 9],
     4: [10, 11, 12],
 }
+
+def indo_time_today():
+    return datetime.now(
+        ZoneInfo("Asia/Jakarta")
+    ).date()
 
 # GET STUDENT PERIOD
 def get_student_period(cur, student_id, year, month):
@@ -609,7 +615,7 @@ def calculate_age(dob):
         except ValueError:
             return ""
 
-    today = date.today()
+    today = indo_time_today()
 
     years = today.year - dob.year
     months = today.month - dob.month

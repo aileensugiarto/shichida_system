@@ -2,6 +2,7 @@ from flask import Flask, render_template, redirect, url_for, request, flash, jso
 import os
 from db import mysql
 from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 TIME_SLOTS = [
     ("09:00", "10:00"),
@@ -13,6 +14,11 @@ TIME_SLOTS = [
     ("15:00", "16:00"),
     ("16:00", "17:00"),
 ]
+
+def indo_time_today():
+    return datetime.now(
+        ZoneInfo("Asia/Jakarta")
+    ).date()
 
 # SCHEDULE
 def model_schedule():
@@ -26,7 +32,7 @@ def model_schedule():
     selected_date = request.args.get("date")
 
     if not selected_date:
-        selected_date = date.today().strftime("%Y-%m-%d")
+        selected_date = indo_time_today().strftime("%Y-%m-%d")
 
     # ============================
     # 2️⃣ GET TEACHERS
@@ -818,7 +824,7 @@ def calculate_age(dob):
             return "-"
         dob = datetime.strptime(dob, "%Y-%m-%d").date()
 
-    today = date.today()
+    today = indo_time_today()
     years = today.year - dob.year
     months = today.month - dob.month
 
