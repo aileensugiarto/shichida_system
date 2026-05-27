@@ -3,7 +3,7 @@ import os, requests
 from db import mysql
 from flask_mysqldb import MySQL
 from datetime import datetime, date
-import webbrowser
+from zoneinfo import ZoneInfo
 
 from model.admin.auth import model_signup, model_login, model_logout
 from model.admin.student import model_student, model_add_student, model_edit_student, model_process_edit_student, model_delete_student
@@ -67,7 +67,7 @@ def dashboard_admin():
   if "loggedin" in session:
     cur = mysql.connection.cursor()
 
-    today = date.today()
+    today = datetime.now(ZoneInfo("Asia/Jakarta")).date()
     cur.execute("""
       SELECT 
         tbl_schedule.date, 
@@ -103,7 +103,6 @@ def dashboard_admin():
     data_teacher = cur.fetchone()[0]
 
     # Total Classes Today
-    # cur.execute("SELECT COUNT(id_schedule) FROM tbl_schedule WHERE date=%s AND id_admin=%s", (today, session['id_admin'], ))
     cur.execute("""
     SELECT COUNT(DISTINCT CONCAT(
         start_time,
