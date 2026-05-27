@@ -1,0 +1,63 @@
+<style>
+    .navbar .dropdown-menu {
+      position: absolute !important;
+      top: 100%;
+      right: 0;
+      left: auto;
+      z-index: 1050;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+    }
+    .navbar .dropdown-menu li a {
+      transition: 0.2s;
+    }
+    .navbar .dropdown-menu li a:hover {
+      background-color: #fff2be;
+    }
+</style>
+
+<!-- TOP NAVBAR -->
+  <nav class="navbar shadow-sm d-flex align-items-center justify-content-between px-5" style="background-color: white;">
+
+    <div class="d-flex align-items-center">
+      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmE-Dw16YtDbRtAC1Wnz6lO6d92UoklLpp_w&s"
+        alt="Shichida Logo" style="height:70px; margin-right: 15px; width: auto;">
+
+      <div style="display:flex; flex-direction:column; line-height:1.1;">
+        <span
+          style="font-family: 'Lexend', sans-serif; font-weight:700; font-size: 11px; color:#ff682d; text-transform: uppercase; letter-spacing: 1.3px;">
+          Shichida Indonesia
+        </span>
+        <span style="font-family: 'Lexend', sans-serif; font-weight:600; font-size: 20px; color:#333;">
+          Director System
+        </span>
+      </div>
+    </div>
+
+    <ul class="navbar-nav d-flex align-items-center">
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown"
+          aria-expanded="false" style="color: #333; font-family:'Lexend'; font-weight:500; font-size: 18px;">
+          Hi, {{session.director_name}}
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end shadow">
+          <li>
+            <a class="dropdown-item" href="/edit_director_account">
+              <i class="fa-solid fa-user-pen me-2" style="color: #e84100; font-size: 13px;"></i>
+              <span style="font-family: Lexend; font-weight: 600; text-transform: uppercase; color: #333; font-size: 12px; letter-spacing: 1.1px;">
+                Edit Account
+              </span>
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="/login_director" style="color: #e84100; font-size: 13px;">
+              <i class="fa-solid fa-right-from-bracket me-2"></i>
+              <span style="font-family: Lexend; font-weight: 600; text-transform: uppercase; color: #333; font-size: 12px; letter-spacing: 1.1px;">
+                Logout
+              </span>
+            </a>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </nav>

@@ -1,0 +1,133 @@
+<!-- SIDEBAR -->
+<style>
+    #sidebar {
+      min-height: 100vh;
+      transition: width 0.3s;
+      border-right: 1px solid #ebebeb;
+      width: 200px;
+      min-width: 200px;
+      flex-shrink: 0;
+      background-color: white;
+    }
+
+    #sidebar.collapsed {
+      width: 80px !important;
+      min-width: 80px !important;
+    }
+
+    #sidebar .nav-link span {
+      transition: opacity 0.3s;
+    }
+
+    #sidebar.collapsed .nav-link {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 12px 0;
+    }
+
+    #sidebar.collapsed .nav-link span {
+      display: none;
+    }
+
+    #sidebar.collapsed .nav-link i {
+      margin-right: 0 !important;
+      font-size: 18px;
+    }
+
+    #sidebar.collapsed .nav-item {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    #sidebar .nav-item span {
+      font-family: Lexend;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+      color: #4b5563;
+      position: relative;
+      transition: color 0.3s ease;
+    }
+
+    #sidebar .nav-item i {
+      color: #e84100;
+    }
+
+    #toggle-btn {
+      color: #4b5563;
+      border: 2px solid #ff946a;
+      background-color: #fff2be;
+      border-radius: 10px;
+    }
+</style>
+
+<div id="sidebar" class="text-white p-3" style="width: 200px; background-color: white;">
+
+    <button id="toggle-btn" class="btn btn-outline-light w-100 mb-4">
+        <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <ul class="nav nav-pills flex-column mb-auto">
+        <!-- Dashboard -->
+        <li class="nav-item mb-2">
+            <a href="/dashboard_admin" class="nav-link text-white">
+                <i class="fa-solid fa-gauge-high me-2"></i>
+                <span>Dashboard</span>
+            </a>
+        </li>
+        <!-- Levels -->
+        <li class="nav-item mb-2">
+            <a href="/level" class="nav-link text-white">
+                <i class="fa-solid fa-level-up me-2"></i>
+                <span>Levels</span>
+            </a>
+        </li>
+        <!-- Teachers -->
+        <li class="nav-item mb-2">
+            <a href="/teacher" class="nav-link text-white">
+                <i class="fa-solid fa-chalkboard-user me-2"></i>
+                <span>Teachers</span>
+            </a>
+        </li>
+        <!-- Students -->
+        <li class="nav-item mb-2">
+            <a href="/student" class="nav-link text-white">
+                <i class="fa-solid fa-users me-2"></i>
+                <span>Students</span>
+            </a>
+        </li>
+        <!-- Schedule -->
+        <li class="nav-item mb-2">
+            <a href="/schedule" class="nav-link text-white">
+                <i class="fa-solid fa-calendar-days me-2"></i>
+                <span>Schedule</span>
+            </a>
+        </li>
+        <!-- Payment -->
+        <li class="nav-item mb-2">
+            <a href="/payment" class="nav-link text-white">
+                <i class="fa-solid fa-money-bill me-2"></i>
+                <span>Payment</span>
+            </a>
+        </li>
+        <!-- Recap -->
+        <li class="nav-item mb-2">
+            <a href="/recap" class="nav-link text-white">
+                <i class="fa-solid fa-file-lines me-2"></i>
+                <span>Recap</span>
+            </a>
+        </li>
+    </ul>
+</div>
+
+<script>
+    const toggleBtn = document.getElementById("toggle-btn");
+    const sidebar = document.getElementById("sidebar");
+
+    toggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("collapsed");
+    });
+  </script>

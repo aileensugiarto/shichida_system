@@ -37,13 +37,13 @@ app.config['MYSQL_PORT'] = 3306
 mysql.init_app(app)
 
 # SIGNUP
-@app.route('/signup_admin', methods=['GET', 'POST'])
-def signup_admin():
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
   return model_signup()
 
 # LOGIN
-@app.route('/login_admin', methods=['GET', 'POST'])
-def login_admin():
+@app.route('/login', methods=['GET', 'POST'])
+def login():
   return model_login()
 
 # LOGOUT
@@ -62,8 +62,8 @@ def process_edit_account():
     return model_process_edit_account()
 
 # DASHBOARD
-@app.route('/dashboard_admin')
-def dashboard_admin():
+@app.route('/dashboard')
+def dashboard():
   if "loggedin" in session:
     cur = mysql.connection.cursor()
 
@@ -126,7 +126,7 @@ def dashboard_admin():
     return render_template('admin/dashboard.html', total_student=data_student, total_teacher=data_teacher, data_schedule=data, total_classes_today=data_classes_today)
 
   flash("Please Login", "danger")
-  return redirect(url_for('login_admin'))
+  return redirect(url_for('login'))
 
 
 # STUDENT
@@ -302,13 +302,13 @@ def recap():
 #################################################################################
 
 # SIGNUP
-@app.route('/signup_director', methods=['GET', 'POST'])
-def signup_director():
+@app.route('/director_signup', methods=['GET', 'POST'])
+def director_signup():
   return model_director_signup()
 
 # LOGIN
-@app.route('/login_director', methods=['GET', 'POST'])
-def login_director():
+@app.route('/director_login', methods=['GET', 'POST'])
+def director_login():
   return model_director_login()
 
 # LOGOUT
@@ -318,8 +318,8 @@ def director_logout():
 
 
 # DASHBOARD DIRECTOR
-@app.route('/dashboard_director')
-def dashboard_director():
+@app.route('/director_dashboard')
+def director_dashboard():
   if "director_loggedin" in session:
     cur = mysql.connection.cursor()
 
@@ -343,7 +343,7 @@ def dashboard_director():
       )
 
   flash("Please Login", "danger")
-  return redirect(url_for('login_director'))
+  return redirect(url_for('director_login'))
 
 
 # BRANCH
