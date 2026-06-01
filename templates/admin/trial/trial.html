@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&family=Quicksand:wght@300..700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <!-- Lexend -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet">
+    <title>Trial</title>
+    <style>
+        body {
+            overflow-x: hidden;
+        }
+
+        .table-responsive thead {
+            background-color: #ffe066;
+        }
+
+        .table-responsive thead th {
+            font-family: Lexend;
+            font-size: 13px;
+            text-transform: uppercase;
+            color: #333;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #dee2e6 !important;
+            position: sticky;
+            z-index: 10;
+            top: 0;
+        }
+
+        .table thead th:hover {
+            background-color: #ffe066 !important;
+        }
+
+        .table thead tr:hover {
+            background-color: #ffe066 !important;
+        }
+
+        .table-responsive tbody td {
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .table-responsive tbody tr:hover {
+            background-color: #fff7f2;
+        }
+
+        .table-responsive {
+            max-height: 75vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* FILTER */
+        .filter-input {
+            border-radius: 12px;
+            overflow: hidden;
+            transition: 0.2s;
+            border: 1px solid #dedede;
+        }
+
+        .filter-input:focus-within {
+            box-shadow: 0 0 0 2px rgba(255, 104, 45, 0.2);
+        }
+
+        .filter-input .input-group-text {
+            background-color: #fff1d9;
+            border: none;
+            color: #ff682d;
+            font-size: 14px;
+        }
+
+        .filter-input input,
+        .filter-input select {
+            font-size: 14px;
+        }
+
+        .filter-input .form-control,
+        .filter-input .form-select {
+            border: none;
+            box-shadow: none;
+            font-weight: 500;
+        }
+    </style>
+</head>
+
+<body style="font-family: Quicksand;">
+
+    <!-- TOP NAVBAR -->
+    {% include 'admin/components/top_navbar.html' %}
+
+    <div class="d-flex">
+
+        <!-- SIDEBAR -->
+        {% include 'admin/components/sidebar.html' %}
+
+        <!-- MAIN CONTENT -->
+        <div class="flex-grow-1 p-4" style="background-color: #f4f6f9;">
+            <h2 class="mb-4 fw-bold">Trial Students</h2>
+            <!-- Popup -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{category}} alert-dismissible fade show">
+                <div class="alert-body">
+                    {{ message }}
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <a href="/add_trial" class="btn fw-bold mb-3" style="background-color: #ff682d; color: white;">Add Trial
+                Student</a>
+
+            <div class="d-flex gap-2 mb-3 flex-wrap">
+                <!-- Year -->
+                <div class="col">
+                    <div class="input-group filter-input">
+                        <span class="input-group-text">
+                            <i class="fa-solid fa-calendar-days"></i>
+                        </span>
+                        <select class="form-select filter-input" id="yearFilter" onchange="applyFilters()">
+
+                            {% for year in year_options %}
+                            <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>
+                                {{ year }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Month -->
+                <div class="col">
+                    <div class="input-group filter-input">
+                        <span class="input-group-text">
+                            <i class="fa-solid fa-layer-group"></i>
+                        </span>
+
+                        {% set months = [
+            'January',
+            'February',
+            'March',
+            'April',
+            'May',
+            'June',
+            'July',
+            'August',
+            'September',
+            'October',
+            'November',
+            'December'
+        ] %}
+
+                        <select class="form-select filter-input" id="monthFilter" onchange="applyFilters()">
+
+                            <option value="all" {% if selected_month == "all" %}selected{% endif %}>
+                                All Months
+                            </option>
+
+                            {% for month in range(1, 13) %}
+                            <option value="{{ month }}"
+                                {% if selected_month|string == month|string %}selected{% endif %}>
+                                {{ months[month-1] }}
+                            </option>
+                            {% endfor %}
+
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Search -->
+                <div class="col">
+                    <div class="input-group filter-input">
+                        <span class="input-group-text">
+                            <i class="fa-solid fa-search"></i>
+                        </span>
+                        <input type="text" id="searchInput" class="form-control" placeholder="Search trial student"
+                            onkeyup="searchTable()">
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table align-middle bg-white text-center">
+                    <thead class="sticky-top">
+                        <tr class="text-nowrap">
+                            <th>No</th>
+                            <th>Name</th>
+                            <th>DOB</th>
+                            <th>Age</th>
+                            <th>Parent</th>
+                            <th>Telp</th>
+                            <th>Trial Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in trial_student_data %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ s.name }}</td>
+                            <td>{{ s.dob }}</td>
+                            <td>{{ s.age }}</td>
+                            <td>{{ s.parent_name }}</td>
+                            <td>{{ s.parent_telp }}</td>
+                            <td>{{s.trial_date}}</td>
+                            <td>
+                                <a href="/edit_trial/{{s.id_trial_student}}" class="btn btn-warning btn-sm fw-bold">
+                                    <i class="fa-solid fa-pen" style="font-size: 13px;"></i>
+                                </a>
+                                <button type="button" class="btn btn-danger btn-sm fw-bold" data-bs-toggle="modal"
+                                    data-bs-target="#deleteModal{{s.id_trial_student}}">
+                                    <i class="fa-solid fa-trash" style="font-size: 13px;"></i>
+                                </button>
+
+                                <!-- Delete Confirmation Modal -->
+                                <div class="modal fade" id="deleteModal{{s.id_trial_student}}" tabindex="-1"
+                                    aria-labelledby="deleteModalLabel{{s.id_trial_student}}" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="deleteModalLabel{{s.id_trial_student}}">
+                                                    Confirm
+                                                    Delete</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                    aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                Are you sure you want to delete this trial student?
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary"
+                                                    data-bs-dismiss="modal">Cancel</button>
+                                                <a href="/delete_trial/{{s.id_trial_student}}"
+                                                    class="btn btn-danger">Confirm</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function searchTable() {
+            let input = document.getElementById("searchInput");
+            let filter = input.value.toLowerCase();
+            let table = document.querySelector("table tbody");
+            let rows = table.getElementsByTagName("tr");
+
+            for (let i = 0; i < rows.length; i++) {
+                let nameCell = rows[i].getElementsByTagName("td")[1]; // Name column (index 1)
+
+                if (nameCell) {
+                    let textValue = nameCell.textContent || nameCell.innerText;
+
+                    if (textValue.toLowerCase().indexOf(filter) > -1) {
+                        rows[i].style.display = "";
+                    } else {
+                        rows[i].style.display = "none";
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script>
+        function applyFilters() {
+
+            const year =
+                document.getElementById("yearFilter").value;
+
+            const month =
+                document.getElementById("monthFilter").value;
+
+            window.location =
+                `/trial?year=${year}&month=${month}`;
+        }
+    </script>
+</body>
+
+</html>

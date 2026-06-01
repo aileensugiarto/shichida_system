@@ -13,6 +13,7 @@ from model.admin.payment import model_payment, model_edit_payment, model_process
 from model.admin.level import model_level, model_add_level, model_edit_level, model_process_edit_level, model_delete_level
 from model.admin.recap import model_recap
 from model.admin.account import model_edit_account, model_process_edit_account
+from model.admin.trial import model_trial, model_edit_trial, model_process_edit_trial, model_delete_trial, model_add_trial
 
 from model.director.auth import model_director_signup, model_director_login, model_director_logout
 from model.director.branch import model_branch, model_add_branch, model_edit_branch, model_process_edit_branch, model_delete_branch
@@ -294,6 +295,32 @@ def delete_level(id):
 @app.route('/recap')
 def recap():
   return model_recap()
+
+
+# TRIAL
+@app.route('/trial')
+def trial():
+  return model_trial()
+
+# ADD TRIAL
+@app.route('/add_trial', methods=['GET', 'POST'])
+def add_trial():
+  return model_add_trial()
+
+# EDIT TRIAL
+@app.route('/edit_trial/<int:id>', methods=['GET'])
+def edit_trial(id):
+  return model_edit_trial(id)
+
+# PROCESS EDIT TRIAL
+@app.route('/process_edit_trial', methods=['POST'])
+def process_edit_trial():
+  return model_process_edit_trial()
+
+# DELETE TRIAL
+@app.route('/delete_trial/<int:id>', methods=['GET'])
+def delete_trial(id):
+  return model_delete_trial(id)
 
 
 #################################################################################

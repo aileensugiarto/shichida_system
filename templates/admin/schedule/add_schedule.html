@@ -26,6 +26,56 @@
   </style>
 </head>
 
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const termSelect = document.getElementById("termSelect");
+
+    const studentGroup = document.getElementById("termStudentGroup");
+
+    const trialStudentGroup = document.getElementById("trialStudentGroup");
+    const trialDobGroup = document.getElementById("trialDobGroup");
+    const trialAgeGroup = document.getElementById("trialAgeGroup");
+    const trialParentNameGroup = document.getElementById("trialParentNameGroup");
+    const trialParentTelpGroup = document.getElementById("trialParentTelpGroup");
+
+    const totalMeetings = document.getElementById("totalMeetings");
+
+    function toggleTrialFields() {
+
+        if (termSelect.value === "TRIAL") {
+
+            studentGroup.classList.add("d-none");
+
+            trialStudentGroup.classList.remove("d-none");
+            trialDobGroup.classList.remove("d-none");
+            trialAgeGroup.classList.remove("d-none");
+            trialParentNameGroup.classList.remove("d-none");
+            trialParentTelpGroup.classList.remove("d-none");
+
+            totalMeetings.value = 1;
+            totalMeetings.readOnly = true;
+
+        } else {
+
+            studentGroup.classList.remove("d-none");
+
+            trialStudentGroup.classList.add("d-none");
+            trialDobGroup.classList.add("d-none");
+            trialAgeGroup.classList.add("d-none");
+            trialParentNameGroup.classList.add("d-none");
+            trialParentTelpGroup.classList.add("d-none");
+
+            totalMeetings.readOnly = false;
+        }
+    }
+
+    termSelect.addEventListener("change", toggleTrialFields);
+
+    toggleTrialFields();
+});
+</script>
+
 <body style="font-family: Quicksand;">
 
   <!-- TOP NAVBAR -->
@@ -78,9 +128,35 @@
           </div>
 
           <!-- Trial DOB -->
-          <div class="form-group mb-3 d-none" id="trialDobGroup">
-            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Date of Birth</label>
-            <input type="date" name="form_trial_dob" class="form-control"
+
+          <div class="row">
+            <div class="col-6">
+              <div class="form-group mb-3 d-none" id="trialDobGroup">
+                <label style="font-weight: 500; font-size: 15px;" class="mb-1">Date of Birth</label>
+                <input type="date" id="trialDob" name="form_trial_dob" class="form-control"
+                  style="height: 33px; border-radius: 8px; font-size: 14px;">
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="form-group mb-3 d-none" id="trialAgeGroup">
+                <label style="font-weight: 500; font-size: 15px;" class="mb-1">Age</label>
+                <input type="text" id="trialAge" class="form-control" readonly
+                  style="height: 33px; border-radius: 8px; font-size: 14px;">
+              </div>
+            </div>
+          </div>
+
+          <!-- Trial Parent Name -->
+          <div class="form-group mb-3 d-none" id="trialParentNameGroup">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Parent Name</label>
+            <input type="text" name="form_trial_parent_name" class="form-control" placeholder="Enter parent name"
+              style="height: 33px; border-radius: 8px; font-size: 14px;">
+          </div>
+
+          <!-- Trial Parent Telp -->
+          <div class="form-group mb-3 d-none" id="trialParentTelpGroup">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Parent Phone</label>
+            <input type="text" name="form_trial_parent_telp" class="form-control" placeholder="Enter parent phone"
               style="height: 33px; border-radius: 8px; font-size: 14px;">
           </div>
 
@@ -189,28 +265,33 @@
   </script>
 
   <script>
-    const termSelect = document.getElementById("termSelect");
-    const termStudent = document.getElementById("termStudentGroup");
-    const trialStudent = document.getElementById("trialStudentGroup");
-    const trialDob = document.getElementById("trialDobGroup");
-    const totalMeetings = document.getElementById("totalMeetings");
+    const dobInput = document.getElementById("trialDob");
+    const ageInput = document.getElementById("trialAge");
 
-    termSelect.addEventListener("change", function () {
-      if (this.value === "TRIAL") {
-        termStudent.classList.add("d-none");
-        trialStudent.classList.remove("d-none");
-        trialDob.classList.remove("d-none");
+    dobInput.addEventListener("change", function () {
 
-        totalMeetings.value = 1;
-        totalMeetings.readOnly = true;
-      } else {
-        termStudent.classList.remove("d-none");
-        trialStudent.classList.add("d-none");
-        trialDob.classList.add("d-none");
-
-        totalMeetings.readOnly = false;
-        totalMeetings.value = "";
+      if (!this.value) {
+        ageInput.value = "";
+        return;
       }
+
+      const dob = new Date(this.value);
+      const today = new Date();
+
+      let years = today.getFullYear() - dob.getFullYear();
+      let months = today.getMonth() - dob.getMonth();
+
+      if (today.getDate() < dob.getDate()) {
+        months--;
+      }
+
+      if (months < 0) {
+        years--;
+        months += 12;
+      }
+
+      ageInput.value =
+        years + "." + String(months).padStart(2, "0");
     });
   </script>
 

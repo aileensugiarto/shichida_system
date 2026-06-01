@@ -49,30 +49,49 @@ def model_schedule():
     # ============================
     # 3️⃣ GET SCHEDULES FOR DATE
     # ============================
-
     cur.execute("""
-        SELECT 
+        SELECT
             s.id_schedule,
             s.start_time,
             s.end_time,
             s.id_teacher,
-            t.name,
+            t.name AS teacher_name,
             l.level_name,
-            st.id_student,
-            st.name,
-            st.dob,
+
+            st.name AS student_name,
+            st.dob AS student_dob,
+
+            ts.name AS trial_name,
+            ts.dob AS trial_dob,
+
             a.status,
+
             s.is_rescheduled,
             s.rescheduled_from,
             s.reschedule_date,
-            st.is_trial
+
+            s.id_trial_student
+
         FROM tbl_schedule s
-        JOIN tbl_teacher t ON s.id_teacher = t.id_teacher
-        LEFT JOIN tbl_level l ON s.id_level = l.id_level
-        LEFT JOIN tbl_attendance a ON s.id_schedule = a.id_schedule   -- ✅ FIX HERE
-        LEFT JOIN tbl_student st ON a.id_student = st.id_student
+
+        JOIN tbl_teacher t
+            ON s.id_teacher = t.id_teacher
+
+        LEFT JOIN tbl_level l
+            ON s.id_level = l.id_level
+
+        LEFT JOIN tbl_attendance a
+            ON s.id_schedule = a.id_schedule
+
+        LEFT JOIN tbl_student st
+            ON a.id_student = st.id_student
+
+        LEFT JOIN tbl_trial_student ts
+            ON s.id_trial_student = ts.id_trial_student
+
         WHERE DATE(s.date) = %s
         AND s.id_admin = %s
+
         ORDER BY s.id_teacher, s.start_time
     """, (selected_date, session['id_admin']))
 
@@ -230,33 +249,57 @@ def model_schedule():
     # ============================
     # 7️⃣ FILL STUDENTS INTO SLOTS
     # ============================
-
     for r in schedule_rows:
 
         slot_key = f"{r[1]}-{r[2]}"
         teacher_id = r[3]
 
-        if teacher_id in schedule_map and slot_key in schedule_map[teacher_id]["slots"]:
+        if teacher_id not in schedule_map:
+            continue
 
-            age = calculate_age(r[8])
+        if slot_key not in schedule_map[teacher_id]["slots"]:
+            continue
 
-            # FIX: ensure trial student always has visible age
-            if not age or age == "-":
-                if r[13]:  # is_trial
-                    age = "0.00"
+        # ==========================
+        # TRIAL STUDENT
+        # ==========================
+        if r[14]:   # id_trial_student
 
-            schedule_map[teacher_id]["slots"][slot_key].append({
-                "id_schedule": r[0],
-                "student_name": r[7],
-                "age": age,
-                "level": r[5],
-                "status": r[9],
-                "is_rescheduled": bool(r[10]),
-                "rescheduled_from": (
-                    r[11].strftime("%d %b %Y") if r[11] else None
-                ),
-                "is_trial": bool(r[13])
-            })
+            student_name = r[8]     # ts.name
+            dob = r[9]              # ts.dob
+            age = calculate_age(dob)
+
+        # ==========================
+        # REGULAR STUDENT
+        # ==========================
+        else:
+
+            student_name = r[6]     # st.name
+            dob = r[7]              # st.dob
+            age = calculate_age(dob)
+
+        schedule_map[teacher_id]["slots"][slot_key].append({
+
+            "id_schedule": r[0],
+
+            "student_name": student_name,
+
+            "age": age,
+
+            "level": r[5],
+
+            "status": r[10],
+
+            "is_rescheduled": bool(r[11]),
+
+            "rescheduled_from": (
+                r[12].strftime("%d %b %Y")
+                if r[12] else None
+            ),
+
+            "is_trial": bool(r[14])
+
+        })
 
     cur.close()
 
@@ -295,51 +338,48 @@ def model_add_schedule():
     levels = cur.fetchall()
 
     if request.method == "POST":
-        # ===== 1. GET FORM DATA =====
+
         term = request.form['form_term']
+
         start_date = datetime.strptime(
-            request.form['form_start_date'], "%Y-%m-%d"
+            request.form['form_start_date'],
+            "%Y-%m-%d"
         ).date()
 
         class_day = request.form['form_class_day'].upper().strip()
+
         level = int(request.form['form_level'])
+
         time_slot = request.form['form_time_slot']
         start_time, end_time = time_slot.split("|")
+
         teacher = int(request.form['form_teacher'])
 
+        student = None
+        id_trial_student = None
+
         if term == "TRIAL":
+
             term = 0
-            student_name = request.form['form_trial_student_name']
-            dob = request.form['form_trial_dob']
-
-            cur.execute("""
-                INSERT INTO tbl_student (name, dob, is_trial, id_admin)
-                VALUES (%s, %s, %s, %s)
-            """, (student_name, dob, 1, session['id_admin']))
-
-            student = cur.lastrowid
             total_meetings = 1
 
+            student_name = request.form['form_trial_student_name']
+            dob = request.form['form_trial_dob']
+            parent_name = request.form['form_trial_parent_name']
+            parent_telp = request.form['form_trial_parent_telp']
+
         else:
+
             term = int(term)
-            student = int(request.form['form_student'])
-            total_meetings = int(request.form['form_total_meetings'])
 
-        # ===== 2. INSERT MASTER SCHEDULE =====
-        cur.execute("""
-            INSERT INTO tbl_master_schedule
-            (term, start_date, class_day, id_level, start_time, end_time,
-             id_teacher, id_student, total_meetings, id_admin)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-        """, (
-            term, start_date, class_day, level,
-            start_time, end_time, teacher, student,
-            total_meetings, session['id_admin']
-        ))
+            student = int(
+                request.form['form_student']
+            )
 
-        id_master_schedule = cur.lastrowid
+            total_meetings = int(
+                request.form['form_total_meetings']
+            )
 
-        # ===== 3. MAP DAY STRING → PYTHON WEEKDAY =====
         day_map = {
             'MON': 0,
             'TUE': 1,
@@ -351,20 +391,96 @@ def model_add_schedule():
 
         target_weekday = day_map[class_day]
 
-        # ===== 4. FIND FIRST CLASS DATE (🔥 IMPORTANT)
         current_date = start_date
+
         while current_date.weekday() != target_weekday:
             current_date += timedelta(days=1)
 
-        first_class_date = current_date  # ✅ SAVE THIS
+        first_class_date = current_date
 
-        # ===== 5. GENERATE WEEKLY SCHEDULES =====
+        # ==================================
+        # INSERT TRIAL STUDENT
+        # ==================================
+
+        if term == 0:
+
+            cur.execute("""
+                INSERT INTO tbl_trial_student
+                (
+                    name,
+                    dob,
+                    parent_name,
+                    parent_telp,
+                    trial_date,
+                    id_admin
+                )
+                VALUES (%s,%s,%s,%s,%s,%s)
+            """, (
+                student_name,
+                dob,
+                parent_name,
+                parent_telp,
+                first_class_date,
+                session['id_admin']
+            ))
+
+            id_trial_student = cur.lastrowid
+
+        # ==================================
+        # MASTER SCHEDULE
+        # ==================================
+
+        cur.execute("""
+            INSERT INTO tbl_master_schedule
+            (
+                term,
+                start_date,
+                class_day,
+                id_level,
+                start_time,
+                end_time,
+                id_teacher,
+                id_student,
+                id_trial_student,
+                total_meetings,
+                id_admin
+            )
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        """, (
+            term,
+            start_date,
+            class_day,
+            level,
+            start_time,
+            end_time,
+            teacher,
+            student,
+            id_trial_student,
+            total_meetings,
+            session['id_admin']
+        ))
+
+        id_master_schedule = cur.lastrowid
+
+        # ==================================
+        # CREATE SCHEDULES
+        # ==================================
+
         for _ in range(total_meetings):
+
             cur.execute("""
                 INSERT INTO tbl_schedule
-                (date, start_time, end_time, id_teacher,
-                 id_level, id_master_schedule, id_admin)
-                VALUES (%s,%s,%s,%s,%s,%s,%s)
+                (
+                    date,
+                    start_time,
+                    end_time,
+                    id_teacher,
+                    id_level,
+                    id_master_schedule,
+                    id_trial_student,
+                    id_admin
+                )
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
             """, (
                 current_date,
                 start_time,
@@ -372,31 +488,46 @@ def model_add_schedule():
                 teacher,
                 level,
                 id_master_schedule,
+                id_trial_student,
                 session['id_admin']
             ))
 
             id_schedule = cur.lastrowid
 
-            cur.execute("""
-                INSERT INTO tbl_attendance
-                (id_schedule, id_student, id_admin)
-                VALUES (%s,%s,%s)
-            """, (id_schedule, student, session['id_admin']))
+            # regular students only
+            if student is not None:
+
+                cur.execute("""
+                    INSERT INTO tbl_attendance
+                    (
+                        id_schedule,
+                        id_student,
+                        id_admin
+                    )
+                    VALUES (%s,%s,%s)
+                """, (
+                    id_schedule,
+                    student,
+                    session['id_admin']
+                ))
 
             current_date += timedelta(days=7)
 
         mysql.connection.commit()
+
         cur.close()
 
-        flash("Schedule successfully added", "success")
+        flash(
+            "Schedule successfully added",
+            "success"
+        )
 
-        # =========================
-        # 🔥 REDIRECT TO CORRECT DATE
-        # =========================
-        return redirect(url_for(
-            'schedule',
-            date=first_class_date.strftime("%Y-%m-%d")
-        ))
+        return redirect(
+            url_for(
+                'schedule',
+                date=first_class_date.strftime("%Y-%m-%d")
+            )
+        )
 
     return render_template(
         'admin/schedule/add_schedule.html',
@@ -404,7 +535,6 @@ def model_add_schedule():
         data_student=updated_students,
         data_level=levels
     )
-
 
 # EDIT SCHEDULE
 def model_edit_schedule(id):
@@ -435,7 +565,6 @@ def model_edit_schedule(id):
 
   cur.close()
   return render_template('admin/schedule/edit_schedule.html', data_schedule=schedule, data_teacher=teachers, data_student=updated_students, data_current_student=current_students, data_level=levels, time_slots=TIME_SLOTS)
-
 
 # PROCESS EDIT SCHEDULE
 def model_process_edit_schedule():
@@ -470,7 +599,6 @@ def model_process_edit_schedule():
 
   flash("Schedule successfully updated", "success")
   return redirect(url_for("schedule", date=date))
-
 
 # EDIT MASTER SCHEDULE
 def model_edit_master_schedule(id_master_schedule):
@@ -837,7 +965,6 @@ def calculate_age(dob):
 
     return f"{years}.{months:02d}"
 
-
 # GET ATTENDANCE
 def model_get_attendance(id):
   cur = mysql.connection.cursor()
@@ -870,7 +997,6 @@ def model_get_attendance(id):
       'date': row[3].strftime("%A, %d %B %Y")
     })
   return jsonify(students)
-
 
 # GET ATTENDANCE BY ATTENDANCE ID
 def model_get_attendance_by_attendance(id_attendance):
