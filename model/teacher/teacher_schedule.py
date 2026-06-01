@@ -66,9 +66,13 @@ def model_teacher_schedule(branch_name):
             s.end_time,
             s.id_teacher,
 
-            st.name,
-            st.dob,
-            st.is_trial,
+            COALESCE(st.name, ts.name) AS student_name,
+            COALESCE(st.dob, ts.dob) AS dob,
+
+            CASE
+                WHEN ts.id_trial_student IS NOT NULL THEN 1
+                ELSE 0
+            END AS is_trial,
 
             l.level_name,
 
@@ -90,6 +94,9 @@ def model_teacher_schedule(branch_name):
 
         LEFT JOIN tbl_student st
             ON att.id_student = st.id_student
+
+        LEFT JOIN tbl_trial_student ts
+            ON s.id_trial_student = ts.id_trial_student
 
         LEFT JOIN tbl_level l
             ON s.id_level = l.id_level

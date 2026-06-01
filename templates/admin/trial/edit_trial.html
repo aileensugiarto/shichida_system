@@ -3,21 +3,21 @@
 
 <head>
     <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
-    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&family=Quicksand:wght@300..700&display=swap"
-    rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <!-- Lexend -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet">
-  <title>Edit Trial</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&family=Quicksand:wght@300..700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <!-- Lexend -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet">
+    <title>Edit Trial</title>
 
     <style>
         body {
@@ -59,13 +59,28 @@
                     </div>
 
                     <!-- DOB -->
-                    <div class="mb-3">
-                        <label style="font-weight: 500; font-size: 15px;" class="mb-1">
-                            Date of Birth
-                        </label>
+                    <div class="row mb-3">
 
-                        <input type="date" name="form_dob" class="form-control" value="{{ data_trial[2] }}" required
-                            style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+                        <!-- DOB -->
+                        <div class="col-6">
+                            <label style="font-weight: 500; font-size: 15px;" class="mb-1">
+                                Date of Birth
+                            </label>
+
+                            <input type="date" id="dob" name="form_dob" class="form-control" value="{{ data_trial[2] }}"
+                                required style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+                        </div>
+
+                        <!-- AGE -->
+                        <div class="col-6">
+                            <label style="font-weight: 500; font-size: 15px;" class="mb-1">
+                                Age
+                            </label>
+
+                            <input type="text" id="age" class="form-control" readonly placeholder="Auto calculated"
+                                style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+                        </div>
+
                     </div>
 
                     <!-- PARENT NAME -->
@@ -74,8 +89,8 @@
                             Parent Name
                         </label>
 
-                        <input type="text" name="form_parent_name" class="form-control" value="{{ data_trial[3] }}" required
-                            style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+                        <input type="text" name="form_parent_name" class="form-control" value="{{ data_trial[3] }}"
+                            required style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
                     </div>
 
                     <!-- PHONE -->
@@ -84,8 +99,8 @@
                             Parent Phone
                         </label>
 
-                        <input type="text" name="form_parent_telp" class="form-control" value="{{ data_trial[4] }}" required
-                            style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+                        <input type="text" name="form_parent_telp" class="form-control" value="{{ data_trial[4] }}"
+                            required style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
                     </div>
 
                     <!-- TRIAL DATE -->
@@ -94,14 +109,14 @@
                             Trial Date
                         </label>
 
-                        <input type="date" name="form_trial_date" class="form-control" value="{{ data_trial[5] }}" required
-                            style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
+                        <input type="date" name="form_trial_date" class="form-control" value="{{ data_trial[5] }}"
+                            required style="width: 100%; height: 33px; border-radius: 8px; font-size: 14px;">
                     </div>
 
                     <div>
-            <input type="submit" value="EDIT TRIAL STUDENT" class="btn btn-sm w-100 fw-bold"
-              style="border-radius: 5px; background-color: #ffd555;">
-          </div>
+                        <input type="submit" value="EDIT TRIAL STUDENT" class="btn btn-sm w-100 fw-bold"
+                            style="border-radius: 5px; background-color: #ffd555;">
+                    </div>
 
                 </form>
 
@@ -112,7 +127,47 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function calculateAge() {
 
+            const dobValue = document.getElementById("dob").value;
+
+            if (!dobValue) {
+                document.getElementById("age").value = "";
+                return;
+            }
+
+            const dob = new Date(dobValue);
+            const today = new Date();
+
+            let years = today.getFullYear() - dob.getFullYear();
+            let months = today.getMonth() - dob.getMonth();
+
+            if (today.getDate() < dob.getDate()) {
+                months--;
+            }
+
+            if (months < 0) {
+                years--;
+                months += 12;
+            }
+
+            document.getElementById("age").value =
+                years + "." + String(months).padStart(2, "0");
+        }
+
+        // Calculate when DOB changes
+        document.getElementById("dob").addEventListener(
+            "change",
+            calculateAge
+        );
+
+        // Calculate immediately when page loads
+        window.addEventListener(
+            "load",
+            calculateAge
+        );
+    </script>
 </body>
 
 </html>
