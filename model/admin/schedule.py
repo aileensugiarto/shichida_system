@@ -260,22 +260,22 @@ def model_schedule():
         if slot_key not in schedule_map[teacher_id]["slots"]:
             continue
 
-        # ==========================
-        # TRIAL STUDENT
-        # ==========================
-        if r[14]:   # id_trial_student
+        # New trial student table
+        new_trial = bool(r[15])
 
-            student_name = r[8]     # ts.name
-            dob = r[9]              # ts.dob
+        # Legacy tbl_student.is_trial
+        old_trial = bool(r[8])
+
+        if new_trial:
+
+            student_name = r[9]
+            dob = r[10]
             age = calculate_age(dob)
 
-        # ==========================
-        # REGULAR STUDENT
-        # ==========================
         else:
 
-            student_name = r[6]     # st.name
-            dob = r[7]              # st.dob
+            student_name = r[6]
+            dob = r[7]
             age = calculate_age(dob)
 
         schedule_map[teacher_id]["slots"][slot_key].append({
@@ -288,16 +288,16 @@ def model_schedule():
 
             "level": r[5],
 
-            "status": r[10],
+            "status": r[11],
 
-            "is_rescheduled": bool(r[11]),
+            "is_rescheduled": bool(r[12]),
 
             "rescheduled_from": (
-                r[12].strftime("%d %b %Y")
-                if r[12] else None
+                r[13].strftime("%d %b %Y")
+                if r[13] else None
             ),
 
-            "is_trial": bool(r[14])
+            "is_trial": (old_trial or new_trial)
 
         })
 
