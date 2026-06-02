@@ -66,11 +66,12 @@ def model_teacher_schedule(branch_name):
             s.end_time,
             s.id_teacher,
 
-            COALESCE(st.name, ts.name) AS student_name,
-            COALESCE(st.dob, ts.dob) AS dob,
+            COALESCE(ts.name, st.name) AS student_name,
+            COALESCE(ts.dob, st.dob) AS dob,
 
             CASE
                 WHEN ts.id_trial_student IS NOT NULL THEN 1
+                WHEN st.is_trial = 1 THEN 1
                 ELSE 0
             END AS is_trial,
 
@@ -142,13 +143,13 @@ def model_teacher_schedule(branch_name):
 
             age = calculate_age(r[5])
 
-            if not age or age == "-":
-                if r[6]:
-                    age = "0.00"
+            # old trial data sometimes has empty DOB
+            if r[6] and (not age or age == "-"):
+                age = "0.00"
 
             schedule_map[teacher_id]["slots"][slot_key].append({
                 "id_schedule": r[0],
-                "student_name": r[4],
+                "student_name": r[4] if r[4] else "-",
                 "age": age,
                 "level": r[7],
                 "status": r[8],
