@@ -21,13 +21,13 @@ def model_signup():
         cur.execute("SELECT 1 FROM tbl_admin WHERE username = %s", (username,))
         if cur.fetchone():
             flash("Username already exists", "danger")
-            return redirect(url_for("signup_admin"))
+            return redirect(url_for("signup"))
 
         # 2. ✅ Check if branch already has an admin
         cur.execute("SELECT 1 FROM tbl_admin WHERE id_branch = %s", (id_branch,))
         if cur.fetchone():
             flash("This branch already has an admin account", "danger")
-            return redirect(url_for("signup_admin"))
+            return redirect(url_for("signup"))
 
         # 3. Get id_director from selected branch
         cur.execute("SELECT id_director FROM tbl_branch WHERE id_branch = %s", (id_branch,))
@@ -35,7 +35,7 @@ def model_signup():
 
         if result is None:
             flash("Selected branch does not exist", "danger")
-            return redirect(url_for("signup_admin"))
+            return redirect(url_for("signup"))
 
         id_director = result[0]
 
@@ -48,13 +48,13 @@ def model_signup():
             mysql.connection.commit()
 
             flash("Sign Up Successful", "success")
-            return redirect(url_for("login_admin"))
+            return redirect(url_for("login"))
 
         except Exception as e:
             mysql.connection.rollback()
             flash("Something went wrong during signup", "danger")
             print(e)
-            return redirect(url_for("signup_admin"))
+            return redirect(url_for("signup"))
 
     return render_template('admin/signup.html', data_branch=branches)
 
@@ -96,4 +96,4 @@ def model_logout():
     session.pop('id_admin', None)
     session.pop('id_branch', None)
     session.pop('id_director', None)
-    return redirect(url_for('login_admin'))
+    return redirect(url_for('login'))

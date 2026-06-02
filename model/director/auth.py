@@ -18,10 +18,10 @@ def model_director_signup():
       cur.execute("INSERT INTO tbl_director VALUES (%s, %s, %s, %s)", ('', username, password, name))
       mysql.connection.commit()
       flash("Sign Up Successful", "success")
-      return redirect(url_for('login_director'))
+      return redirect(url_for('director_login'))
     else:
       flash("Username already exists", "danger")
-      return redirect(url_for("signup_director"))
+      return redirect(url_for("director_signup"))
 
   return render_template('director/signup.html')
 
@@ -45,7 +45,7 @@ def model_director_login():
       session['director_loggedin'] = True
       session['director_name'] = account[3]
       session['id_director'] = account[0]
-      return redirect(url_for("dashboard_director"))
+      return redirect(url_for("director_dashboard"))
 
   return render_template("director/login.html")
 
@@ -54,4 +54,4 @@ def model_director_login():
 def model_director_logout():
   session.pop('director_loggedin', None)
   session.pop('director_name', None)
-  return redirect(url_for('login_director'))
+  return redirect(url_for('director_login'))
