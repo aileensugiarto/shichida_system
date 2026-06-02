@@ -60,7 +60,7 @@ def model_schedule():
 
             st.name AS student_name,
             st.dob AS student_dob,
-            st.is_trial AS old_trial
+            st.is_trial AS old_trial,
 
             ts.name AS trial_name,
             ts.dob AS trial_dob,
