@@ -60,6 +60,7 @@ def model_schedule():
 
             st.name AS student_name,
             st.dob AS student_dob,
+            st.is_trial AS old_trial
 
             ts.name AS trial_name,
             ts.dob AS trial_dob,
@@ -261,22 +262,25 @@ def model_schedule():
             continue
 
         # New trial student table
-        new_trial = bool(r[15])
+        is_new_trial = bool(r[15])
 
-        # Legacy tbl_student.is_trial
-        old_trial = bool(r[8])
+        # Old tbl_student.is_trial
+        is_old_trial = bool(r[8])
 
-        if new_trial:
+        # Any trial
+        is_trial = is_new_trial or is_old_trial
 
-            student_name = r[9]
-            dob = r[10]
-            age = calculate_age(dob)
+        if is_new_trial:
+
+            student_name = r[9]      # ts.name
+            dob = r[10]              # ts.dob
 
         else:
 
-            student_name = r[6]
-            dob = r[7]
-            age = calculate_age(dob)
+            student_name = r[6]      # st.name
+            dob = r[7]               # st.dob
+
+        age = calculate_age(dob)
 
         schedule_map[teacher_id]["slots"][slot_key].append({
 
@@ -297,7 +301,7 @@ def model_schedule():
                 if r[13] else None
             ),
 
-            "is_trial": (old_trial or new_trial)
+            "is_trial": is_trial
 
         })
 
