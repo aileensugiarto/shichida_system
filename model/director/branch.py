@@ -13,7 +13,7 @@ def model_branch():
             COUNT(DISTINCT t.id_teacher) AS total_teachers
         FROM tbl_branch b
         LEFT JOIN tbl_admin a ON a.id_branch = b.id_branch
-        LEFT JOIN tbl_student s ON s.id_admin = a.id_admin
+        LEFT JOIN tbl_student s ON s.id_admin = a.id_admin AND s.is_trial = 0
         LEFT JOIN tbl_teacher t ON t.id_admin = a.id_admin
         WHERE b.id_director = %s
         GROUP BY b.id_branch, b.branch_name
