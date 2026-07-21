@@ -22,23 +22,110 @@ def indo_time_today():
 
 # BUILD SCHEDULE MAP
 def build_schedule_map(selected_date):
+    cur = mysql.connection.cursor()
+
+    # GET TEACHERS
+    cur.execute("SELECT id_teacher, name FROM tbl_teacher WHERE id_admin=%s ORDER BY name", (session['id_admin'], ))
+    teachers = cur.fetchall()
+
+    # GET SCHEDULES
+    cur.execute("""
+        SELECT
+        s.id_schedule,
+        s.start_time,
+        s.end_time,
+        s.id_teacher,
+        t.name AS teacher_name,
+        l.level_name
+
+        st.name AS student_name,
+        st.dob AS student_dob,
+        st.is_trial AS old_trial,
+
+        ts.name AS trial_name,
+        ts.dob AS trial_dob,
+
+        s.id_trial_student
+        FROM tbl_schedule s
+        JOIN tbl_teacher t ON s.id_teacher = t.id_teacher
+        LEFT JOIN tbl_level l ON s.id_level = l.id_level
+        LEFT JOIN tbl_attendance a ON s.id_schedule = a.id_schedule
+        LEFT JOIN tbl_student st ON a.id_student = st.id_student
+        LEFT JOIN tbl_trial_student ts ON s.id_trial_student = ts.id_trial_student
+        WHERE DATE(s.date)=%s AND s.id_admin=%s
+        ORDER BY s.id_teacher, s.start_time
+    """, (selected_date, session['id_admin']))
+
+    schedule_rows = cur.fetchall()
+    schedule_map = {}
+    for id_teacher, teacher_name in teachers:
+        schedule_map[id_teacher] = {
+            "teacher_name":teacher_name,
+            "slots": {
+                f"{start}-{end}": [] for start, end in TIME_SLOTS
+            }
+        }
+
+    for r in schedule_rows:
+        slot_key = f"{r[1]}-{r[2]}"
+        id_teacher = r[3]
+
+        if id_teacher not in schedule_map:
+            continue
+        
+        is_new_trial = bool(r[15])
+        is_old_trial = bool(r[8])
+
+        if is_new_trial:
+            student_name = r[9]
+            dob = r[10]
+        else:
+            student_name = r[6]
+            dob = r[7]
+
+        age = calculate_age(dob)
+
+        schedule_map[id_teacher]["slots"][slot_key].append({
+            "id_schedule": r[0],
+            "student_name": student_name,
+            "age": age,
+            "level": r[5],
+            "status": r[11],
+            "is_trial": is_new_trial or is_old_trial
+        })
+    
+    cur.close()
+
+    return schedule_map, teachers
+
+# SCHEDULE
+def model_schedule():
 
     cur = mysql.connection.cursor()
 
     # ============================
-    # GET TEACHERS
+    # 1️⃣ SELECTED DATE
     # ============================
+
+    selected_date = request.args.get("date")
+
+    if not selected_date:
+        selected_date = indo_time_today().strftime("%Y-%m-%d")
+
+    # ============================
+    # 2️⃣ GET TEACHERS
+    # ============================
+
     cur.execute("""
         SELECT id_teacher, name
         FROM tbl_teacher
         WHERE id_admin = %s
-        ORDER BY name
-    """, (session['id_admin'], ))
+    """, (session['id_admin'],))
 
     teachers = cur.fetchall()
 
     # ============================
-    # GET SCHEDULES
+    # 3️⃣ GET SCHEDULES FOR DATE
     # ============================
     cur.execute("""
         SELECT
@@ -86,89 +173,7 @@ def build_schedule_map(selected_date):
     schedule_rows = cur.fetchall()
 
     # ============================
-    # BUILD EMPTY MAP
-    # ============================
-    schedule_map = {}
-
-    for teacher_id, teacher_name in teachers:
-
-        schedule_map[teacher_id] = {
-            "teacher_name": teacher_name,
-            "slots": {
-                f"{start}-{end}": []
-                for start, end in TIME_SLOTS
-            }
-        }
-
-    # ============================
-    # FILL SLOTS
-    # ============================
-    for r in schedule_rows:
-
-        slot_key = f"{r[1]}-{r[2]}"
-        teacher_id = r[3]
-
-        if teacher_id not in schedule_map:
-            continue
-
-        if slot_key not in schedule_map[teacher_id]["slots"]:
-            continue
-
-        # trial student?
-        is_new_trial = bool(r[12])
-        is_old_trial = bool(r[8])
-
-        is_trial = is_new_trial or is_old_trial
-
-        if is_new_trial:
-            student_name = r[9]
-            dob = r[10]
-        else:
-            student_name = r[6]
-            dob = r[7]
-
-        age = calculate_age(dob)
-
-        schedule_map[teacher_id]["slots"][slot_key].append({
-
-            "id_schedule": r[0],
-            "student_name": student_name,
-            "age": age,
-            "level": r[5],
-            "status": r[11],
-            "is_trial": is_trial
-
-        })
-
-    cur.close()
-
-    return schedule_map, teachers
-
-
-# SCHEDULE
-def model_schedule():
-
-    cur = mysql.connection.cursor()
-
-    # ============================
-    # SELECTED DATE
-    # ============================
-
-    selected_date = request.args.get("date")
-
-    if not selected_date:
-        selected_date = indo_time_today().strftime("%Y-%m-%d")
-
-    # ============================
-    # BUILD SCHEDULE MAP
-    # ============================
-
-    schedule_map, teachers = build_schedule_map(
-        selected_date
-    )
-
-    # ============================
-    # MASTER SCHEDULE TABLE
+    # 4️⃣ MASTER SCHEDULE TABLE
     # ============================
 
     term_filter = request.args.get("term")
@@ -219,13 +224,7 @@ def model_schedule():
         query += " AND m.id_teacher = %s"
         params.append(teacher_filter)
 
-    query += """
-        ORDER BY FIELD(
-            m.class_day,
-            'MON','TUE','WED','THU','FRI','SAT'
-        ),
-        m.start_time
-    """
+    query += " ORDER BY FIELD(m.class_day,'MON','TUE','WED','THU','FRI','SAT'), m.start_time"
 
     cur.execute(query, params)
 
@@ -237,15 +236,11 @@ def model_schedule():
 
     cur.execute("""
         SELECT id_level, level_name, age_range,
-        CAST(
-            SUBSTRING_INDEX(age_range, '-', 1)
-            AS DECIMAL(4,2)
-        ) AS min_age
+        CAST(SUBSTRING_INDEX(age_range, '-', 1) AS DECIMAL(4,2)) AS min_age
         FROM tbl_level
         WHERE id_admin=%s
         ORDER BY min_age ASC
     """, (session['id_admin'],))
-
     levels = cur.fetchall()
 
     cur.execute("""
@@ -253,11 +248,10 @@ def model_schedule():
         FROM tbl_teacher
         WHERE id_admin=%s
     """, (session['id_admin'],))
-
     teachers_filter = cur.fetchall()
 
     # ============================
-    # ATTENDANCE TRACKER
+    # 5️⃣ ATTENDANCE TRACKER
     # ============================
 
     cur.execute("""
@@ -270,16 +264,14 @@ def model_schedule():
             a.status,
             a.id_attendance
         FROM tbl_master_schedule m
-        JOIN tbl_schedule s
+        JOIN tbl_schedule s 
             ON m.id_master_schedule = s.id_master_schedule
-        JOIN tbl_attendance a
+        JOIN tbl_attendance a 
             ON s.id_schedule = a.id_schedule
-        JOIN tbl_student st
+        JOIN tbl_student st 
             ON a.id_student = st.id_student
         WHERE m.id_admin = %s
-        ORDER BY
-            m.id_master_schedule,
-            s.date
+        ORDER BY m.id_master_schedule, s.date
     """, (session['id_admin'],))
 
     attendance_rows = cur.fetchall()
@@ -294,12 +286,11 @@ def model_schedule():
         student = r[3]
         class_date = r[4]
         status = r[5]
-        id_attendance = r[6]
+        id_attendnace = r[6]
 
         key = f"{master_id}_{student}"
 
         if key not in attendance_tracker:
-
             attendance_tracker[key] = {
                 "year": year,
                 "term": term,
@@ -310,14 +301,81 @@ def model_schedule():
         attendance_tracker[key]["meetings"].append({
             "date": class_date.strftime("%d %b %Y"),
             "status": status,
-            "id_attendance": id_attendance
+            "id_attendance": id_attendnace
         })
 
-    attendance_tracker = list(
-        attendance_tracker.values()
-    )
+    attendance_tracker = list(attendance_tracker.values())
+
+    # ============================
+    # 6️⃣ BUILD SCHEDULE MAP
+    # ============================
+
+    schedule_map = {}
+
+    for teacher_id, teacher_name in teachers:
+
+        schedule_map[teacher_id] = {
+            "teacher_name": teacher_name,
+            "slots": {
+                f"{start}-{end}": [] for start, end in TIME_SLOTS
+            }
+        }
+
+    # ============================
+    # 7️⃣ FILL STUDENTS INTO SLOTS
+    # ============================
+    for r in schedule_rows:
+
+        slot_key = f"{r[1]}-{r[2]}"
+        teacher_id = r[3]
+
+        if teacher_id not in schedule_map:
+            continue
+
+        if slot_key not in schedule_map[teacher_id]["slots"]:
+            continue
+
+        # New trial student table
+        is_new_trial = bool(r[12])
+
+        # Old tbl_student.is_trial
+        is_old_trial = bool(r[8])
+
+        # Any trial
+        is_trial = is_new_trial or is_old_trial
+
+        if is_new_trial:
+
+            student_name = r[9]      # ts.name
+            dob = r[10]              # ts.dob
+
+        else:
+
+            student_name = r[6]      # st.name
+            dob = r[7]               # st.dob
+
+        age = calculate_age(dob)
+
+        schedule_map[teacher_id]["slots"][slot_key].append({
+
+            "id_schedule": r[0],
+
+            "student_name": student_name,
+
+            "age": age,
+
+            "level": r[5],
+
+            "status": r[11],
+
+            "is_trial": is_trial
+        })
 
     cur.close()
+
+    # ============================
+    # 8️⃣ RENDER PAGE
+    # ============================
 
     return render_template(
         "admin/schedule/schedule.html",
@@ -329,6 +387,7 @@ def model_schedule():
         levels=levels,
         teachers_filter=teachers_filter
     )
+
 # ADD SCHEDULE
 def model_add_schedule():
     cur = mysql.connection.cursor()
@@ -1058,37 +1117,3 @@ def model_update_attendance():
     cur.close()
     return jsonify({'message': 'Attendance successfully updated'})
   return jsonify({'error': 'invalid request'}), 400
-
-# PRINT SCHEDULE
-def model_print_schedule():
-    selected_date = request.args.get('date')
-
-    if not selected_date:
-        selected_date = indo_time_today().strftime("%Y-%m-%d")
-    
-    print_type = request.args.get(
-        "print_type",
-        "all"
-    )
-
-    selected_teacher = request.args.get("teacher")
-
-    schedule_map, teachers = build_schedule_map(selected_date)
-
-    # Filter single teacher
-    if (print_type == "single" and selected_teacher):
-        id_teacher = int(selected_teacher)
-        filtered_map = {}
-        if id_teacher in schedule_map:
-            filtered_map[id_teacher] = schedule_map[id_teacher]
-        schedule_map = filtered_map
-
-    return render_template(
-        "admin/schedule/print_schedule.html",
-        selected_date=selected_date,
-        schedule_map=schedule_map,
-        teachers=teachers,
-        time_slots=TIME_SLOTS,
-        print_type=print_type,
-        selected_teacher=selected_teacher
-    )

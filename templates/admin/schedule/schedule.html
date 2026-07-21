@@ -207,14 +207,6 @@
       background: #999;
     }
 
-    .rescheduled-class {
-      background-color: #fff3cd !important;
-    }
-
-    .rescheduled-class:hover {
-      background-color: #ffe69c !important;
-    }
-
     .trial-student {
       background-color: #e7f3ff !important;
     }
@@ -346,6 +338,10 @@
           Schedule
         </a>
 
+        <a href="/print_schedule" class="btn fw-bold mb-3 ms-3" style="background-color: #FFC107; color: white;">
+          Print Schedule
+        </a>
+
         <!-- Table -->
         <div class="table-responsive">
           <table id="studentScheduleTable" class="table align-middle bg-white text-center">
@@ -464,11 +460,7 @@
                   {% set students = data.slots[slot] %}
 
                   {% for i in range(6) %}
-                  <tr class="slot-row
-                    {% if students|length > i and students[i].rescheduled_from %}
-                      rescheduled-class
-                    {% endif %}
-                  ">
+                  <tr class="slot-row">
                     {% if i == 0 %}
                     <td rowspan="6" class="align-middle text-center">
                       <span class="time-pill
@@ -489,9 +481,7 @@
 
                     {% if students|length > i %}
                     <td class="{% if students[i].is_trial %}trial-student{% endif %} name-box">
-                      {% if students[i].is_rescheduled %}
-                      🔁
-                      {% elif students[i].status == 'present' %}
+                      {% if students[i].status == 'present' %}
                       ✅
                       {% elif students[i].status == 'absent' %}
                       ❌

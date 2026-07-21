@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 from model.admin.auth import model_signup, model_login, model_logout
 from model.admin.student import model_student, model_add_student, model_edit_student, model_process_edit_student, model_delete_student
 from model.admin.teacher import model_teacher, model_add_teacher, model_edit_teacher, model_process_edit_teacher, model_delete_teacher
-from model.admin.schedule import model_schedule, model_add_schedule, model_edit_schedule, model_process_edit_schedule, model_delete_schedule, model_get_attendance, model_update_attendance, model_edit_master_schedule, model_process_edit_master_schedule, model_delete_master_schedule, model_get_attendance_by_attendance
+from model.admin.schedule import model_schedule, model_add_schedule, model_edit_schedule, model_process_edit_schedule, model_delete_schedule, model_get_attendance, model_update_attendance, model_edit_master_schedule, model_process_edit_master_schedule, model_delete_master_schedule, model_get_attendance_by_attendance, model_print_schedule
 from model.admin.payment import model_payment, model_edit_payment, model_process_edit_payment, model_delete_payment, model_add_payment, check_registration_status
 from model.admin.level import model_level, model_add_level, model_edit_level, model_process_edit_level, model_delete_level
 from model.admin.recap import model_recap
@@ -221,6 +221,10 @@ def delete_master_student(id):
 # def process_reschedule():
 #   return model_process_reschedule()
 
+# @app.route('/print_schedule', methods=['GET'])
+# def print_schedule():
+#   return model_print_schedule()
+
 @app.route('/get_attendance/<int:id>', methods=['GET'])
 def get_attendance(id):
   return model_get_attendance(id)
@@ -232,6 +236,10 @@ def update_attendance():
 @app.route('/get_attendance_by_attendance/<int:id>')
 def get_attendance_by_attendance(id):
     return model_get_attendance_by_attendance(id)
+
+@app.route('/print_schedule')
+def print_schedule():
+  return model_print_schedule()
 
 
 # TEACHER SCHEDULE PAGE
