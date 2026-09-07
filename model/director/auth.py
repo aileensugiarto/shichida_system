@@ -62,7 +62,7 @@ def model_director_logout():
 def login_required_director(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'loggedin' not in session:
+        if 'director_loggedin' not in session:
             flash("Please log in first", "warning")
             return redirect(url_for('director_login'))
         return f(*args, **kwargs)
