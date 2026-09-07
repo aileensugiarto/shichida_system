@@ -15,7 +15,7 @@ from model.admin.recap import model_recap
 from model.admin.account import model_edit_account, model_process_edit_account
 from model.admin.trial import model_trial, model_edit_trial, model_process_edit_trial, model_delete_trial, model_add_trial
 
-from model.director.auth import model_director_signup, model_director_login, model_director_logout
+from model.director.auth import model_director_signup, model_director_login, model_director_logout, login_required_director
 from model.director.branch import model_branch, model_add_branch, model_edit_branch, model_process_edit_branch, model_delete_branch
 from model.director.admin import model_admin, model_add_admin, model_edit_admin, model_process_edit_admin, model_delete_admin
 from model.director.student import model_director_student
@@ -396,6 +396,7 @@ def director_logout():
 
 # DASHBOARD DIRECTOR
 @app.route('/director_dashboard')
+@login_required_director
 def director_dashboard():
   if "director_loggedin" in session:
     cur = mysql.connection.cursor()
@@ -446,86 +447,102 @@ def director_dashboard():
 
 # BRANCH
 @app.route('/branch')
+@login_required_director
 def branch():
   return model_branch()
 
 # ADD BRANCH
 @app.route('/add_branch', methods=['GET', 'POST'])
+@login_required_director
 def add_branch():
   return model_add_branch()
 
 # EDIT BRANCH
 @app.route('/edit_branch/<int:id>', methods=['GET'])
+@login_required_director
 def edit_branch(id):
   return model_edit_branch(id)
 
 # PROCESS EDIT BRANCH
 @app.route('/process_edit_branch', methods=['POST'])
+@login_required_director
 def process_edit_branch():
   return model_process_edit_branch()
 
 # DELETE BRANCH
 @app.route('/delete_branch/<int:id>', methods=['GET'])
+@login_required_director
 def delete_branch(id):
   return model_delete_branch(id)
 
 
 # ADMIN
 @app.route('/admin')
+@login_required_director
 def admin():
   return model_admin()
 
 # ADD ADMIN
 @app.route('/add_admin', methods=['GET', 'POST'])
+@login_required_director
 def add_admin():
   return model_add_admin()
 
 # EDIT ADMIN
 @app.route('/edit_admin/<int:id>', methods=['GET'])
+@login_required_director
 def edit_admin(id):
   return model_edit_admin(id)
 
 # PROCESS EDIT ADMIN
 @app.route('/process_edit_admin', methods=['POST'])
+@login_required_director
 def process_edit_admin():
   return model_process_edit_admin()
 
 # DELETE ADMIN
 @app.route('/delete_admin/<int:id>', methods=['GET'])
+@login_required_director
 def delete_admin(id):
   return model_delete_admin(id)
 
 
 # STUDENT
 @app.route('/director_student')
+@login_required_director
 def director_student():
   return model_director_student()
 
 
 # TEACHER
 @app.route('/director_teacher')
+@login_required_director
 def director_teacher():
   return model_director_teacher()
 
 
 # PAYMENT
 @app.route('/director_payment')
+@login_required_director
 def director_payment():
   return model_director_payment()
 
 
 # SCHEDULE
 @app.route('/director_schedule')
+@login_required_director
 def director_schedule():
   return model_director_schedule()
 
 # EDIT DIRECTOR
 @app.route('/edit_director_account', methods=['GET'])
+@login_required_director
 def edit_director_account():
     return model_edit_director_account()
 
 # PROCESS EDIT DIRECTOR ACCOUNT
 @app.route('/process_edit_director_account', methods=['POST'])
+@login_required_director
 def process_edit_director_account():
     return model_process_edit_director_account()
 
