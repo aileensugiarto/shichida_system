@@ -1,5 +1,6 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, session
 from db import mysql
+from functools import wraps
 
 # SIGNUP
 def model_signup():
@@ -97,3 +98,14 @@ def model_logout():
     session.pop('id_branch', None)
     session.pop('id_director', None)
     return redirect(url_for('login'))
+
+
+# LOGIN REQUIRED
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'loggedin' not in session:
+            flash("Please log in first", "warning")
+            return redirect(url_for('login_admin'))
+        return f(*args, **kwargs)
+    return decorated_function

@@ -5,7 +5,7 @@ from flask_mysqldb import MySQL
 from datetime import datetime, date
 from zoneinfo import ZoneInfo
 
-from model.admin.auth import model_signup, model_login, model_logout
+from model.admin.auth import model_signup, model_login, model_logout, login_required
 from model.admin.student import model_student, model_add_student, model_edit_student, model_process_edit_student, model_delete_student
 from model.admin.teacher import model_teacher, model_add_teacher, model_edit_teacher, model_process_edit_teacher, model_delete_teacher
 from model.admin.schedule import model_schedule, model_add_schedule, model_edit_schedule, model_process_edit_schedule, model_delete_schedule, model_get_attendance, model_update_attendance, model_edit_master_schedule, model_process_edit_master_schedule, model_delete_master_schedule, model_get_attendance_by_attendance, model_print_schedule
@@ -54,16 +54,19 @@ def logout():
 
 # EDIT ACCOUNT
 @app.route('/edit_account', methods=['GET'])
+@login_required
 def edit_account():
     return model_edit_account()
 
 # PROCESS EDIT ACCOUNT
 @app.route('/process_edit_account', methods=['POST'])
+@login_required
 def process_edit_account():
     return model_process_edit_account()
 
 # DASHBOARD
 @app.route('/dashboard_admin')
+@login_required
 def dashboard_admin():
   if "loggedin" in session:
     cur = mysql.connection.cursor()
@@ -131,86 +134,104 @@ def dashboard_admin():
 
 # STUDENT
 @app.route('/student')
+@login_required
 def student():
   return model_student()
 
 # ADD STUDENT
 @app.route('/add_student', methods=['GET', 'POST'])
+@login_required
 def add_student():
   return model_add_student()
 
 # EDIT STUDENT
 @app.route('/edit_student/<int:id>', methods=['GET'])
+@login_required
 def edit_student(id):
   return model_edit_student(id)
 
 # PROCESS EDIT STUDENT
 @app.route('/process_edit_student', methods=['POST'])
+@login_required
 def process_edit_student():
   return model_process_edit_student()
 
 # DELETE STUDENT
 @app.route('/delete_student/<int:id>', methods=['GET'])
+@login_required
 def delete_student(id):
   return model_delete_student(id)
 
 
 # TEACHER
 @app.route('/teacher')
+@login_required
 def teacher():
   return model_teacher()
 
 # ADD TEACHER
 @app.route('/add_teacher', methods=['GET', 'POST'])
+@login_required
 def add_teacher():
   return model_add_teacher()
 
 # EDIT TEACHER
 @app.route('/edit_teacher/<int:id>', methods=['GET'])
+@login_required
 def edit_teacher(id):
   return model_edit_teacher(id)
 
 # PROCESS EDIT TEACHER
 @app.route('/process_edit_teacher', methods=['POST'])
+@login_required
 def process_edit_teacher():
   return model_process_edit_teacher()
 
 # DELETE TEACHER
 @app.route('/delete_teacher/<int:id>', methods=['GET'])
+@login_required
 def delete_teacher(id):
   return model_delete_teacher(id)
 
 
 # SCHEDULE
 @app.route('/schedule')
+@login_required
 def schedule():
   return model_schedule()
 
 @app.route ('/add_schedule', methods=['GET', 'POST'])
+@login_required
 def add_schedule():
   return model_add_schedule()
 
 @app.route('/edit_schedule/<int:id>', methods=['GET'])
+@login_required
 def edit_schedule(id):
   return model_edit_schedule(id)
 
 @app.route('/process_edit_schedule', methods=['POST'])
+@login_required
 def process_edit_schedule():
   return model_process_edit_schedule()
 
 @app.route('/edit_master_schedule/<int:id>', methods=['GET'])
+@login_required
 def edit_master_schedule(id):
   return model_edit_master_schedule(id)
 
 @app.route('/process_edit_master_schedule', methods=['POST'])
+@login_required
 def process_edit_master_schedule():
   return model_process_edit_master_schedule()
 
 @app.route('/delete_schedule/<int:id>', methods=['GET'])
+@login_required
 def delete_schedule(id):
   return model_delete_schedule(id)
 
 @app.route('/delete_master_schedule/<int:id>', methods=['GET'])
+@login_required
 def delete_master_student(id):
   return model_delete_master_schedule(id)
 
@@ -226,18 +247,22 @@ def delete_master_student(id):
 #   return model_print_schedule()
 
 @app.route('/get_attendance/<int:id>', methods=['GET'])
+@login_required
 def get_attendance(id):
   return model_get_attendance(id)
 
 @app.route('/update_attendance', methods=['POST'])
+@login_required
 def update_attendance():
   return model_update_attendance()
 
 @app.route('/get_attendance_by_attendance/<int:id>')
+@login_required
 def get_attendance_by_attendance(id):
     return model_get_attendance_by_attendance(id)
 
 @app.route('/print_schedule')
+@login_required
 def print_schedule():
   return model_print_schedule()
 
@@ -249,84 +274,102 @@ def teacher_schedule(branch_name):
 
 # PAYMENT
 @app.route('/payment')
+@login_required
 def payment():
   return model_payment()
 
 # ADD PAYMENT
 @app.route('/add_payment', methods=['GET', 'POST'])
+@login_required
 def add_payment():
   return model_add_payment()
 
 # EDIT PAYMENT
 @app.route('/edit_payment/<int:id>', methods=['GET'])
+@login_required
 def edit_payment(id):
   return model_edit_payment(id)
 
 # PROCESS EDIT PAYMENT
 @app.route('/process_edit_payment', methods=['POST'])
+@login_required
 def process_edit_payment():
   return model_process_edit_payment()
 
 # DELETE PAYMENT
 @app.route('/delete_payment/<int:id>', methods=['GET'])
+@login_required
 def delete_payment(id):
   return model_delete_payment(id)
 
 app.add_url_rule('/check_registration_status', 'check_registration_status', check_registration_status)
+
+
 # LEVEL
 @app.route('/level')
+@login_required
 def level():
   return model_level()
 
 # ADD LEVEL
 @app.route('/add_level', methods=['GET', 'POST'])
+@login_required
 def add_level():
   return model_add_level()
 
 # EDIT LEVEL
 @app.route('/edit_level/<int:id>', methods=['GET'])
+@login_required
 def edit_level(id):
   return model_edit_level(id)
 
-# PROCESS EDIT PAYMENT
+# PROCESS EDIT LEVEL
 @app.route('/process_edit_level', methods=['POST'])
+@login_required
 def process_edit_level():
   return model_process_edit_level()
 
-# DELETE PAYMENT
+# DELETE LEVEL
 @app.route('/delete_level/<int:id>', methods=['GET'])
+@login_required
 def delete_level(id):
   return model_delete_level(id)
 
 
 # RECAP
 @app.route('/recap')
+@login_required
 def recap():
   return model_recap()
 
 
 # TRIAL
 @app.route('/trial')
+@login_required
 def trial():
   return model_trial()
 
 # ADD TRIAL
 @app.route('/add_trial', methods=['GET', 'POST'])
+@login_required
 def add_trial():
   return model_add_trial()
 
 # EDIT TRIAL
 @app.route('/edit_trial/<int:id>', methods=['GET'])
+@login_required
 def edit_trial(id):
   return model_edit_trial(id)
 
 # PROCESS EDIT TRIAL
 @app.route('/process_edit_trial', methods=['POST'])
+@login_required
 def process_edit_trial():
   return model_process_edit_trial()
 
 # DELETE TRIAL
 @app.route('/delete_trial/<int:id>', methods=['GET'])
+@login_required
 def delete_trial(id):
   return model_delete_trial(id)
 
