@@ -106,6 +106,6 @@ def login_required(f):
     def decorated_function(*args, **kwargs):
         if 'loggedin' not in session:
             flash("Please log in first", "warning")
-            return redirect(url_for('login_admin'))
+            return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
