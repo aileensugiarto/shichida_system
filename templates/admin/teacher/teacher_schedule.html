@@ -178,8 +178,8 @@
     }
 
     .time-column {
-      width: 100px;
-      min-width: 100px;
+      width: 17%;
+      min-width: 85px;
     }
 
     .student-column {
@@ -205,18 +205,15 @@
       font-family: 'Lexend', sans-serif;
       font-weight: 600;
       color: #ff682d;
-      white-space: normal;
-      overflow: hidden;
+      white-space: nowrap;
     }
 
-    .slot-time {
-      text-align: center;
-      background: #fff !important;
-      font-family: 'Lexend', sans-serif;
-      font-weight: 600;
-      color: #ff682d;
-      white-space: nowrap;
-      overflow: visible;
+    .slot-time span {
+      display: inline-block;
+      padding: 5px 10px;
+      border: 1px solid #ffb17f;
+      border-radius: 18px;
+      background: #fffaf5;
     }
 
     /* =====================================================
@@ -264,19 +261,17 @@
         padding: 8px 10px;
       }
 
-      .schedule-table .time-column {
-        width: 100px;
-        min-width: 100px;
-      }
-
-      .schedule-table .slot-time span {
-        display: inline-block;
-        width: auto;
-        min-width: 88px;
-        padding: 5px 4px;
-        font-size: 10px;
-        white-space: nowrap;
-      }
+      .slot-time span {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 0;
+      border: 0;
+      border-radius: 18px;
+      background: none;
+      white-space: nowrap;
+      font-size: 10.5px;
+    }
     }
   </style>
 </head>
