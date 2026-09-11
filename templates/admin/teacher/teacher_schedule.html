@@ -178,8 +178,8 @@
     }
 
     .time-column {
-      width: 17%;
-      min-width: 85px;
+      width: 100px;
+      min-width: 100px;
     }
 
     .student-column {
@@ -209,15 +209,14 @@
       overflow: hidden;
     }
 
-    .slot-time span {
-      display: block;
-      width: 100%;
-      box-sizing: border-box;
-      padding: 5px 10px;
-      border: 1px solid #ffb17f;
-      border-radius: 18px;
-      background: #fffaf5;
+    .slot-time {
+      text-align: center;
+      background: #fff !important;
+      font-family: 'Lexend', sans-serif;
+      font-weight: 600;
+      color: #ff682d;
       white-space: nowrap;
+      overflow: visible;
     }
 
     /* =====================================================
@@ -263,6 +262,20 @@
       .day-btn {
         min-width: 60px;
         padding: 8px 10px;
+      }
+
+      .schedule-table .time-column {
+        width: 100px;
+        min-width: 100px;
+      }
+
+      .schedule-table .slot-time span {
+        display: inline-block;
+        width: auto;
+        min-width: 88px;
+        padding: 5px 4px;
+        font-size: 10px;
+        white-space: nowrap;
       }
     }
   </style>
