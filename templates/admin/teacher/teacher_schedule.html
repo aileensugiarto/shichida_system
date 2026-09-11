@@ -179,6 +179,7 @@
 
     .time-column {
       width: 17%;
+      min-width: 85px;
     }
 
     .student-column {
@@ -204,15 +205,19 @@
       font-family: 'Lexend', sans-serif;
       font-weight: 600;
       color: #ff682d;
-      white-space: nowrap;
+      white-space: normal;
+      overflow: hidden;
     }
 
     .slot-time span {
-      display: inline-block;
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
       padding: 5px 10px;
       border: 1px solid #ffb17f;
       border-radius: 18px;
       background: #fffaf5;
+      white-space: nowrap;
     }
 
     /* =====================================================
@@ -258,15 +263,6 @@
       .day-btn {
         min-width: 60px;
         padding: 8px 10px;
-      }
-
-      .slot-time span {
-        display: inline-block;
-        padding: 5px 10px;
-        border: 1px solid #ffb17f;
-        border-radius: 18px;
-        background: #fffaf5;
-        font-size: 11px;
       }
     }
   </style>
