@@ -64,7 +64,7 @@
     .info-row {
       display: flex;
       align-items: center;
-      margin-bottom: 18px;
+      margin-bottom: 14px;
     }
 
     .icon {
@@ -102,30 +102,6 @@
       font-weight: 600;
       font-size: 16px;
       color: #333;
-    }
-
-    .dashboard-student {
-      margin-bottom: 4px;
-      line-height: 1.5;
-    }
-
-    .dashboard-student-name {
-      font-size: 16px;
-      font-weight: 600;
-      color: #333;
-    }
-
-    .student-note {
-      margin-left: 4px;
-      font-size: 13px;
-      font-weight: 600;
-      color: #333;
-    }
-
-    .dashboard-trial-student {
-      background: #dff6ff;
-      border-radius: 4px;
-      padding: 2px 5px;
     }
   </style>
 </head>
@@ -211,64 +187,36 @@
 
             <!-- TOP -->
             <div class="d-flex justify-content-between align-items-start mb-3">
-              <!-- Level -->
-              <h5 class="fw-bold mb-1"
-                style="color:#333; text-transform: uppercase; font-family: Lexend; letter-spacing: 1.2px;">
-                {{ class.levels|join(', ') }}
+              <h5 class="fw-bold mb-1" style="color:#333; text-transform: uppercase; font-family: Lexend; letter-spacing: 1.2px;">
+                {{class[4]}}
               </h5>
-              <!-- Class Time -->
+
               <div class="class-time">
                 <i class="fa-regular fa-clock me-1 fw-bold"></i>
-                {{ class.start_time }} - {{ class.end_time }}
+                {{class[1]}} - {{class[2]}}
               </div>
             </div>
 
             <!-- TEACHER -->
             <div class="info-row">
-              <!-- Teacher Icon -->
               <div class="icon teacher">
                 <i class="fa-solid fa-chalkboard-user"></i>
               </div>
               <div>
                 <span class="label">Teacher</span>
-                <span class="value">
-                  {{ class.teacher }}
-                </span>
+                <span class="value">{{class[3]}}</span>
               </div>
             </div>
 
             <!-- STUDENTS -->
-            <div class="info-row">
-              <!-- Student Icon -->
+             <div class="info-row">
               <div class="icon student">
                 <i class="fa-solid fa-users"></i>
               </div>
-
-              <div class="student-list">
-
+              <div>
                 <span class="label">Students</span>
-
-                {% for student in class.students %}
-
-                <div class="dashboard-student">
-
-                  <span
-                    class="dashboard-student-name {% if student.type == 'trial' %}dashboard-trial-student{% endif %}">
-                    {{ student.name }}
-                  </span>
-
-                  {% if student.notes %}
-                  <span class="student-note">
-                    ({{ student.notes }})
-                  </span>
-                  {% endif %}
-
-                </div>
-
-                {% endfor %}
-
+                <span class="value">{{class[5]}}</span>
               </div>
-
             </div>
 
           </div>

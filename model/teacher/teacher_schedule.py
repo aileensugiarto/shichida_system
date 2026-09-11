@@ -1,7 +1,18 @@
 from flask import render_template, request
 from db import mysql
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from zoneinfo import ZoneInfo
+
+
+DAYS = [
+    "MON",
+    "TUE",
+    "WED",
+    "THU",
+    "FRI",
+    "SAT"
+]
+
 
 TIME_SLOTS = [
     ("09:00", "10:00"),
@@ -14,33 +25,110 @@ TIME_SLOTS = [
     ("16:00", "17:00"),
 ]
 
+
+# =========================================================
+# INDONESIA TODAY
+# =========================================================
+
 def indo_time_today():
     return datetime.now(
         ZoneInfo("Asia/Jakarta")
     ).date()
 
-# =========================================
+
+# =========================================================
+# CALCULATE AGE
+# =========================================================
+
+def calculate_age(dob):
+
+    if not dob:
+        return ""
+
+    if isinstance(dob, str):
+
+        dob = dob.strip()
+
+        if not dob:
+            return ""
+
+        parsed = None
+
+        for fmt in (
+            "%Y-%m-%d",
+            "%d/%m/%Y",
+            "%m/%d/%Y",
+            "%d-%m-%Y",
+            "%Y/%m/%d"
+        ):
+            try:
+                parsed = datetime.strptime(
+                    dob,
+                    fmt
+                ).date()
+                break
+            except ValueError:
+                pass
+
+        dob = parsed
+
+    elif isinstance(dob, datetime):
+        dob = dob.date()
+
+    if not dob:
+        return ""
+
+    today = indo_time_today()
+
+    years = today.year - dob.year
+    months = today.month - dob.month
+
+    if today.day < dob.day:
+        months -= 1
+
+    if months < 0:
+        years -= 1
+        months += 12
+
+    return f"{years}.{months:02d}"
+
+
+# =========================================================
 # TEACHER SCHEDULE PAGE
-# =========================================
+# =========================================================
+
 def model_teacher_schedule(branch_name):
 
     cur = mysql.connection.cursor()
 
-    # =========================================
-    # SELECTED DATE
-    # =========================================
-    selected_date = request.args.get("date")
+    # =====================================================
+    # SELECTED DAY
+    # Automatically use today's day
+    # =====================================================
 
-    if not selected_date:
-        selected_date = indo_time_today().strftime("%Y-%m-%d")
+    selected_day = request.args.get(
+        "day",
+        ""
+    ).upper()
 
-    # =========================================
-    # GET TEACHERS BY BRANCH
-    # =========================================
+    if selected_day not in DAYS:
+
+        selected_day = indo_time_today().strftime(
+            "%a"
+        ).upper()
+
+        if selected_day not in DAYS:
+            selected_day = "MON"
+
+    # =====================================================
+    # GET TEACHERS FOR THIS BRANCH
+    # =====================================================
+
     cur.execute("""
         SELECT
             t.id_teacher,
             t.name
+
         FROM tbl_teacher t
 
         JOIN tbl_admin a
@@ -51,186 +139,211 @@ def model_teacher_schedule(branch_name):
 
         WHERE LOWER(b.branch_name) = LOWER(%s)
 
-        ORDER BY t.name ASC
-    """, (branch_name,))
+        ORDER BY
+            t.name ASC
+    """, (
+        branch_name,
+    ))
 
-    teachers = cur.fetchall()
+    teacher_rows = cur.fetchall()
 
-    # =========================================
-    # GET SCHEDULES
-    # =========================================
+    # =====================================================
+    # BUILD EMPTY TEACHER MAP
+    # =====================================================
+
+    schedule_map = {}
+
+    for teacher_id, teacher_name in teacher_rows:
+
+        schedule_map[teacher_id] = {
+            "id_teacher": teacher_id,
+            "name": teacher_name,
+            "slots": {}
+        }
+
+        for start_time, end_time in TIME_SLOTS:
+
+            schedule_map[teacher_id]["slots"][
+                (start_time, end_time)
+            ] = []
+
+    # =====================================================
+    # GET RECURRING TEACHER SCHEDULE
+    # =====================================================
+
     cur.execute("""
         SELECT
-            s.id_schedule,
-            s.start_time,
-            s.end_time,
-            s.id_teacher,
 
-            COALESCE(ts.name, st.name) AS student_name,
-            COALESCE(ts.dob, st.dob) AS dob,
+            ts.id_teacher_schedule,
+            ts.id_teacher,
+            ts.class_day,
+            ts.start_time,
+            ts.end_time,
 
-            CASE
-                WHEN ts.id_trial_student IS NOT NULL THEN 1
-                WHEN st.is_trial = 1 THEN 1
-                ELSE 0
-            END AS is_trial,
+            ts.id_student,
+            ts.id_trial_student,
 
-            l.level_name,
+            ts.id_level,
+            ts.notes,
 
-            att.status,
+            st.name AS student_name,
+            st.dob AS student_dob,
 
-            s.is_rescheduled,
-            s.reschedule_date
+            tr.name AS trial_name,
+            tr.dob AS trial_dob,
 
-        FROM tbl_schedule s
+            l.level_name
+
+        FROM tbl_teacher_schedule ts
+
+        JOIN tbl_teacher t
+            ON ts.id_teacher = t.id_teacher
 
         JOIN tbl_admin a
-            ON s.id_admin = a.id_admin
+            ON ts.id_admin = a.id_admin
 
         JOIN tbl_branch b
             ON a.id_branch = b.id_branch
 
-        LEFT JOIN tbl_attendance att
-            ON s.id_schedule = att.id_schedule
-
         LEFT JOIN tbl_student st
-            ON att.id_student = st.id_student
+            ON ts.id_student = st.id_student
 
-        LEFT JOIN tbl_trial_student ts
-            ON s.id_trial_student = ts.id_trial_student
+        LEFT JOIN tbl_trial_student tr
+            ON ts.id_trial_student = tr.id_trial_student
 
         LEFT JOIN tbl_level l
-            ON s.id_level = l.id_level
+            ON ts.id_level = l.id_level
 
-        WHERE DATE(s.date) = %s
-        AND LOWER(b.branch_name) = LOWER(%s)
+        WHERE LOWER(b.branch_name) = LOWER(%s)
 
-        ORDER BY s.id_teacher, s.start_time
+          AND ts.class_day = %s
+
+        ORDER BY
+
+            ts.id_teacher,
+            ts.start_time,
+            COALESCE(
+                st.name,
+                tr.name
+            ) ASC
     """, (
-        selected_date,
-        branch_name
+        branch_name,
+        selected_day
     ))
 
     schedule_rows = cur.fetchall()
 
-    # =========================================
-    # BUILD EMPTY SCHEDULE MAP
-    # =========================================
-    schedule_map = {}
+    # =====================================================
+    # FILL TEACHER SCHEDULE
+    # =====================================================
 
-    for teacher_id, teacher_name in teachers:
+    for row in schedule_rows:
 
-        schedule_map[teacher_id] = {
-            "teacher_name": teacher_name,
-            "slots": {
-                f"{start}-{end}": []
-                for start, end in TIME_SLOTS
-            }
-        }
+        (
+            id_teacher_schedule,
+            teacher_id,
+            class_day,
+            start_time,
+            end_time,
 
-    # =========================================
-    # FILL SLOTS
-    # =========================================
-    for r in schedule_rows:
+            id_student,
+            id_trial_student,
 
-        slot_key = f"{r[1]}-{r[2]}"
-        teacher_id = r[3]
+            id_level,
+            notes,
 
-        if (
-            teacher_id in schedule_map
-            and slot_key in schedule_map[teacher_id]["slots"]
-        ):
+            student_name,
+            student_dob,
 
-            age = calculate_age(r[5])
+            trial_name,
+            trial_dob,
 
-            # old trial data sometimes has empty DOB
-            if r[6] and (not age or age == "-"):
-                age = "0.00"
+            level_name
 
-            schedule_map[teacher_id]["slots"][slot_key].append({
-                "id_schedule": r[0],
-                "student_name": r[4] if r[4] else "-",
-                "age": age,
-                "level": r[7],
-                "status": r[8],
-                "is_rescheduled": bool(r[9]),
-                "reschedule_date": (
-                    r[10].strftime("%d %b %Y")
-                    if r[10] else None
-                ),
-                "is_trial": bool(r[6])
-            })
+        ) = row
+
+        # -------------------------------------------------
+        # Ignore teachers outside the branch
+        # -------------------------------------------------
+
+        if teacher_id not in schedule_map:
+            continue
+
+        slot_key = (
+            str(start_time)[:5],
+            str(end_time)[:5]
+        )
+
+        # -------------------------------------------------
+        # CURRENT / TRIAL
+        # -------------------------------------------------
+
+        if id_student:
+
+            student_type = "current"
+            display_name = student_name
+            dob = student_dob
+
+        else:
+
+            student_type = "trial"
+            display_name = trial_name
+            dob = trial_dob
+
+        # -------------------------------------------------
+        # ADD STUDENT
+        # -------------------------------------------------
+
+        schedule_map[teacher_id]["slots"][
+            slot_key
+        ].append({
+
+            "id_teacher_schedule":
+                id_teacher_schedule,
+
+            "id_student":
+                id_student,
+
+            "id_trial_student":
+                id_trial_student,
+
+            "student_type":
+                student_type,
+
+            "name":
+                display_name or "",
+
+            "age":
+                calculate_age(dob),
+
+            "id_level":
+                id_level,
+
+            "level_name":
+                level_name or "",
+
+            "notes":
+                notes or ""
+
+        })
 
     cur.close()
 
-    # =========================================
-    # RENDER PAGE
-    # =========================================
+    # =====================================================
+    # RENDER
+    # =====================================================
+
     return render_template(
+
         "admin/teacher/teacher_schedule.html",
-        selected_date=selected_date,
-        schedule_map=schedule_map,
+
+        selected_day=selected_day,
+
+        days=DAYS,
+
         time_slots=TIME_SLOTS,
+
+        schedule_map=schedule_map,
+
         branch_name=branch_name
     )
-
-
-# =========================================
-# CALCULATE AGE
-# =========================================
-def calculate_age(dob):
-
-    if not dob:
-        return "-"
-
-    if isinstance(dob, str):
-
-        if dob.strip() == "":
-            return "-"
-
-        from datetime import datetime
-
-        dob = datetime.strptime(
-            dob,
-            "%Y-%m-%d"
-        ).date()
-
-    today = indo_time_today()
-
-    years = today.year - dob.year
-    months = today.month - dob.month
-
-    if today.day < dob.day:
-        months -= 1
-
-    if months < 0:
-        years -= 1
-        months += 12
-
-    return f"{years}.{months:02d}"
-
-
-
-# CALCULATE AGE
-def calculate_age(dob):
-
-    if not dob:
-        return "-"
-
-    if isinstance(dob, str):
-        if dob.strip() == "":
-            return "-"
-        dob = datetime.strptime(dob, "%Y-%m-%d").date()
-
-    today = indo_time_today()
-    years = today.year - dob.year
-    months = today.month - dob.month
-
-    if today.day < dob.day:
-        months -= 1
-
-    if months < 0:
-        years -= 1
-        months += 12
-
-    return f"{years}.{months:02d}"

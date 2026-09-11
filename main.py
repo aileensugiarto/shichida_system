@@ -8,7 +8,19 @@ from zoneinfo import ZoneInfo
 from model.admin.auth import model_signup, model_login, model_logout, login_required
 from model.admin.student import model_student, model_add_student, model_edit_student, model_process_edit_student, model_delete_student
 from model.admin.teacher import model_teacher, model_add_teacher, model_edit_teacher, model_process_edit_teacher, model_delete_teacher
-from model.admin.schedule import model_schedule, model_add_schedule, model_edit_schedule, model_process_edit_schedule, model_delete_schedule, model_get_attendance, model_update_attendance, model_edit_master_schedule, model_process_edit_master_schedule, model_delete_master_schedule, model_get_attendance_by_attendance, model_print_schedule
+# from model.admin.schedule import model_schedule, model_add_schedule, model_edit_schedule, model_process_edit_schedule, model_delete_schedule, model_get_attendance, model_update_attendance, model_edit_master_schedule, model_process_edit_master_schedule, model_delete_master_schedule, model_get_attendance_by_attendance, model_print_schedule
+from model.admin.schedule import (
+    model_schedule,
+    model_add_teacher_schedule,
+    model_edit_teacher_schedule,
+    model_delete_teacher_schedule,
+    model_get_schedule_students,
+    model_get_student_attendance,
+    model_get_student_attendance_record,
+    model_save_student_attendance,
+    model_delete_student_attendance,
+    model_print_schedule
+)
 from model.admin.payment import model_payment, model_edit_payment, model_process_edit_payment, model_delete_payment, model_add_payment, check_registration_status
 from model.admin.level import model_level, model_add_level, model_edit_level, model_process_edit_level, model_delete_level
 from model.admin.recap import model_recap
@@ -24,6 +36,7 @@ from model.director.payment import model_director_payment
 from model.director.schedule import model_director_schedule
 from model.director.account import model_edit_director_account, model_process_edit_director_account
 
+# from model.teacher.teacher_schedule_ori import model_teacher_schedule
 from model.teacher.teacher_schedule import model_teacher_schedule
 
 app = Flask(__name__)
@@ -65,72 +78,261 @@ def process_edit_account():
     return model_process_edit_account()
 
 # DASHBOARD
+# @app.route('/dashboard_admin')
+# @login_required
+# def dashboard_admin():
+#   if "loggedin" in session:
+#     cur = mysql.connection.cursor()
+
+#     today = datetime.now(ZoneInfo("Asia/Jakarta")).date()
+#     cur.execute("""
+#       SELECT 
+#         tbl_schedule.date, 
+#         tbl_schedule.start_time, 
+#         tbl_schedule.end_time, 
+#         tbl_teacher.name AS teacher, 
+#         tbl_level.level_name,
+#         GROUP_CONCAT(tbl_student.name SEPARATOR ', ') AS students
+#       FROM tbl_schedule
+#       JOIN tbl_teacher ON tbl_schedule.id_teacher = tbl_teacher.id_teacher
+#       JOIN tbl_level ON tbl_schedule.id_level = tbl_level.id_level
+#       LEFT JOIN tbl_attendance ON tbl_schedule.id_schedule = tbl_attendance.id_schedule
+#       LEFT JOIN tbl_student ON tbl_attendance.id_student = tbl_student.id_student
+#       WHERE tbl_schedule.date = %s 
+#       AND tbl_schedule.id_admin = %s
+#       GROUP BY 
+#         tbl_schedule.date,
+#         tbl_schedule.start_time,
+#         tbl_schedule.end_time,
+#         tbl_teacher.name,
+#         tbl_level.level_name
+#       ORDER BY 
+#         tbl_schedule.start_time ASC
+#       """, (today, session['id_admin']))
+#     data = cur.fetchall()
+
+#     # Total Students
+#     cur.execute("SELECT COUNT(id_student) FROM tbl_student WHERE id_admin = %s AND (is_trial IS NULL OR is_trial = 0)", (session['id_admin'], ))
+#     data_student = cur.fetchone()[0]
+
+#     # Total Teachers
+#     cur.execute("SELECT COUNT(id_teacher) FROM tbl_teacher WHERE id_admin = %s", (session['id_admin'], ))
+#     data_teacher = cur.fetchone()[0]
+
+#     # Total Classes Today
+#     cur.execute("""
+#     SELECT COUNT(DISTINCT CONCAT(
+#         start_time,
+#         end_time,
+#         id_teacher,
+#         id_level,
+#         date
+#     ))
+#     FROM tbl_schedule
+#     WHERE date=%s
+#     AND id_admin=%s
+# """, (
+#     today,
+#     session['id_admin']
+# ))
+#     data_classes_today = cur.fetchone()[0]
+
+#     cur.close()
+
+#     return render_template('admin/dashboard.html', total_student=data_student, total_teacher=data_teacher, data_schedule=data, total_classes_today=data_classes_today)
+
+#   flash("Please Login", "danger")
+#   return redirect(url_for('login'))
 @app.route('/dashboard_admin')
 @login_required
 def dashboard_admin():
-  if "loggedin" in session:
-    cur = mysql.connection.cursor()
+    if "loggedin" in session:
+        cur = mysql.connection.cursor()
 
-    today = datetime.now(ZoneInfo("Asia/Jakarta")).date()
-    cur.execute("""
-      SELECT 
-        tbl_schedule.date, 
-        tbl_schedule.start_time, 
-        tbl_schedule.end_time, 
-        tbl_teacher.name AS teacher, 
-        tbl_level.level_name,
-        GROUP_CONCAT(tbl_student.name SEPARATOR ', ') AS students
-      FROM tbl_schedule
-      JOIN tbl_teacher ON tbl_schedule.id_teacher = tbl_teacher.id_teacher
-      JOIN tbl_level ON tbl_schedule.id_level = tbl_level.id_level
-      LEFT JOIN tbl_attendance ON tbl_schedule.id_schedule = tbl_attendance.id_schedule
-      LEFT JOIN tbl_student ON tbl_attendance.id_student = tbl_student.id_student
-      WHERE tbl_schedule.date = %s 
-      AND tbl_schedule.id_admin = %s
-      GROUP BY 
-        tbl_schedule.date,
-        tbl_schedule.start_time,
-        tbl_schedule.end_time,
-        tbl_teacher.name,
-        tbl_level.level_name
-      ORDER BY 
-        tbl_schedule.start_time ASC
-      """, (today, session['id_admin']))
-    data = cur.fetchall()
+        # =====================================================
+        # TODAY'S DATE & DAY
+        # =====================================================
+        today = datetime.now(
+            ZoneInfo("Asia/Jakarta")
+        ).date()
 
-    # Total Students
-    cur.execute("SELECT COUNT(id_student) FROM tbl_student WHERE id_admin = %s AND (is_trial IS NULL OR is_trial = 0)", (session['id_admin'], ))
-    data_student = cur.fetchone()[0]
+        today_day = today.strftime("%a").upper()
 
-    # Total Teachers
-    cur.execute("SELECT COUNT(id_teacher) FROM tbl_teacher WHERE id_admin = %s", (session['id_admin'], ))
-    data_teacher = cur.fetchone()[0]
+        # =====================================================
+        # TODAY'S SCHEDULE
+        # Uses the NEW recurring tbl_teacher_schedule
+        # =====================================================
+        cur.execute("""
+            SELECT
+                ts.id_teacher_schedule,
+                ts.start_time,
+                ts.end_time,
 
-    # Total Classes Today
-    cur.execute("""
-    SELECT COUNT(DISTINCT CONCAT(
-        start_time,
-        end_time,
-        id_teacher,
-        id_level,
-        date
-    ))
-    FROM tbl_schedule
-    WHERE date=%s
-    AND id_admin=%s
-""", (
-    today,
-    session['id_admin']
-))
-    data_classes_today = cur.fetchone()[0]
+                t.name AS teacher,
 
-    cur.close()
+                l.level_name,
 
-    return render_template('admin/dashboard.html', total_student=data_student, total_teacher=data_teacher, data_schedule=data, total_classes_today=data_classes_today)
+                st.name AS student_name,
+                tr.name AS trial_name,
 
-  flash("Please Login", "danger")
-  return redirect(url_for('login'))
+                CASE
+                    WHEN ts.id_trial_student IS NOT NULL
+                    THEN 'trial'
+                    ELSE 'current'
+                END AS student_type,
 
+                ts.notes
+
+            FROM tbl_teacher_schedule ts
+
+            JOIN tbl_teacher t
+                ON ts.id_teacher = t.id_teacher
+
+            JOIN tbl_level l
+                ON ts.id_level = l.id_level
+
+            LEFT JOIN tbl_student st
+                ON ts.id_student = st.id_student
+
+            LEFT JOIN tbl_trial_student tr
+                ON ts.id_trial_student = tr.id_trial_student
+
+            WHERE ts.class_day = %s
+              AND ts.id_admin = %s
+
+            ORDER BY
+                ts.start_time ASC,
+                t.name ASC,
+                COALESCE(st.name, tr.name) ASC
+        """, (
+            today_day,
+            session['id_admin']
+        ))
+
+        schedule_rows = cur.fetchall()
+
+        # =====================================================
+        # GROUP STUDENTS BY TEACHER + TIME
+        # =====================================================
+        schedule_classes = {}
+
+        for row in schedule_rows:
+
+            (
+                schedule_id,
+                start_time,
+                end_time,
+                teacher,
+                level_name,
+                student_name,
+                trial_name,
+                student_type,
+                notes
+            ) = row
+
+            # Each teacher + time slot becomes one class card
+            key = (
+                teacher,
+                start_time,
+                end_time
+            )
+
+            if key not in schedule_classes:
+                schedule_classes[key] = {
+                    "start_time": start_time,
+                    "end_time": end_time,
+                    "teacher": teacher,
+                    "levels": [],
+                    "students": []
+                }
+
+            # =================================================
+            # ADD LEVEL
+            # =================================================
+            if (
+                level_name
+                and level_name not in schedule_classes[key]["levels"]
+            ):
+                schedule_classes[key]["levels"].append(
+                    level_name
+                )
+
+            # =================================================
+            # ADD STUDENT
+            # =================================================
+            student_name = student_name or trial_name
+
+            if student_name:
+                schedule_classes[key]["students"].append({
+                    "name": student_name,
+                    "type": student_type,
+                    "notes": notes
+                })
+
+        data = list(schedule_classes.values())
+
+        # =====================================================
+        # TOTAL STUDENTS
+        # =====================================================
+        cur.execute("""
+            SELECT COUNT(id_student)
+            FROM tbl_student
+            WHERE id_admin = %s
+              AND (is_trial IS NULL OR is_trial = 0)
+        """, (
+            session['id_admin'],
+        ))
+
+        data_student = cur.fetchone()[0]
+
+        # =====================================================
+        # TOTAL TEACHERS
+        # =====================================================
+        cur.execute("""
+            SELECT COUNT(id_teacher)
+            FROM tbl_teacher
+            WHERE id_admin = %s
+        """, (
+            session['id_admin'],
+        ))
+
+        data_teacher = cur.fetchone()[0]
+
+        # =====================================================
+        # TOTAL CLASSES TODAY
+        # =====================================================
+        cur.execute("""
+            SELECT COUNT(DISTINCT CONCAT(
+                start_time,
+                end_time,
+                id_teacher
+            ))
+            FROM tbl_teacher_schedule
+
+            WHERE class_day = %s
+              AND id_admin = %s
+        """, (
+            today_day,
+            session['id_admin']
+        ))
+
+        data_classes_today = cur.fetchone()[0]
+
+        cur.close()
+
+        # =====================================================
+        # SEND DATA TO DASHBOARD
+        # =====================================================
+        return render_template(
+            'admin/dashboard.html',
+            total_student=data_student,
+            total_teacher=data_teacher,
+            data_schedule=data,
+            total_classes_today=data_classes_today
+        )
+
+    flash("Please Login", "danger")
+    return redirect(url_for('login'))
 
 # STUDENT
 @app.route('/student')
@@ -194,77 +396,150 @@ def delete_teacher(id):
   return model_delete_teacher(id)
 
 
+# # SCHEDULE
+# @app.route('/schedule')
+# @login_required
+# def schedule():
+#   return model_schedule()
+
+# @app.route ('/add_schedule', methods=['GET', 'POST'])
+# @login_required
+# def add_schedule():
+#   return model_add_schedule()
+
+# @app.route('/edit_schedule/<int:id>', methods=['GET'])
+# @login_required
+# def edit_schedule(id):
+#   return model_edit_schedule(id)
+
+# @app.route('/process_edit_schedule', methods=['POST'])
+# @login_required
+# def process_edit_schedule():
+#   return model_process_edit_schedule()
+
+# @app.route('/edit_master_schedule/<int:id>', methods=['GET'])
+# @login_required
+# def edit_master_schedule(id):
+#   return model_edit_master_schedule(id)
+
+# @app.route('/process_edit_master_schedule', methods=['POST'])
+# @login_required
+# def process_edit_master_schedule():
+#   return model_process_edit_master_schedule()
+
+# @app.route('/delete_schedule/<int:id>', methods=['GET'])
+# @login_required
+# def delete_schedule(id):
+#   return model_delete_schedule(id)
+
+# @app.route('/delete_master_schedule/<int:id>', methods=['GET'])
+# @login_required
+# def delete_master_student(id):
+#   return model_delete_master_schedule(id)
+
+# @app.route('/get_attendance/<int:id>', methods=['GET'])
+# @login_required
+# def get_attendance(id):
+#   return model_get_attendance(id)
+
+# @app.route('/update_attendance', methods=['POST'])
+# @login_required
+# def update_attendance():
+#   return model_update_attendance()
+
+# @app.route('/get_attendance_by_attendance/<int:id>')
+# @login_required
+# def get_attendance_by_attendance(id):
+#     return model_get_attendance_by_attendance(id)
+
+# @app.route('/print_schedule')
+# @login_required
+# def print_schedule():
+#   return model_print_schedule()
+# =========================================================
 # SCHEDULE
+# =========================================================
 @app.route('/schedule')
 @login_required
 def schedule():
-  return model_schedule()
+    return model_schedule()
 
-@app.route ('/add_schedule', methods=['GET', 'POST'])
+# =========================================================
+# ADD STUDENT TO RECURRING TEACHER SCHEDULE
+# =========================================================
+@app.route('/add_teacher_schedule', methods=['POST'])
 @login_required
-def add_schedule():
-  return model_add_schedule()
+def add_teacher_schedule():
+    return model_add_teacher_schedule()
 
-@app.route('/edit_schedule/<int:id>', methods=['GET'])
+# =========================================================
+# EDIT STUDENT FROM RECURRING TEACHER SCHEDULE
+# =========================================================
+@app.route('/edit_teacher_schedule/<int:schedule_id>', methods=['POST'])
 @login_required
-def edit_schedule(id):
-  return model_edit_schedule(id)
+def edit_teacher_schedule(schedule_id):
+    return model_edit_teacher_schedule(schedule_id)
 
-@app.route('/process_edit_schedule', methods=['POST'])
+# =========================================================
+# DELETE STUDENT FROM RECURRING TEACHER SCHEDULE
+# =========================================================
+@app.route('/delete_teacher_schedule/<int:id>', methods=['POST'])
 @login_required
-def process_edit_schedule():
-  return model_process_edit_schedule()
+def delete_teacher_schedule(id):
+    return model_delete_teacher_schedule(id)
 
-@app.route('/edit_master_schedule/<int:id>', methods=['GET'])
+
+# =========================================================
+# GET STUDENTS FOR ADD STUDENT MODAL
+# =========================================================
+@app.route('/get_schedule_students', methods=['GET'])
 @login_required
-def edit_master_schedule(id):
-  return model_edit_master_schedule(id)
+def get_schedule_students():
+    return model_get_schedule_students()
 
-@app.route('/process_edit_master_schedule', methods=['POST'])
+
+# =========================================================
+# GET ATTENDANCE
+# =========================================================
+@app.route('/get_student_attendance', methods=['GET'])
 @login_required
-def process_edit_master_schedule():
-  return model_process_edit_master_schedule()
+def get_student_attendance():
+    return model_get_student_attendance()
 
-@app.route('/delete_schedule/<int:id>', methods=['GET'])
+
+# =========================================================
+# GET ONE ATTENDANCE RECORD
+# =========================================================
+@app.route('/get_student_attendance_record', methods=['GET'])
 @login_required
-def delete_schedule(id):
-  return model_delete_schedule(id)
+def get_student_attendance_record():
+    return model_get_student_attendance_record()
 
-@app.route('/delete_master_schedule/<int:id>', methods=['GET'])
+
+# =========================================================
+# SAVE ATTENDANCE
+# =========================================================
+@app.route('/save_student_attendance', methods=['POST'])
 @login_required
-def delete_master_student(id):
-  return model_delete_master_schedule(id)
+def save_student_attendance():
+    return model_save_student_attendance()
 
-# @app.route('/reschedule/<int:id>', methods=['GET'])
-# def reschedule(id):
-#   return model_reschedule(id)
-# @app.route('/process_reschedule', methods=['POST'])
-# def process_reschedule():
-#   return model_process_reschedule()
 
-# @app.route('/print_schedule', methods=['GET'])
-# def print_schedule():
-#   return model_print_schedule()
-
-@app.route('/get_attendance/<int:id>', methods=['GET'])
+# =========================================================
+# DELETE / CLEAR ATTENDANCE
+# =========================================================
+@app.route('/delete_student_attendance', methods=['POST'])
 @login_required
-def get_attendance(id):
-  return model_get_attendance(id)
+def delete_student_attendance():
+    return model_delete_student_attendance()
 
-@app.route('/update_attendance', methods=['POST'])
-@login_required
-def update_attendance():
-  return model_update_attendance()
-
-@app.route('/get_attendance_by_attendance/<int:id>')
-@login_required
-def get_attendance_by_attendance(id):
-    return model_get_attendance_by_attendance(id)
-
+# =========================================================
+# PRINT SCHEDULE
+# =========================================================
 @app.route('/print_schedule')
 @login_required
 def print_schedule():
-  return model_print_schedule()
+    return model_print_schedule()
 
 
 # TEACHER SCHEDULE PAGE

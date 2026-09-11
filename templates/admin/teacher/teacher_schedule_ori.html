@@ -1,0 +1,441 @@
+<!-- templates/teacher_schedule.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Quicksand:wght@300;400;500;600;700&family=Lexend:wght@100..900&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <title>Teacher Schedule</title>
+
+  <style>
+    body {
+      background-color: #f4f6f9;
+      font-family: Quicksand;
+    }
+
+    .page-title {
+      font-family: Lexend;
+      font-weight: 700;
+      color: #333;
+    }
+
+    .sticky-date-bar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    /* DATE DISPLAY */
+    .custom-date-input {
+      position: fixed;
+
+      width: 1px;
+      height: 1px;
+
+      opacity: 0.01;
+
+      border: none;
+      padding: 0;
+    }
+
+    .custom-date-input:focus {
+      outline: none;
+      border-color: none;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .date-display {
+      width: 100%;
+      padding: 16px 20px;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+
+      font-family: Lexend;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+
+      color: #374151;
+
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+
+      cursor: pointer;
+      transition: all .2s ease;
+    }
+
+    /* TEACHER TABLE */
+    .table-teacher {
+      max-height: 70vh;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .table-teacher thead th {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background-color: #f8fafc;
+      color: #374151;
+      font-weight: 700;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-family: Lexend;
+    }
+
+    .table-teacher tbody td {
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .slot-row {
+      vertical-align: middle;
+    }
+
+    .slot-row td {
+      padding-top: 2px;
+      padding-bottom: 2px;
+      height: 26px;
+      font-size: 14px;
+      line-height: 1.1;
+    }
+
+    .slot-row td[rowspan] {
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+
+    /* TIME PILL */
+    .time-pill {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 13.5px;
+      font-weight: 700;
+      background: #fff7ed;
+      color: #e84100;
+      border: 1px solid #fed7aa;
+    }
+
+    .name-box {
+      max-width: 160px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+      padding: 2px 6px;
+      margin: auto;
+      text-align: center;
+    }
+
+    .name-box::-webkit-scrollbar {
+      height: 3px;
+    }
+
+    .name-box::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 10px;
+    }
+
+    .rescheduled-class {
+      background-color: #fff3cd !important;
+    }
+
+    .trial-student {
+      background-color: #e7f3ff !important;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container-fluid py-4 px-4">
+
+    <h2 class="page-title mb-4">
+      Teacher Schedule
+    </h2>
+
+    <!-- DATE PICKER -->
+    <div class="sticky-date-bar mb-4">
+
+      <form method="get">
+        <div id="dateDisplay" class="date-display mb-2"></div>
+        <input type="date" id="scheduleDate" name="date" value="{{ selected_date }}" class="custom-date-input"
+          onchange="this.form.submit()">
+
+      </form>
+
+    </div>
+
+    <!-- TEACHER TABLE -->
+    <div class="row">
+
+      {% for teacher_id, data in schedule_map.items() %}
+
+      <div class="col-12 col-md-6 mb-4">
+
+        <div class="card h-100 shadow-sm border-0">
+
+          <!-- HEADER -->
+          <div class="card-header text-center" style="
+            background: white;
+            color: #333;
+            border-bottom: 3px solid #f97316;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-family: Lexend;
+            font-weight: 700;
+            font-size: 15px;
+          ">
+            {{ data.teacher_name }}
+          </div>
+
+          <!-- TABLE -->
+          <div class="table-teacher">
+
+            <table class="table table-bordered text-center mb-0 bg-white">
+
+              <thead>
+                <tr>
+                  <th style="width:130px;">Time</th>
+                  <th>Student</th>
+                  <th>Level</th>
+                </tr>
+              </thead>
+
+              <tbody>
+
+                {% for start, end in time_slots %}
+
+                {% set slot = start ~ "-" ~ end %}
+                {% set students = data.slots[slot] %}
+
+                {% for i in range(6) %}
+
+                <tr class="slot-row
+                  {% if students|length > i and students[i].rescheduled_from %}
+                    rescheduled-class
+                  {% endif %}
+                ">
+
+                  {% if i == 0 %}
+                  <td rowspan="6" class="align-middle text-center">
+                    <span class="time-pill">
+                      {{ slot }}
+                    </span>
+                  </td>
+                  {% endif %}
+
+                  {% if students|length > i %}
+
+                  <td class="
+                    name-box
+                    {% if students[i].is_trial %}
+                      trial-student
+                    {% endif %}
+                  ">
+
+                    {% if students[i].is_rescheduled %}
+                    🔁
+                    {% elif students[i].status == 'present' %}
+                    ✅
+                    {% elif students[i].status == 'absent' %}
+                    ❌
+                    {% endif %}
+
+                    {{ students[i].student_name }}
+                    {% if students[i].age %}
+                    ({{ students[i].age }})
+                    {% endif %}
+                  </td>
+
+                  <td>
+                    {{ students[i].level }}
+                  </td>
+
+                  {% else %}
+
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+
+                  {% endif %}
+
+                </tr>
+
+                {% endfor %}
+                {% endfor %}
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {% endfor %}
+
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    const dateInput = document.getElementById("scheduleDate");
+    const dateDisplay = document.getElementById("dateDisplay");
+
+    // =========================
+    // Detect iPhone / iPad
+    // =========================
+    function isIOS() {
+      return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    }
+
+    // =========================
+    // Format Date
+    // Example:
+    // THURSDAY, 21 MAY 2026
+    // =========================
+    function formatDate(dateStr) {
+
+      if (!dateStr) return "";
+
+      const [year, month, day] = dateStr.split("-");
+
+      const date = new Date(
+        Number(year),
+        Number(month) - 1,
+        Number(day)
+      );
+
+      const weekday = date.toLocaleDateString("en-GB", {
+        weekday: "long"
+      });
+
+      const rest = date.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+      });
+
+      return `${weekday}, ${rest}`.toUpperCase();
+    }
+
+    // =========================
+    // Update Display
+    // =========================
+    function updateDateDisplay() {
+
+      const selectedDate = dateInput.value;
+
+      if (!selectedDate) {
+        dateDisplay.textContent = "";
+        return;
+      }
+
+      const today = new Date();
+
+      const todayString =
+        today.getFullYear() + "-" +
+        String(today.getMonth() + 1).padStart(2, "0") + "-" +
+        String(today.getDate()).padStart(2, "0");
+
+      if (selectedDate === todayString) {
+        dateDisplay.textContent =
+          "TODAY - " + formatDate(selectedDate);
+      } else {
+        dateDisplay.textContent =
+          formatDate(selectedDate);
+      }
+    }
+
+    // Initial load
+    updateDateDisplay();
+
+    // Update when date changes
+    dateInput.addEventListener("change", updateDateDisplay);
+
+    // =========================
+    // Open Date Picker
+    // =========================
+    dateDisplay.addEventListener("click", () => {
+
+      // iPhone / iPad Safari
+      if (isIOS()) {
+
+        dateInput.style.position = "fixed";
+        dateInput.style.top = "0";
+        dateInput.style.left = "0";
+        dateInput.style.width = "1px";
+        dateInput.style.height = "1px";
+        dateInput.style.opacity = "0.01";
+        dateInput.style.pointerEvents = "auto";
+
+        dateInput.focus();
+
+        setTimeout(() => {
+          dateInput.click();
+        }, 0);
+
+        return;
+      }
+
+      // Chrome / Edge / Android
+      if (typeof dateInput.showPicker === "function") {
+        dateInput.showPicker();
+        return;
+      }
+
+      // Generic fallback
+      dateInput.focus();
+
+      try {
+        dateInput.click();
+      } catch (e) {
+        console.log(e);
+      }
+
+    });
+
+    // Keyboard accessibility
+    dateDisplay.setAttribute("tabindex", "0");
+
+    dateDisplay.addEventListener("keydown", (e) => {
+
+      if (e.key === "Enter" || e.key === " ") {
+
+        e.preventDefault();
+
+        dateDisplay.click();
+
+      }
+
+    });
+  </script>
+
+</body>
+
+</html>

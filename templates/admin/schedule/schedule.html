@@ -2,48 +2,38 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
-    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
-    href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&family=Quicksand:wght@300..700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Lexend:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <!-- Lexend -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet">
   <title>Schedule</title>
+
   <style>
     body {
       overflow-x: hidden;
+      font-family: 'Quicksand';
     }
 
-    /* ALERTS */
+    /* =====================================================
+           ALERT
+    ===================================================== */
     .custom-alert {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
+      border: none;
+      border-radius: 12px;
       padding: 14px 16px;
       margin-bottom: 20px;
-      border-radius: 12px;
-      border: none;
-    }
-
-    .alert-content {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    .alert-content i {
-      font-size: 18px;
     }
 
     .custom-alert.success {
@@ -58,79 +48,309 @@
       border-left: 5px solid #dc3545;
     }
 
-    .custom-alert.warning {
-      background: #fff8e5;
-      color: #b78103;
-      border-left: 5px solid #ffc107;
-    }
-
-    .custom-alert.info {
-      background: #eef7ff;
-      color: #0d6efd;
-      border-left: 5px solid #0d6efd;
-    }
-
     .alert-close {
       background: none;
       border: none;
-      padding: 0;
-      margin-left: 15px;
       color: inherit;
       font-size: 18px;
-      cursor: pointer;
-      opacity: .6;
+      opacity: .7;
+    }
+
+    /* =====================================================
+           DAY BUTTONS
+    ===================================================== */
+    .day-selector {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .day-btn {
+      min-width: 72px;
+      border: 2px solid #ffa682;
+      background: white;
+      color: #555;
+      border-radius: 10px;
+      padding: 9px 16px;
+      font-family: 'Lexend', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .7px;
+      text-decoration: none;
+      text-align: center;
       transition: .2s;
     }
 
-    .alert-close:hover {
-      opacity: 1;
-      transform: scale(1.1);
+    .day-btn:hover {
+      background: #fff2be;
     }
 
-    /* TABLE */
-    .table-responsive thead th {
-      background-color: #ffe066 !important;
-      font-family: Lexend;
-      font-size: 13px;
+    .day-btn.active {
+      background: #ff682d;
+      border-color: #ff682d;
+      color: white;
+    }
+
+    /* =====================================================
+           TEACHER SCHEDULE GRID
+    ===================================================== */
+    .teacher-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 28px;
+      align-items: start;
+    }
+
+    .teacher-card {
+      background: white;
+      border: 1px solid #d9d9d9;
+      border-radius: 5px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
+    }
+
+    .teacher-header {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 50px;
+      padding: 10px 16px;
+      background: #ffffff;
+      border-bottom: 3px solid #ff682d;
+    }
+
+    .teacher-name {
+      font-family: 'Lexend', sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 1.3px;
       text-transform: uppercase;
       color: #333;
-      letter-spacing: 1px;
-      border-bottom: 1px solid #dee2e6 !important;
+    }
 
+    .teacher-icon {
+      display: none;
+    }
+
+    /* =====================================================
+           SCHEDULE TABLE
+    ===================================================== */
+    .schedule-wrapper {
+      width: 100%;
+      max-height: 480px;
+      overflow-x: auto;
+      overflow-y: auto;
+    }
+
+    .schedule-wrapper .schedule-table thead th {
       position: sticky;
       top: 0;
-      z-index: 20; /* higher so it stays above rows */
+      z-index: 10;
     }
 
-    .table-responsive thead th:hover {
-      background-color: #ffe066 !important;
+    .schedule-table {
+      width: 100%;
+      margin: 0;
+      border-collapse: collapse;
+      table-layout: fixed;
     }
 
-    .table-responsive thead tr:hover {
-      background-color: #ffe066 !important;
+    .schedule-table th {
+      background: #f4f6f8;
+      color: #3d4b5c;
+      font-family: 'Lexend', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      padding: 12px 8px;
+      border: 1px solid #d9dee3;
+      border-top: none;
+      text-align: center;
     }
 
-    .table-responsive tbody td {
+    .schedule-table td {
+      height: 48px;
+      padding: 6px 9px;
+      border: 1px solid #d9dee3;
+      vertical-align: middle;
+      font-size: 13px;
       font-weight: 500;
-      font-size: 14px;
+      background: #fff;
     }
 
-    .table-responsive tbody tr:hover {
-      background-color: #fff7f2;
+    .schedule-table tbody tr:hover td {
+      background: #fff7f2;
     }
 
-    .table-responsive {
-      max-height: 75vh;
-      overflow-y: auto;
-      position: relative;
+    .time-column {
+      width: 17%;
     }
 
-    /* FILTER */
+    .student-column {
+      width: 25%;
+    }
+
+    .level-column {
+      width: 13%;
+    }
+
+    .notes-column {
+      width: 18%;
+    }
+
+    .action-column {
+      width: 12%;
+      min-width: 100px;
+    }
+
+    .slot-time {
+      text-align: center;
+      background: #fff !important;
+      font-family: 'Lexend', sans-serif;
+      font-weight: 600;
+      color: #ff682d;
+      white-space: nowrap;
+    }
+
+    .slot-time span {
+      display: inline-block;
+      padding: 5px 10px;
+      border: 1px solid #ffb17f;
+      border-radius: 18px;
+      background: #fffaf5;
+    }
+
+    /* =====================================================
+           STUDENT ROW
+        ===================================================== */
+    .trial-student-name {
+      background: #dff6ff;
+      border-radius: 4px;
+      padding: 2px 4px;
+    }
+
+    .level-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 5px;
+      background: #fff2be;
+      color: #765d00;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .notes-text {
+      color: #666;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* =====================================================
+           EMPTY ROW / ADD BUTTON
+        ===================================================== */
+    .empty-student {
+      color: #c5c5c5;
+      font-size: 11px;
+    }
+
+    .add-student-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #676767;
+      background: #F4F6F8;
+      border-radius: 100px;
+      padding: 5px 6px;
+      font-size: 8px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    /* =====================================================
+           ACTION BUTTONS
+    ===================================================== */
+    .action-buttons {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .action-btn {
+      width: 31px;
+      height: 31px;
+      border: none;
+      border-radius: 5px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: .15s;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .edit-btn {
+      background: #ffc107;
+      color: #111;
+    }
+
+    .edit-btn:hover {
+      background: #e0a800;
+      color: #111;
+    }
+
+    .delete-btn {
+      background: #e9344f;
+      color: white;
+    }
+
+    .delete-btn:hover {
+      background: #c8233d;
+      color: white;
+    }
+
+    .row-add-action {
+      text-align: center;
+      background: #fff !important;
+    }
+
+    /* =====================================================
+           RESPONSIVE
+        ===================================================== */
+
+    @media (max-width: 1100px) {
+      .teacher-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* =====================================================
+           ATTENDANCE SECTION
+        ===================================================== */
+    .attendance-section {
+      margin-top: 45px;
+    }
+
+    .attendance-card {
+      background: white;
+      /* border: 1px solid #e8e8e8; */
+      /* box-shadow: 0 3px 12px rgba(0, 0, 0, .04); */
+      overflow: hidden;
+    }
+
     .filter-input {
+      flex: 1;
+      min-width: 0;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      border: 1px solid #dedede;
       border-radius: 12px;
       overflow: hidden;
+      background: white;
       transition: 0.2s;
-      border: 1px solid #dedede;
     }
 
     .filter-input:focus-within {
@@ -138,15 +358,30 @@
     }
 
     .filter-input .input-group-text {
+      width: 44px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
       background-color: #fff1d9;
       border: none;
       color: #ff682d;
       font-size: 14px;
+      flex-shrink: 0;
     }
 
     .filter-input input,
     .filter-input select {
+      flex: 1;
+      width: 0;
+      height: 100%;
+      padding: 0 10px;
       font-size: 14px;
+      border: none;
+      outline: none;
+      box-shadow: none;
+      background: transparent;
     }
 
     .filter-input .form-control,
@@ -156,159 +391,232 @@
       font-weight: 500;
     }
 
-    /* TABLE TEACHER */
-    .table-teacher {
-      max-height: 70vh;
+    .attendance-table-wrapper {
+      overflow-x: auto;
+      max-height: 480px;
       overflow-y: auto;
-      position: relative;
     }
 
-    .table-teacher thead th {
+    .attendance-table {
+      width: 100%;
+      min-width: 850px;
+      border-collapse: collapse;
+    }
+
+    .attendance-table th {
       position: sticky;
       top: 0;
-      z-index: 10;
-      background-color: #f8fafc;
-      color: #374151;
-      font-weight: 700;
-      font-size: 14px;
+      z-index: 5;
+      background: #ffe066;
+      color: #333;
+      padding: 11px 8px;
+      font-family: 'Lexend', sans-serif;
+      font-size: 13px;
       text-transform: uppercase;
       letter-spacing: 1px;
-      font-weight: bold;
+      text-align: center;
+      border-bottom: 1px solid #dee2e6;
     }
 
-    .table-teacher tbody td {
-      font-weight: 500;
+    .attendance-table td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #eee;
+      text-align: center;
       font-size: 14px;
     }
 
-    /* TIME PILL */
-    .time-pill {
-      display: inline-block;
-      padding: 5px 12px;
-      border-radius: 999px;
-      font-size: 13.5px;
-      font-weight: 700;
-      background: #fff7ed;
-      color: #e84100;
-      border: 1px solid #fed7aa;
+    .attendance-table tbody tr:hover {
+      background: #fff7f2;
     }
 
-    .slot-row {
-      vertical-align: middle;
+    .attendance-name {
+      text-align: left !important;
+      font-weight: 600;
+      max-width: 200px;
+      position: sticky;
+      left: 0;
+      background: white;
+      z-index: 2;
     }
 
-    .slot-row td {
-      padding-top: 2px;
-      padding-bottom: 2px;
-      height: 26px;
-      font-size: 14px;
-      line-height: 1.1;
+    .attendance-table tbody tr:hover .attendance-name {
+      background: #fff7f2;
     }
 
-    .slot-row td[rowspan] {
-      padding-top: 0;
-      padding-bottom: 0;
-    }
-
-    /* DATE DISPLAY */
-    .date-display {
-      width: 100%;
+    /* =====================================================
+           MEETING BOX
+        ===================================================== */
+    .meeting-box {
+      width: 38px;
+      height: 38px;
+      margin: auto;
+      border-radius: 8px;
+      border: 2px solid #e2e2e2;
+      background: #f8f8f8;
+      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 14px 20px;
-      border-radius: 12px;
-      font-family: Lexend;
+      font-family: 'Lexend', sans-serif;
+      font-size: 11px;
       font-weight: 700;
-      font-size: 14px;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: #333;
-      background: white;
-      border: 1px solid #e5e7eb;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-      cursor: pointer;
-      transition: all 0.25s ease;
+      transition: .2s;
+      position: relative;
     }
 
-    .date-display:hover {
-      transform: translateY(-1px);
+    .meeting-box:hover {
+      border-color: #ff9b76;
     }
 
-    /* ATTENDANCE TABLE */
-    #attendanceTable td:last-child {
-      padding-left: 0px !important;
-      padding-right: 0px !important;
+    .meeting-box.present {
+      background: #eaf8ef;
+      border-color: #73c991;
+      color: #198754;
     }
 
-    /* NAME BOX */
-    .name-box {
-      max-width: 150px;
-      height: 24px;
-      overflow-x: auto;
-      overflow-y: hidden;
+    .meeting-box.absent {
+      background: #fdecec;
+      border-color: #ef9292;
+      color: #dc3545;
+    }
+
+    .meeting-box.none {
+      background: #f8f8f8;
+      color: #aaa;
+    }
+
+    .meeting-box.has-date::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: white;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 500;
       white-space: nowrap;
-      padding: 2px 6px;
-      margin: auto;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity .15s ease;
+      z-index: 100;
+    }
+
+    .meeting-box.has-date:hover::after {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* =====================================================
+           NO ATTENDANCE
+    ===================================================== */
+    .no-attendance {
+      padding: 35px;
       text-align: center;
+      color: #666;
+      font-size: 14px;
+      font-weight: bold;
     }
 
-    .name-box span {
-      display: inline-block;
-      min-width: 100%;
+    /* =====================================================
+           MODALS
+    ===================================================== */
+    .modal-content {
+      border: none;
+      border-radius: 15px;
+      overflow: hidden;
     }
 
-    .name-box::-webkit-scrollbar {
-      height: 3px;
+    .modal-body {
+      padding: 22px;
     }
 
-    .name-box::-webkit-scrollbar-thumb {
-      background: #c1c1c1;
-      border-radius: 10px;
+    .btn-add {
+      background: #ff682d;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      padding: 8px 18px;
+      font-family: 'Lexend', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
     }
 
-    .name-box::-webkit-scrollbar-thumb:hover {
-      background: #999;
+    .btn-cancel {
+      background: #f1f1f1;
+      border: none;
+      color: #333;
+      border-radius: 5px;
+      padding: 8px 18px;
+      font-family: 'Lexend', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
     }
 
-    .trial-student {
-      background-color: #e7f3ff !important;
+    /* =====================================================
+           RESPONSIVE
+        ===================================================== */
+
+    @media (max-width: 768px) {
+
+      .main-content {
+        padding: 16px;
+      }
+
+      .teacher-header {
+        padding: 13px 15px;
+      }
+
+      .schedule-table {
+        min-width: 850px;
+      }
+
+      .attendance-filters {
+        width: 100%;
+      }
+
+      .filter-box {
+        flex: 1;
+      }
+
+      .filter-box select,
+      .filter-box input {
+        width: 100%;
+      }
+
     }
   </style>
 </head>
 
-<body style="font-family: Quicksand;">
 
-  <!-- TOP NAVBAR -->
+<body>
   {% include 'admin/components/top_navbar.html' %}
 
   <div class="d-flex">
-
     <!-- SIDEBAR -->
     {% include 'admin/components/sidebar.html' %}
 
     <!-- MAIN CONTENT -->
-    <div class="flex-grow-1 p-4 justify-content-center" style="background-color: #f4f6f9;">
-      <!-- Popup -->
+    <div class="flex-grow-1 p-4" style="background-color: #f4f6f9;">
+      <h2 class="mb-4 fw-bold">Schedule</h2>
       {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
       {% for category, message in messages %}
-      <div class="custom-alert alert alert- {{ category }} alert-dismissible fade show" role="alert">
-        <div class="d-flex align-items-center">
+      <div class="custom-alert {{ category }}">
+        <div>
           {% if category == "success" %}
           <i class="fa-solid fa-circle-check me-2"></i>
           {% elif category == "danger" %}
           <i class="fa-solid fa-circle-xmark me-2"></i>
-          {% elif category == "warning" %}  
-          <i class="fa-solid fa-triangle-exclamation me-2"></i>
           {% else %}
           <i class="fa-solid fa-circle-info me-2"></i>
           {% endif %}
-
-          <span>{{ message }}</span>
+          {{ message }}
         </div>
-
-        <button type="button" class="alert-close" data-bs-dismiss="alert" aria-label="Close">
+        <button type="button" class="alert-close" onclick="this.parentElement.remove()">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
@@ -316,798 +624,1009 @@
       {% endif %}
       {% endwith %}
 
-      <h2 class="fw-bold mb-4">Schedule</h2>
 
-      <!-- MASTER SCHEDULE TABLE -->
-      <div class="mb-4">
-
-        <div class="d-flex gap-2 mb-3 align-items-center">
-          <!-- Filter -->
-          <form method="get" class="row g-2 align-items-center w-100">
-            <div class="col-12 col-sm-6 col-md-4 col-lg-2">
-              <div class="input-group filter-input">
-                <span class="input-group-text">
-                  <i class="fa-solid fa-calendar-days"></i>
-                </span>
-                <select id="yearFilter" class="form-select w-auto"></select>
-              </div>
-            </div>
-
-            <div class="col-12 col-sm-6 col-md-4 col-lg-2">
-              <div class="input-group filter-input">
-                <span class="input-group-text">
-                  <i class="fa-solid fa-book-open"></i>
-                </span>
-                <select id="termFilter" class="form-select w-auto">
-                  <option value="">All Terms</option>
-                  <option value="1">Term 1</option>
-                  <option value="2">Term 2</option>
-                  <option value="3">Term 3</option>
-                  <option value="4">Term 4</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="col-12 col-sm-6 col-md-4 col-lg-2">
-              <div class="input-group filter-input">
-                <span class="input-group-text">
-                  <i class="fa-solid fa-layer-group"></i>
-                </span>
-                <select id="dayFilter" class="form-select">
-                  <option value="">All Days</option>
-                  <option value="MON">Monday</option>
-                  <option value="TUE">Tuesday</option>
-                  <option value="WED">Wednesday</option>
-                  <option value="THU">Thursday</option>
-                  <option value="FRI">Friday</option>
-                  <option value="SAT">Saturday</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="col-12 col-sm-6 col-md-4 col-lg-2">
-              <!-- LEVEL FILTER -->
-              <div class="input-group filter-input">
-                <span class="input-group-text">
-                  <i class="fa-solid fa-level-up"></i>
-                </span>
-                <select name="level" class="form-select w-auto" onchange="this.form.submit()">
-                  <option value="">All Levels</option>
-                  {% for level in levels %}
-                  <option value="{{ level[0] }}"
-                    {% if request.args.get('level') == level[0]|string %}selected{% endif %}>
-                    {{ level[1] }}
-                  </option>
-                  {% endfor %}
-                </select>
-              </div>
-            </div>
-
-            <div class="col-12 col-sm-6 col-md-4 col-lg-2">
-              <!-- TEACHER FILTER -->
-              <div class="input-group filter-input">
-                <span class="input-group-text">
-                  <i class="fa-solid fa-chalkboard-user"></i>
-                </span>
-                <select name="teacher" class="form-select" onchange="this.form.submit()">
-                  <option value="">All Teachers</option>
-                  {% for t in teachers_filter %}
-                  <option value="{{ t[0] }}" {% if request.args.get('teacher') == t[0]|string %}selected{% endif %}>
-                    {{ t[1] }}
-                  </option>
-                  {% endfor %}
-                </select>
-              </div>
-            </div>
-
-            <div class="col-12 col-sm-6 col-md-4 col-lg-2">
-              <div class="input-group filter-input">
-                <span class="input-group-text">
-                  <i class="fa-solid fa-search"></i>
-                </span>
-                <input type="text" id="studentFilter" class="form-control" placeholder="Search student">
-              </div>
-            </div>
-          </form>
-        </div>
-
-        <a href="/add_schedule" class="btn fw-bold mb-3" style="background-color: #ff682d; color: white;">Add
-          Schedule
+      <!-- =================================================
+                 DAY SELECTOR
+      ================================================= -->
+      <div class="day-selector">
+        {% for day in days %}
+        <a href="{{ url_for('schedule', day=day) }}" class="day-btn {% if selected_day == day %}active{% endif %}">
+          {{ day }}
         </a>
-
-        <a href="/print_schedule" class="btn fw-bold mb-3 ms-3" style="background-color: #FFC107; color: white;">
-          Print Schedule
-        </a>
-
-        <!-- Table -->
-        <div class="table-responsive">
-          <table id="studentScheduleTable" class="table align-middle bg-white text-center">
-            <thead class="sticky-top">
-              <tr class="text-nowrap">
-                <th scope="col">Year</th>
-                <th scope="col">Term</th>
-                <th scope="col">Class Day</th>
-                <th scope="col">Time</th>
-                <th scope="col">Student</th>
-                <th scope="col">Level</th>
-                <th scope="col">Teacher</th>
-                <th scope="col">Start Date</th>
-                <th scope="col">Meetings</th>
-                <th scope="col">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for row in data_master_schedule %}
-              <tr>
-                <td>{{ row[1] }}</td> <!-- Year -->
-                <td>{{ row[2] }}</td> <!-- Term -->
-                <td>{{ row[4] }}</td> <!-- Class Day -->
-                <td>{{ row[5] }} - {{ row[6] }}</td> <!-- Time -->
-                <!-- Student -->
-                <td>
-                  <div class="name-box">
-                    <span>{{ row[8] }}</span>
-                  </div>
-                </td>
-                <td data-level-id="{{ row[10] }}">{{ row[7] }}</td> <!-- Level -->
-                <td>{{ row[9] }}</td> <!-- Teacher -->
-                <td>{{ row[3] }}</td> <!-- Start Date -->
-                <td>{{ row[10] }}</td> <!-- Meetings -->
-                <td>
-                  <a href="/edit_master_schedule/{{ row[0] }}" class="btn btn-warning btn-sm fw-bold">
-                    <i class="fa-solid fa-pen" style="font-size: 13px;"></i>
-                  </a>
-                  <button type="button" class="btn btn-danger btn-sm fw-bold" data-bs-toggle="modal"
-                    data-bs-target="#deleteMasterModal{{ row[0] }}">
-                    <i class="fa-solid fa-trash" style="font-size: 13px;"></i>
-                  </button>
-
-                  <!-- Delete Confirmation Modal -->
-                  <div class="modal fade" id="deleteMasterModal{{ row[0] }}" tabindex="-1"
-                    aria-labelledby="deleteMasterModalLabel{{ row[0] }}" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                      <div class="modal-content">
-                        <div class="modal-header">
-                          <h5 class="modal-title" id="deleteMasterModalLabel{{ row[0] }}">Confirm Delete</h5>
-                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                          Are you sure you want to delete this student schedule? This will remove all future classes.
-                        </div>
-                        <div class="modal-footer">
-                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                          <a href="/delete_master_schedule/{{ row[0] }}" class="btn btn-danger">Confirm</a>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- DATE PICKER -->
-      <form method="get" class="mb-3" style="position: sticky; top: 0; z-index: 1050;">
-        <input type="date" id="scheduleDate" name="date" value="{{ selected_date }}" class="visually-hidden"
-          onchange="this.form.submit()">
-        <div class="text-center">
-          <div id="dateDisplay" class="date-display shadow-sm"></div>
-        </div>
-      </form>
-
-      <!-- TEACHER TABLE -->
-      <div class="row">
-        {% for teacher_id, data in schedule_map.items() %}
-
-        <div class="col-12 col-md-6 mb-4">
-          <div class="card h-100 shadow-sm">
-
-            <div class="card-header fw-bold text-center" style="
-              background: white;
-              color: #333;
-              border-bottom: 3px solid #f97316;
-              letter-spacing: 1px;
-              text-transform: uppercase;
-              font-family: lexend;
-              font-weight: bold;
-              font-size: 15px;
-            ">
-              {{ data.teacher_name }}
-            </div>
-
-            <div class="table-teacher">
-              <table class="table table-bordered text-center mb-0">
-
-                <thead>
-                  <tr>
-                    <th style="width:130px;">Time</th>
-                    <th>Student</th>
-                    <th>Level</th>
-                    <th style="width:160px;">Action</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {% for start, end in time_slots %}
-                  {% set slot = start ~ "-" ~ end %}
-                  {% set students = data.slots[slot] %}
-
-                  {% for i in range(6) %}
-                  <tr class="slot-row">
-                    {% if i == 0 %}
-                    <td rowspan="6" class="align-middle text-center">
-                      <span class="time-pill
-                        {% if start == '09:00' %} pill-09
-                        {% elif start == '10:00' %} pill-10
-                        {% elif start == '11:00' %} pill-11
-                        {% elif start == '12:00' %} pill-12
-                        {% elif start == '13:00' %} pill-13
-                        {% elif start == '14:00' %} pill-14
-                        {% elif start == '15:00' %} pill-15
-                        {% elif start == '16:00' %} pill-16
-                        {% endif %}
-                      ">
-                        {{ slot }}
-                      </span>
-                    </td>
-                    {% endif %}
-
-                    {% if students|length > i %}
-                    <td class="{% if students[i].is_trial %}trial-student{% endif %} name-box">
-                      {% if students[i].status == 'present' %}
-                      ✅
-                      {% elif students[i].status == 'absent' %}
-                      ❌
-                      {% endif %}
-                      {{ students[i].student_name }} ({{ students[i].age }})
-                    </td>
-                    <td>{{ students[i].level }}</td>
-                    <td>
-                      <!-- Mark Attendance -->
-                      <button class="btn btn-primary btn-sm fw-bold"
-                        onclick="openAttendance({{ students[i].id_schedule }})">
-                        <i class="fa-solid fa-clipboard-check" style="font-size: 13px;"></i>
-                      </button>
-                      <!-- Edit Schedule -->
-                      <a href="/edit_schedule/{{ students[i].id_schedule }}" class="btn btn-warning btn-sm fw-bold">
-                        <i class="fa-solid fa-pen" style="font-size: 13px;"></i>
-                      </a>
-                      <!-- Delete Schedule -->
-                      <button type="button" class="btn btn-danger btn-sm fw-bold" data-bs-toggle="modal"
-                        data-bs-target="#deleteScheduleModal{{ students[i].id_schedule }}">
-                        <i class="fa-solid fa-trash" style="font-size: 13px;"></i>
-                      </button>
-
-                      <!-- Delete Confirmation Modal -->
-                      <div class="modal fade" id="deleteScheduleModal{{ students[i].id_schedule }}" tabindex="-1"
-                        aria-labelledby="deleteScheduleModal{{ students[i].id_schedule }}" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
-                          <div class="modal-content">
-                            <div class="modal-header">
-                              <h5 class="modal-title" id="deleteScheduleModal{{ students[i].id_schedule }}">Confirm
-                                Delete</h5>
-                              <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                              Are you sure you want to delete this schedule?
-                            </div>
-                            <div class="modal-footer">
-                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                              <a href="/delete_schedule/{{ students[i].id_schedule }}"
-                                class="btn btn-danger">Confirm</a>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                    </td>
-                    {% else %}
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
-                    {% endif %}
-
-                  </tr>
-                  {% endfor %}
-                  {% endfor %}
-                </tbody>
-
-              </table>
-            </div>
-
-          </div>
-        </div>
-
         {% endfor %}
       </div>
 
+      <!-- =================================================
+                 TEACHERS
+            ================================================= -->
+      <div class="teacher-grid">
+        {% for teacher_id, teacher in schedule_map.items() %}
+        <div class="teacher-card">
+          <div class="teacher-header">
+            <div class="teacher-name">
+              {{ teacher.name }}
+            </div>
+          </div>
+          <div class="schedule-wrapper">
+            <table class="schedule-table">
+              <thead>
+                <tr>
+                  <th class="time-column">Time</th>
+                  <th class="student-column">Student</th>
+                  <th class="level-column">Level</th>
+                  <th class="notes-column">Notes</th>
+                  <th class="action-column">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for slot_key, students in teacher.slots.items() %}
+                {% set start_time = slot_key[0] %}
+                {% set end_time = slot_key[1] %}
+                {% set row_count = students|length + (1 if students|length < 6 else 0) %}
+                {% for row_index in range(row_count) %}
+                {% set student = students[row_index] if row_index < students|length else none %}
+                <tr>
+                  {% if row_index == 0 %}
+                  <td class="slot-time" rowspan="{{ row_count }}">
+                    <span>{{ start_time }}-{{ end_time }}</span>
+                  </td>
+                  {% endif %}
+                  {% if student %}
+                  <td>
+                    <span class="student-name {% if student.student_type == 'trial' %}trial-student-name{% endif %}">
+                      {{ student.name }}{% if student.age %} ({{ student.age }}){% endif %}
+                    </span>
+                  </td>
 
-      <!-- ATTENDANCE TRACKER -->
-      <h3 class="fw-bold mt-3 mb-3">Attendance Tracker</h3>
+                  <td class="text-center">
+                    <span class="level-badge">
+                      {{ student.level_name }}
+                    </span>
+                  </td>
 
-      <!-- Attendance Filter -->
-      <div class="d-flex gap-2 mb-3 align-items-center">
+                  <td>
+                    {% if student.notes %}
+                    <span class="notes-text">
+                      {{ student.notes }}
+                    </span>
 
-        <div class="input-group filter-input">
-          <span class="input-group-text">
-            <i class="fa-solid fa-calendar-days"></i>
-          </span>
-          <select id="attendanceYearFilter" class="form-select w-auto"></select>
-        </div>
-
-        <div class="input-group filter-input">
-          <span class="input-group-text">
-            <i class="fa-solid fa-book-open"></i>
-          </span>
-          <select id="attendanceTermFilter" class="form-select w-auto">
-            <option value="">All Terms</option>
-            <option value="1">Term 1</option>
-            <option value="2">Term 2</option>
-            <option value="3">Term 3</option>
-            <option value="4">Term 4</option>
-          </select>
-        </div>
-
-        <div class="input-group filter-input">
-          <span class="input-group-text">
-            <i class="fa-solid fa-search"></i>
-          </span>
-          <input type="text" id="attendanceStudentFilter" class="form-control w-25" placeholder="Search student">
-        </div>
-      </div>
-
-      <!-- ATTENDANCE TABLE -->
-      <div class="table-responsive" style="margin-bottom: 30px;">
-        <table id="attendanceTable" class="table text-center bg-white align-middle">
-          <thead>
-            <tr>
-              <th>Year</th>
-              <th>Term</th>
-              <th>Student</th>
-              <th>Meetings</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {% for row in attendance_tracker %}
-            <tr>
-              <td>{{row.year}}</td>
-              <td>{{ row.term }}</td>
-              <td>{{row.student}}</td>
-              <!-- <td>
-                <div class="name-box">
-                  <span>{{ row.student }}</span>
-                </div>
-              </td> -->
-              <td>
-                <div style="display:flex; flex-wrap:wrap; gap:6px; justify-content:center;">
-                  {% for meeting in row.meetings %}
-                  <div data-bs-toggle="tooltip" title="Class: {{ meeting.date }}" onclick="openAttendanceByAttendanceId({{ meeting.id_attendance }})"
-                  style="
-                    width:28px;
-                    height:28px;
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    border-radius:6px;
-                    font-size:14px;
-                    background:
-                      {% if meeting.status == 'present' %}
-                        #d4edda
-                      {% elif meeting.status == 'absent' %}
-                        #f8d7da
-                      {% else %}
-                        #e2e3e5
-                      {% endif %};
-                  ">
-                    {% if meeting.status == "present" %}
-                    ✅
-                    {% elif meeting.status == "absent" %}
-                    ❌
                     {% else %}
-                    –
+                    <span class="text-muted">—</span>
                     {% endif %}
-                  </div>
-                  {% endfor %}
+                  </td>
 
-                </div>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+                  <td>
+                    <div class="action-buttons">
+
+                      <button type="button" class="action-btn edit-btn" title="Edit student" onclick='openEditStudentModal(
+                          {{ student.id_teacher_schedule|tojson }},
+                          {{ teacher.id_teacher|tojson }},
+                          {{ selected_day|tojson }},
+                          {{ start_time|tojson }},
+                          {{ end_time|tojson }},
+                          {{ student.student_type|tojson }},
+                          {{ (student.id_student or "")|tojson }},
+                          {{ (student.id_trial_student or "")|tojson }},
+                          {{ student.id_level|tojson }},
+                          {{ student.notes|tojson }}
+                        )'>
+                        <i class="fa-solid fa-pen"></i>
+                      </button>
+
+                      <button type="button" class="action-btn delete-btn" title="Remove student" onclick="confirmDelete(
+                          {{ student.id_teacher_schedule }},
+                          '{{ selected_day }}'
+                        )">
+                        <i class="fa-solid fa-trash"></i>
+                      </button>
+
+                    </div>
+                  </td>
+
+                  {% else %}
+
+                  <td>
+                    <button type="button" class="add-student-btn" onclick="openAddStudentModal(
+                        {{ teacher.id_teacher }},
+                        '{{ selected_day }}',
+                        '{{ start_time }}',
+                        '{{ end_time }}'
+                      )">
+                      <i class="fa-solid fa-plus"></i>
+                    </button>
+                  </td>
+
+                  <td>
+                    <span class="empty-student">—</span>
+                  </td>
+
+                  <td>
+                    <span class="empty-student">—</span>
+                  </td>
+
+                  <td class="row-add-action"></td>
+                  {% endif %}
+                </tr>
+                {% endfor %}
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% endfor %}
       </div>
 
-    </div>
+      <!-- =================================================
+                 ATTENDANCE
+      ================================================= -->
+      <div class="attendance-section mb-3">
+        <h2 class="mb-4 fw-bold">Attendance</h2>
 
-  </div>
-
-  <!-- MARK ATTENDANCE -->
-  <div class="modal fade" id="attendanceModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="attendanceModalTitle">Mark Attendance</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <div class="row mb-2 fw-bold">
-            <div class="col-6">
-              Students
-            </div>
-            <div class="col-6 text-center">
-              Attendance
-            </div>
-          </div>
-          <div id="attendanceList">
-            <!-- Load data by js -->
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-warning btn-sm fw-bold" data-bs-dismiss="modal">CANCEL</button>
-          <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="saveAttendance()">SAVE CHANGES</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-  <script>
-    // =====================================================
-    // AUTO HIDE FLASH MESSAGES
-    // =====================================================
-    setTimeout(() => {
-      document.querySelectorAll(".alert").forEach(alert => {
-        const bsAlert = new bootstrap.Alert(alert);
-        bsAlert.close();
-      });
-    }, 4000);
-
-    // =====================================================
-    // DATE DISPLAY
-    // =====================================================
-    const dateInput = document.getElementById("scheduleDate");
-    const dateDisplay = document.getElementById("dateDisplay");
-
-    if (dateInput) {
-
-      function formatDate(dateStr) {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString("en-GB", {
-          weekday: "long",
-          day: "numeric",
-          month: "long",
-          year: "numeric"
-        });
-      }
-
-      const selectedDate = "{{ selected_date }}";
-      dateInput.value = selectedDate;
-
-      const today = new Date().toLocaleDateString("en-CA");
-      const isToday = selectedDate === today;
-
-      dateDisplay.textContent = isToday ?
-        `TODAY – ${formatDate(selectedDate)}` :
-        formatDate(selectedDate);
-
-      dateDisplay.addEventListener("click", () => {
-        if (dateInput.showPicker) {
-          dateInput.showPicker();
-        } else {
-          dateInput.focus();
-        }
-      });
-    }
-
-    // =====================================================
-    // TERM CALCULATOR
-    // =====================================================
-    function getCurrentTerm() {
-
-      const month = new Date().getMonth() + 1;
-
-      if (month >= 1 && month <= 3) return "1";
-      if (month >= 4 && month <= 6) return "2";
-      if (month >= 7 && month <= 9) return "3";
-
-      return "4";
-    }
-
-    // =====================================================
-    // DYNAMIC YEAR FILTER
-    // =====================================================
-    function populateYearFilter(selectId, centerYear = null) {
-
-      const select = document.getElementById(selectId);
-      if (!select) return;
-
-      const currentYear = new Date().getFullYear();
-      const year = centerYear || currentYear;
-
-      select.innerHTML = `
-    <option value="">All Years</option>
-    <option value="${year-1}">${year-1}</option>
-    <option value="${year}" selected>${year}</option>
-    <option value="${year+1}">${year+1}</option>
-  `;
-
-    }
-
-    // =====================================================
-    // SCHEDULE TABLE FILTER
-    // =====================================================
-    function filterTable() {
-
-      const yearValue = document.getElementById("yearFilter").value;
-      const termValue = document.getElementById("termFilter").value;
-      const dayValue = document.getElementById("dayFilter").value;
-      const studentValue = document.getElementById("studentFilter").value.toLowerCase();
-
-      const rows = document.querySelectorAll("#studentScheduleTable tbody tr");
-
-      rows.forEach(row => {
-
-        const yearText = row.cells[0].innerText.trim();
-        const termText = row.cells[1].innerText.trim();
-        const dayText = row.cells[2].innerText.trim();
-        const studentText = row.cells[4].innerText.toLowerCase();
-
-        const yearMatch = !yearValue || yearText === yearValue;
-        const termMatch = !termValue || termText === termValue;
-        const dayMatch = !dayValue || dayText === dayValue;
-        const studentMatch = !studentValue || studentText.includes(studentValue);
-
-        row.style.display =
-          (yearMatch && termMatch && dayMatch && studentMatch) ?
-          "" :
-          "none";
-
-      });
-
-    }
-
-    // =====================================================
-    // ATTENDANCE TABLE FILTER
-    // =====================================================
-    function filterAttendanceTable() {
-
-      const yearValue = document.getElementById("attendanceYearFilter").value;
-      const termValue = document.getElementById("attendanceTermFilter").value;
-      const studentValue = document.getElementById("attendanceStudentFilter").value.toLowerCase();
-
-      const rows = document.querySelectorAll("#attendanceTable tbody tr");
-
-      rows.forEach(row => {
-
-        const yearText = row.cells[0].innerText.trim();
-        const termText = row.cells[1].innerText.trim();
-        const studentText = row.cells[2].innerText.toLowerCase();
-
-        const yearMatch = !yearValue || yearText === yearValue;
-        const termMatch = !termValue || termText === termValue;
-        const studentMatch = !studentValue || studentText.includes(studentValue);
-
-        row.style.display =
-          (yearMatch && termMatch && studentMatch) ?
-          "" :
-          "none";
-
-      });
-
-    }
-
-    // =====================================================
-    // ATTENDANCE MODAL
-    // =====================================================
-    let currentScheduleId = null;
-
-    // OPEN ATTENDANCE (TEACHER TABLE)
-    function openAttendance(scheduleId) {
-
-      currentScheduleId = scheduleId;
-
-      fetch(`/get_attendance/${scheduleId}`)
-        .then(res => res.json())
-        .then(data => {
-
-          if (data.length > 0) {
-            const dateObj = new Date(data[0].date);
-            const shortDay = dateObj.toLocaleDateString('en-US', {
-              weekday: 'short'
-            });
-            const formattedDate = dateObj.toLocaleDateString("en-GB", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric"
-            });
-            document.getElementById('attendanceModalTitle').innerHTML = `Mark Attendance - ${shortDay}, ${formattedDate}`;
-          }
-
-          const container = document.getElementById("attendanceList");
-          container.innerHTML = "";
-
-          data.forEach(s => {
-
-            container.innerHTML += `
-        <div class="row align-items-center mb-2">
-          <div class="col-6">${s.name}</div>
-          <div class="col-6 text-center">
-            <select class="form-select form-select-sm"
-              data-id="${s.id_ss}">
-              <option value="">--</option>
-              <option value="present" ${s.status === 'present' ? 'selected' : ''}>Present</option>
-              <option value="absent" ${s.status === 'absent' ? 'selected' : ''}>Absent</option>
+        <!-- Filters -->
+        <div class="d-flex gap-2 mb-3 w-100">
+          <!-- Year Filter -->
+          <div class="input-group filter-input">
+            <span class="input-group-text">
+              <i class="fa-solid fa-calendar-days"></i>
+            </span>
+            <select id="attendanceYear">
+              {% for year in range(attendance_year - 1, attendance_year + 2) %}
+              <option value="{{ year }}" {% if year == attendance_year %} selected {% endif %}>
+                {{ year }}
+              </option>
+              {% endfor %}
             </select>
           </div>
+
+          <!-- Term Filter -->
+          <div class="input-group filter-input">
+            <span class="input-group-text">
+              <i class="fa-solid fa-book-open"></i>
+            </span>
+            <select id="attendanceTerm">
+              {% for term in [1, 2, 3, 4] %}
+              <option value="{{ term }}" {% if term == attendance_term %} selected {% endif %}>
+                Term {{ term }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Search Filter -->
+          <div class="input-group filter-input">
+            <span class="input-group-text">
+              <i class="fa-solid fa-search"></i>
+            </span>
+            <input type="text" id="attendanceSearch" placeholder="Search student">
+          </div>
         </div>
-      `;
+
+        <!-- ATTENDANCE CARD -->
+        <div class="attendance-card">
+          <!-- Attendance Table -->
+          <div class="attendance-table-wrapper">
+            {% if attendance_students %}
+            <table class="attendance-table">
+              <thead>
+                <tr>
+                  <th class="attendance-name">Student</th>
+
+                  {% for meeting in range(1, 11) %}
+                  <th>M{{ meeting }}</th>
+                  {% endfor %}
+                </tr>
+              </thead>
+              <tbody id="attendanceBody">
+                {% for student in attendance_students %}
+                <tr data-student-name="{{ student.name|lower }}">
+                  <td class="attendance-name">
+                    {{ student.name }}
+                  </td>
+                  {% for meeting in range(1, 11) %}
+                  {% set student_id = student.id_student|string %}
+                  {% set meeting_id = meeting|string %}
+                  {% set record = attendance_records
+                                                    .get(student_id, {})
+                                                    .get(meeting_id)
+                                                %}
+                  {% if record %}
+                  {% set status = record.status %}
+                  {% set class_date = record.class_date %}
+                  {% else %}
+                  {% set status = "None" %}
+                  {% set class_date = None %}
+                  {% endif %}
+                  <td>
+
+                    <div class="meeting-box
+                                                            {% if status == 'Present' %}
+                                                                present
+                                                            {% elif status == 'Absent' %}
+                                                                absent
+                                                            {% else %}
+                                                                none
+                                                            {% endif %}
+                                                            {% if class_date %}
+                                                                has-date
+                                                            {% endif %}
+                                                        " data-student-id="{{ student.id_student }}"
+                      data-student-name="{{ student.name }}" data-meeting="{{ meeting }}"
+                      data-year="{{ attendance_year }}" data-term="{{ attendance_term }}" data-status="{{ status }}"
+                      data-date="{{ class_date or '' }}"
+                      data-tooltip="{% if class_date %}Class: {{ class_date }}{% endif %}"
+                      onclick="openAttendanceModal(this)">
+                      M{{ meeting }}
+                    </div>
+                  </td>
+                  {% endfor %}
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            {% else %}
+
+            <div class="no-attendance">
+              <i class="fa-solid fa-user-slash mb-2" style="font-size: 24px;"></i>
+              <div>
+                No current students found for this term.
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- =====================================================
+         ADD STUDENT MODAL
+    ===================================================== -->
+  <div class="modal fade" id="addStudentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form id="teacherScheduleForm" method="POST" action="{{ url_for('add_teacher_schedule') }}">
+          <div class="modal-header">
+            <h4 class="modal-title fw-bold ps-2" id="teacherScheduleModalTitle">
+              Add Student
+            </h4>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Hidden schedule information -->
+            <input type="hidden" name="id_teacher" id="modalTeacher">
+            <input type="hidden" name="class_day" id="modalDay">
+            <input type="hidden" name="start_time" id="modalStartTime">
+            <input type="hidden" name="end_time" id="modalEndTime">
+            <input type="hidden" name="id_teacher_schedule" id="modalScheduleId">
+
+            <!-- Slot information -->
+            <div class="mb-3"
+              style="background-color: #f4f6f8; padding: 5px 10px; border-radius: 8px; text-align: center;">
+              <span id="modalScheduleText"
+                style="font-family: lexend; color: #333; font-weight: bold; font-size: 14px; letter-spacing: 1.1px;">
+                —
+              </span>
+            </div>
+
+            <!-- Student Type -->
+            <div class="mb-3">
+              <label style="font-weight: 500; font-size: 15px;" class="mb-1">Student</label>
+              <select class="form-select" name="student_type" id="studentType" required
+                style="width: 100%; height: 33px; border-radius: 8px; font-size: 13px;">
+                <option value="current">
+                  Current Student
+                </option>
+                <option value="trial">
+                  Trial Student
+                </option>
+              </select>
+            </div>
+
+            <!-- Current Student -->
+            <div class="mb-3" id="currentStudentContainer">
+              <label style="font-weight: 500; font-size: 15px;" class="mb-1">Student Name</label>
+              <select class="form-select" name="id_student" id="studentSelect"
+                style="width: 100%; height: 33px; border-radius: 8px; font-size: 13px;">
+                <option value="">
+                  Loading students...
+                </option>
+              </select>
+            </div>
+
+            <!-- Trial Student -->
+            <div class="mb-3" id="trialStudentContainer" style="display:none;">
+              <label style="font-weight: 500; font-size: 15px;" class="mb-1">Student</label>
+              <select class="form-select" name="id_trial_student" id="trialStudentSelect"
+                style="width: 100%; height: 33px; border-radius: 8px; font-size: 13px;">
+                <option value="">
+                  Loading trial students...
+                </option>
+              </select>
+            </div>
+
+            <!-- Level -->
+            <div class="mb-3">
+              <label style="font-weight: 500; font-size: 15px;" class="mb-1">Level</label>
+              <select class="form-select" name="id_level" id="levelSelect" required
+                style="width: 100%; height: 33px; border-radius: 8px; font-size: 13px;">
+                <option value="">
+                  Select Level
+                </option>
+                {% for level in levels %}
+                <option value="{{ level[0] }}">
+                  {{ level[1] }} ({{ level[2] }})
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Notes -->
+            <div class="mb-3">
+              <label style="font-weight: 500; font-size: 15px;" class="mb-1">Notes</label>
+              <textarea class="form-control" name="notes" rows="3" placeholder="e.g. Replacement on 19 September"
+                style="width: 100%; border-radius: 8px; font-size: 13px;"></textarea>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-cancel" data-bs-dismiss="modal">
+              Cancel
+            </button>
+            <button type="submit" class="btn-add" id="teacherScheduleSubmit">
+              <i class="fa-solid fa-plus me-1"></i>
+              <span id="teacherScheduleSubmitText">Add Student</span>
+            </button>
+
+          </div>
+
+        </form>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- =====================================================
+         ATTENDANCE MODAL
+    ===================================================== -->
+  <div class="modal fade" id="attendanceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title fw-bold ps-2" id="attendanceModalTitle">
+            Meeting
+          </h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="attendanceStudentId">
+          <input type="hidden" id="attendanceMeeting">
+          <input type="hidden" id="attendanceYearValue">
+          <input type="hidden" id="attendanceTermValue">
+
+          <!-- Date -->
+          <div class="mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Date</label>
+            <input type="date" class="form-control" id="attendanceDate"
+              style="width: 100%; height: 33px; border-radius: 8px; font-size: 13px;">
+          </div>
+
+          <!-- Status -->
+          <div class="mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Status</label>
+
+            <select class="form-select" id="attendanceStatus"
+              style="width: 100%; height: 33px; border-radius: 8px; font-size: 13px;">
+
+              <option value="None">
+                None
+              </option>
+
+              <option value="Absent">
+                Absent
+              </option>
+
+              <option value="Present">
+                Present
+              </option>
+
+            </select>
+
+          </div>
+
+        </div>
+
+
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" data-bs-dismiss="modal">
+            Cancel
+          </button>
+          <button type="button" class="btn-add" onclick="saveAttendance()">
+            <i class="fa-solid fa-check me-1"></i>
+            Save Changes
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- =====================================================
+         DELETE FORM
+    ===================================================== -->
+
+  <form id="deleteScheduleForm" method="POST" style="display:none;">
+  </form>
+
+
+
+  <!-- Bootstrap -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+
+
+  <script>
+    /* =====================================================
+       TEACHER SCHEDULE MODAL
+    ===================================================== */
+    let addStudentModal =
+      new bootstrap.Modal(
+        document.getElementById("addStudentModal")
+      );
+
+    let attendanceModal =
+      new bootstrap.Modal(
+        document.getElementById("attendanceModal")
+      );
+
+    function setTeacherScheduleModalMode(mode) {
+      const form = document.getElementById("teacherScheduleForm");
+      const title = document.getElementById("teacherScheduleModalTitle");
+      const submit = document.getElementById("teacherScheduleSubmit");
+      const submitText = document.getElementById("teacherScheduleSubmitText");
+      const scheduleId = document.getElementById("modalScheduleId");
+
+      if (mode === "edit") {
+        const id = scheduleId.value;
+        form.action = `/edit_teacher_schedule/${id}`;
+        title.textContent = "Edit Student";
+        submitText.textContent = "Save Changes";
+        submit.querySelector("i").className = "fa-solid fa-check me-1";
+      } else {
+        form.action = "{{ url_for('add_teacher_schedule') }}";
+        title.textContent = "Add Student";
+        submitText.textContent = "Add Student";
+        submit.querySelector("i").className = "fa-solid fa-plus me-1";
+        scheduleId.value = "";
+      }
+    }
+
+    /* =====================================================
+       ADD STUDENT
+    ===================================================== */
+    function openAddStudentModal(
+      teacherId,
+      day,
+      startTime,
+      endTime
+    ) {
+
+      document.getElementById("modalTeacher").value = teacherId;
+      document.getElementById("modalDay").value = day;
+      document.getElementById("modalStartTime").value = startTime;
+      document.getElementById("modalEndTime").value = endTime;
+      document.getElementById("modalScheduleId").value = "";
+
+      document.getElementById("modalScheduleText").textContent =
+        `${day} • ${startTime} – ${endTime}`;
+
+      document.getElementById("studentType").value = "current";
+
+      document.getElementById("studentSelect").value = "";
+      document.getElementById("trialStudentSelect").value = "";
+      document.getElementById("levelSelect").value = "";
+      document.querySelector("#teacherScheduleForm textarea[name='notes']").value = "";
+
+      setTeacherScheduleModalMode("add");
+      toggleStudentType();
+      loadScheduleStudents();
+
+      addStudentModal.show();
+    }
+
+    /* =====================================================
+       EDIT STUDENT
+    ===================================================== */
+
+    function openEditStudentModal(
+      scheduleId,
+      teacherId,
+      day,
+      startTime,
+      endTime,
+      studentType,
+      studentId,
+      trialStudentId,
+      levelId,
+      notes
+    ) {
+
+      document.getElementById("modalScheduleId").value = scheduleId;
+      document.getElementById("modalTeacher").value = teacherId;
+      document.getElementById("modalDay").value = day;
+      document.getElementById("modalStartTime").value = startTime;
+      document.getElementById("modalEndTime").value = endTime;
+
+      document.getElementById("modalScheduleText").textContent =
+        `${day} • ${startTime} – ${endTime}`;
+
+      document.getElementById("studentType").value = studentType || "current";
+
+      document.getElementById("levelSelect").value = levelId || "";
+
+      document.querySelector("#teacherScheduleForm textarea[name='notes']").value =
+        notes || "";
+
+      setTeacherScheduleModalMode("edit");
+      toggleStudentType();
+
+      loadScheduleStudents().then(() => {
+        if ((studentType || "current") === "trial") {
+          document.getElementById("trialStudentSelect").value =
+            trialStudentId || "";
+        } else {
+          document.getElementById("studentSelect").value =
+            studentId || "";
+        }
+      });
+
+      addStudentModal.show();
+    }
+
+    /* =====================================================
+       STUDENT TYPE TOGGLE
+    ===================================================== */
+    document
+      .getElementById("studentType")
+      .addEventListener("change", toggleStudentType);
+
+    function toggleStudentType() {
+
+      const type =
+        document.getElementById("studentType").value;
+
+      const currentContainer =
+        document.getElementById("currentStudentContainer");
+
+      const trialContainer =
+        document.getElementById("trialStudentContainer");
+
+      const studentSelect =
+        document.getElementById("studentSelect");
+
+      const trialSelect =
+        document.getElementById("trialStudentSelect");
+
+      if (type === "current") {
+        currentContainer.style.display = "block";
+        trialContainer.style.display = "none";
+        studentSelect.required = true;
+        trialSelect.required = false;
+      } else {
+        currentContainer.style.display = "none";
+        trialContainer.style.display = "block";
+        studentSelect.required = false;
+        trialSelect.required = true;
+      }
+    }
+
+    /* =====================================================
+       LOAD STUDENTS
+    ===================================================== */
+    function loadScheduleStudents() {
+
+      const studentSelect =
+        document.getElementById("studentSelect");
+
+      const trialSelect =
+        document.getElementById("trialStudentSelect");
+
+      studentSelect.innerHTML =
+        '<option value="">Loading...</option>';
+
+      trialSelect.innerHTML =
+        '<option value="">Loading...</option>';
+
+      return fetch(
+          "{{ url_for('get_schedule_students') }}"
+        )
+        .then(response => response.json())
+        .then(data => {
+
+          if (!data.success) {
+            throw new Error(
+              data.message ||
+              "Unable to load students."
+            );
+          }
+
+          studentSelect.innerHTML =
+            '<option value="">Select Student</option>';
+
+          data.current_students.forEach(student => {
+
+            const option =
+              document.createElement("option");
+
+            option.value = student.id_student;
+            option.textContent = student.age ?
+              `${student.name} (${student.age})` :
+              student.name;
+
+            studentSelect.appendChild(option);
+          });
+
+
+          trialSelect.innerHTML =
+            '<option value="">Select Trial Student</option>';
+
+          data.trial_students.forEach(student => {
+
+            const option =
+              document.createElement("option");
+
+            option.value = student.id_trial_student;
+            option.textContent = student.age ?
+              `${student.name} (${student.age})` :
+              student.name;
+            trialSelect.appendChild(option);
+          });
+
+        })
+        .catch(error => {
+
+          console.error(error);
+
+          studentSelect.innerHTML =
+            '<option value="">Unable to load</option>';
+
+          trialSelect.innerHTML =
+            '<option value="">Unable to load</option>';
+
+          throw error;
+        });
+    }
+
+
+    /* =====================================================
+       DELETE SCHEDULE
+    ===================================================== */
+    function confirmDelete(
+      scheduleId,
+      day
+    ) {
+
+      if (
+        !confirm(
+          "Are you sure you want to remove this student from the schedule?"
+        )
+      ) {
+        return;
+      }
+
+      const form =
+        document.getElementById("deleteScheduleForm");
+
+      form.action =
+        `/delete_teacher_schedule/${scheduleId}?day=${encodeURIComponent(day)}`;
+
+      saveScheduleScroll();
+
+      form.submit();
+    }
+
+    /* =====================================================
+       ATTENDANCE MODAL
+    ===================================================== */
+    function openAttendanceModal(box) {
+
+      const studentId =
+        box.dataset.studentId;
+
+      const studentName =
+        box.dataset.studentName;
+
+      const meeting =
+        box.dataset.meeting;
+
+      const year =
+        box.dataset.year;
+
+      const term =
+        box.dataset.term;
+
+      const status =
+        box.dataset.status ||
+        "None";
+
+      const classDate =
+        box.dataset.date ||
+        "";
+
+      document.getElementById(
+        "attendanceStudentId"
+      ).value = studentId;
+
+      document.getElementById(
+        "attendanceMeeting"
+      ).value = meeting;
+
+      document.getElementById(
+        "attendanceYearValue"
+      ).value = year;
+
+      document.getElementById(
+        "attendanceTermValue"
+      ).value = term;
+
+      document.getElementById(
+          "attendanceModalTitle"
+        ).textContent =
+        `MEETING ${meeting} — ${studentName.toUpperCase()}`;
+
+      document.getElementById(
+        "attendanceDate"
+      ).value = classDate;
+
+      document.getElementById(
+        "attendanceStatus"
+      ).value = status;
+
+      attendanceModal.show();
+    }
+
+    /* =====================================================
+       SAVE ATTENDANCE
+    ===================================================== */
+    function saveAttendance() {
+
+      const studentId =
+        document.getElementById(
+          "attendanceStudentId"
+        ).value;
+
+      const meeting =
+        document.getElementById(
+          "attendanceMeeting"
+        ).value;
+
+      const year =
+        parseInt(
+          document.getElementById(
+            "attendanceYearValue"
+          ).value
+        );
+
+      const term =
+        parseInt(
+          document.getElementById(
+            "attendanceTermValue"
+          ).value
+        );
+
+      const classDate =
+        document.getElementById(
+          "attendanceDate"
+        ).value;
+
+      const status =
+        document.getElementById(
+          "attendanceStatus"
+        ).value;
+
+      fetch(
+          "{{ url_for('save_student_attendance') }}", {
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+
+              id_student: parseInt(studentId),
+
+              year: year,
+
+              term: term,
+
+              meeting_number: parseInt(meeting),
+
+              class_date: classDate || null,
+
+              status: status
+
+            })
+
+          }
+        )
+
+        .then(response =>
+          response.json()
+        )
+
+        .then(data => {
+
+          if (!data.success) {
+
+            throw new Error(
+              data.message ||
+              "Unable to save attendance."
+            );
+
+          }
+
+          attendanceModal.hide();
+
+          saveScheduleScroll();
+
+          const currentDay =
+            "{{ selected_day }}";
+
+          saveScheduleScroll();
+
+          window.location.href =
+            `{{ url_for('schedule') }}?day=${currentDay}` +
+            `&attendance_year=${year}` +
+            `&attendance_term=${term}`;
+        })
+
+        .catch(error => {
+          alert(
+            error.message ||
+            "Something went wrong."
+          );
+        });
+    }
+
+    /* =====================================================
+       ATTENDANCE SEARCH
+    ===================================================== */
+    document
+      .getElementById("attendanceSearch")
+      .addEventListener(
+        "input",
+        function () {
+
+          const search =
+            this.value
+            .trim()
+            .toLowerCase();
+
+          const rows =
+            document.querySelectorAll(
+              "#attendanceBody tr"
+            );
+
+
+          rows.forEach(row => {
+
+            const name =
+              row.dataset.studentName ||
+              "";
+
+            row.style.display =
+              name.includes(search) ?
+              "" :
+              "none";
 
           });
 
-          new bootstrap.Modal(document.getElementById("attendanceModal")).show();
-
-        });
-
-    }
-
-    // OPEN ATTENDANCE BY ATTENDANC ID (ATTENDANCE TABLE)
-    function openAttendanceByAttendanceId(attendanceId) {
-    fetch(`/get_attendance_by_attendance/${attendanceId}`)
-      .then(res => res.json())
-      .then(data => {
-
-        if (data.length > 0) {
-            const dateObj = new Date(data[0].date);
-            const shortDay = dateObj.toLocaleDateString('en-US', {
-              weekday: 'short'
-            });
-            const formattedDate = dateObj.toLocaleDateString("en-GB", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric"
-            });
-            document.getElementById('attendanceModalTitle').innerHTML = `Mark Attendance - ${shortDay}, ${formattedDate}`;
         }
+      );
 
-        const container = document.getElementById("attendanceList");
-        container.innerHTML = "";
+    /* =====================================================
+       ATTENDANCE FILTERS
+    ===================================================== */
+    document
+      .getElementById("attendanceYear")
+      .addEventListener(
+        "change",
+        reloadAttendance
+      );
 
-        data.forEach(s => {
+    document
+      .getElementById("attendanceTerm")
+      .addEventListener(
+        "change",
+        reloadAttendance
+      );
 
-          container.innerHTML += `
-            <div class="row align-items-center mb-2">
-              <div class="col-6">${s.name}</div>
+    function reloadAttendance() {
 
-              <div class="col-6 text-center">
-                <select class="form-select form-select-sm"
-                  data-id="${s.id_ss}">
+      const year =
+        document.getElementById(
+          "attendanceYear"
+        ).value;
 
-                  <option value=""
-                    ${!s.status ? 'selected' : ''}>
-                    --
-                  </option>
+      const term =
+        document.getElementById(
+          "attendanceTerm"
+        ).value;
 
-                  <option value="present"
-                    ${s.status === 'present' ? 'selected' : ''}>
-                    Present
-                  </option>
+      const day =
+        "{{ selected_day }}";
 
-                  <option value="absent"
-                    ${s.status === 'absent' ? 'selected' : ''}>
-                    Absent
-                  </option>
+      saveScheduleScroll();
 
-                </select>
-              </div>
-            </div>
-          `;
-        });
-
-        new bootstrap.Modal(
-          document.getElementById("attendanceModal")
-        ).show();
-
-      });
-
-  }
-
-    function saveAttendance() {
-
-      const selects = document.querySelectorAll("#attendanceList select");
-      const attendance = [];
-
-      selects.forEach(sel => {
-        attendance.push({
-          id_ss: sel.dataset.id,
-          status: sel.value || null
-        });
-      });
-
-      fetch("/update_attendance", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            attendance
-          })
-        })
-        .then(() => location.reload());
-
+      window.location.href =
+        `{{ url_for('schedule') }}` +
+        `?day=${day}` +
+        `&attendance_year=${year}` +
+        `&attendance_term=${term}`;
     }
 
-    // =====================================================
-    // TOOLTIP
-    // =====================================================
-    function initTooltips() {
+    /* =====================================================
+       TOOLTIPS
+    ===================================================== */
+    document.querySelectorAll(".meeting-box").forEach(box => {
+      const classDate = box.dataset.date;
 
-      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+      if (classDate) {
+        const dateObject = new Date(classDate + "T00:00:00");
 
-      tooltipTriggerList.forEach(el => {
-        new bootstrap.Tooltip(el);
-      });
+        const formattedDate = dateObject.toLocaleDateString("en-GB", {
+          day: "numeric",
+          month: "short",
+          year: "numeric"
+        });
 
-    }
-
-    // =====================================================
-    // INIT PAGE
-    // =====================================================
-    document.addEventListener("DOMContentLoaded", () => {
-
-      populateYearFilter("yearFilter");
-      populateYearFilter("attendanceYearFilter");
-
-      handleYearChange("yearFilter");
-      handleYearChange("attendanceYearFilter");
-
-      const defaultTerm = getCurrentTerm();
-
-      document.getElementById("termFilter").value = defaultTerm;
-      document.getElementById("attendanceTermFilter").value = defaultTerm;
-
-      filterTable();
-      filterAttendanceTable();
-
-      initTooltips();
-
+        box.setAttribute("data-tooltip", `Class: ${formattedDate}`);
+      }
     });
 
-    function handleYearChange(selectId) {
+    /* =====================================================
+      PRESERVE PAGE SCROLL POSITION
+    ===================================================== */
+    const scheduleScrollKey = "scheduleScrollY";
 
-      const select = document.getElementById(selectId);
-
-      select.addEventListener("change", () => {
-
-        const selectedYear = parseInt(select.value);
-
-        if (!selectedYear) return;
-
-        populateYearFilter(selectId, selectedYear);
-
-      });
-
+    function saveScheduleScroll() {
+      sessionStorage.setItem(
+        scheduleScrollKey,
+        window.scrollY
+      );
     }
 
-    // =====================================================
-    // FILTER EVENTS
-    // =====================================================
-    document.getElementById("yearFilter").addEventListener("change", filterTable);
-    document.getElementById("termFilter").addEventListener("change", filterTable);
-    document.getElementById("dayFilter").addEventListener("change", filterTable);
-    document.getElementById("studentFilter").addEventListener("keyup", filterTable);
+    window.addEventListener("load", function () {
+      const savedScroll =
+        sessionStorage.getItem(scheduleScrollKey);
 
-    document.getElementById("attendanceYearFilter").addEventListener("change", filterAttendanceTable);
-    document.getElementById("attendanceTermFilter").addEventListener("change", filterAttendanceTable);
-    document.getElementById("attendanceStudentFilter").addEventListener("keyup", filterAttendanceTable);
+      if (savedScroll !== null) {
+        sessionStorage.removeItem(scheduleScrollKey);
+
+        requestAnimationFrame(() => {
+          window.scrollTo(
+            0,
+            Number(savedScroll)
+          );
+        });
+      }
+    });
+
+    document
+      .getElementById("teacherScheduleForm")
+      .addEventListener("submit", function () {
+        saveScheduleScroll();
+      });
   </script>
+
 </body>
 
 </html>

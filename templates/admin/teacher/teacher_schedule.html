@@ -1,439 +1,416 @@
-<!-- templates/teacher_schedule.html -->
-
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Bootstrap -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  >
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
   <link
-    href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Quicksand:wght@300;400;500;600;700&family=Lexend:wght@100..900&display=swap"
-    rel="stylesheet">
-
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
+    href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Lexend:wght@400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
+  <!-- Font Awesome -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+  >
   <title>Teacher Schedule</title>
-
   <style>
     body {
-      background-color: #f4f6f9;
-      font-family: Quicksand;
+      overflow-x: hidden;
+      font-family: 'Quicksand';
+      background: #f4f6f9;
+    }
+    /* =====================================================
+       MAIN CONTENT
+    ===================================================== */
+    .main-content {
+      padding: 24px;
     }
 
-    .page-title {
-      font-family: Lexend;
+    /* =====================================================
+       TITLE
+    ===================================================== */
+    .section-title {
+      font-family: 'Lexend', sans-serif;
       font-weight: 700;
       color: #333;
+      margin-bottom: 4px;
     }
 
-    .sticky-date-bar {
-      position: sticky;
-      top: 0;
-      z-index: 1000;
+    .section-subtitle {
+      color: #9ca3af;
+      font-size: 13px;
+      font-weight: 500;
     }
 
-    /* DATE DISPLAY */
-    .custom-date-input {
-      position: fixed;
-
-      width: 1px;
-      height: 1px;
-
-      opacity: 0.01;
-
-      border: none;
-      padding: 0;
+    /* =====================================================
+       DAY SELECTOR
+    ===================================================== */
+    .day-selector {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
     }
 
-    .custom-date-input:focus {
-      outline: none;
-      border-color: none;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    .day-btn {
+      min-width: 72px;
+      border: 2px solid #ffa682;
+      background: white;
+      color: #555;
+      border-radius: 10px;
+      padding: 9px 16px;
+      font-family: 'Lexend', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .7px;
+      text-decoration: none;
+      text-align: center;
+      transition: .2s;
     }
 
-    .date-display {
-      width: 100%;
-      padding: 16px 20px;
+    .day-btn:hover {
+      background: #fff2be;
+    }
 
+    .day-btn.active {
+      background: #ff682d;
+      border-color: #ff682d;
+      color: white;
+    }
+
+    /* =====================================================
+       TEACHER GRID
+    ===================================================== */
+    .teacher-grid {
+      display: grid;
+      grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+      gap: 28px;
+      align-items: start;
+    }
+
+    /* =====================================================
+       TEACHER CARD
+    ===================================================== */
+    .teacher-card {
+      background: white;
+      border: 1px solid #d9d9d9;
+      border-radius: 5px;
+      overflow: hidden;
+      box-shadow:
+        0 2px 8px rgba(0, 0, 0, .06);
+    }
+
+    /* =====================================================
+       TEACHER HEADER
+    ===================================================== */
+    .teacher-header {
       display: flex;
       justify-content: center;
       align-items: center;
+      min-height: 50px;
+      padding: 10px 16px;
+      background: #ffffff;
+      border-bottom: 3px solid #ff682d;
+    }
 
-      background: white;
-      border: 1px solid #e5e7eb;
-      border-radius: 14px;
-
-      font-family: Lexend;
+    .teacher-name {
+      font-family: 'Lexend', sans-serif;
+      font-size: 17px;
       font-weight: 700;
-      font-size: 15px;
-      letter-spacing: 1px;
+      letter-spacing: 1.3px;
       text-transform: uppercase;
-
-      color: #374151;
-
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-
-      cursor: pointer;
-      transition: all .2s ease;
+      color: #333;
     }
 
-    /* TEACHER TABLE */
-    .table-teacher {
-      max-height: 70vh;
+     /* =====================================================
+           SCHEDULE TABLE
+    ===================================================== */
+    .schedule-wrapper {
+      width: 100%;
+      max-height: 480px;
+      overflow-x: auto;
       overflow-y: auto;
-      position: relative;
     }
 
-    .table-teacher thead th {
+    .schedule-wrapper .schedule-table thead th {
       position: sticky;
       top: 0;
       z-index: 10;
-      background-color: #f8fafc;
-      color: #374151;
-      font-weight: 700;
-      font-size: 14px;
+    }
+
+    .schedule-table {
+      width: 100%;
+      margin: 0;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    .schedule-table th {
+      background: #f4f6f8;
+      color: #3d4b5c;
+      font-family: 'Lexend', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      font-family: Lexend;
-    }
-
-    .table-teacher tbody td {
-      font-weight: 500;
-      font-size: 14px;
-    }
-
-    .slot-row {
-      vertical-align: middle;
-    }
-
-    .slot-row td {
-      padding-top: 2px;
-      padding-bottom: 2px;
-      height: 26px;
-      font-size: 14px;
-      line-height: 1.1;
-    }
-
-    .slot-row td[rowspan] {
-      padding-top: 0;
-      padding-bottom: 0;
-    }
-
-    /* TIME PILL */
-    .time-pill {
-      display: inline-block;
-      padding: 5px 12px;
-      border-radius: 999px;
-      font-size: 13.5px;
-      font-weight: 700;
-      background: #fff7ed;
-      color: #e84100;
-      border: 1px solid #fed7aa;
-    }
-
-    .name-box {
-      max-width: 160px;
-      overflow-x: auto;
-      overflow-y: hidden;
-      white-space: nowrap;
-      padding: 2px 6px;
-      margin: auto;
+      letter-spacing: .8px;
+      padding: 12px 8px;
+      border: 1px solid #d9dee3;
+      border-top: none;
       text-align: center;
     }
 
-    .name-box::-webkit-scrollbar {
-      height: 3px;
+    .schedule-table td {
+      height: 48px;
+      padding: 6px 9px;
+      border: 1px solid #d9dee3;
+      vertical-align: middle;
+      font-size: 13px;
+      font-weight: 500;
+      background: #fff;
     }
 
-    .name-box::-webkit-scrollbar-thumb {
-      background: #c1c1c1;
-      border-radius: 10px;
+    .schedule-table tbody tr:hover td {
+      background: #fff7f2;
     }
 
-    .rescheduled-class {
-      background-color: #fff3cd !important;
+    .time-column {
+      width: 17%;
     }
 
-    .trial-student {
-      background-color: #e7f3ff !important;
+    .student-column {
+      width: 25%;
+    }
+
+    .level-column {
+      width: 13%;
+    }
+
+    .notes-column {
+      width: 18%;
+    }
+
+    .action-column {
+      width: 12%;
+      min-width: 100px;
+    }
+
+    .slot-time {
+      text-align: center;
+      background: #fff !important;
+      font-family: 'Lexend', sans-serif;
+      font-weight: 600;
+      color: #ff682d;
+      white-space: nowrap;
+    }
+
+    .slot-time span {
+      display: inline-block;
+      padding: 5px 10px;
+      border: 1px solid #ffb17f;
+      border-radius: 18px;
+      background: #fffaf5;
+    }
+
+    /* =====================================================
+           STUDENT ROW
+        ===================================================== */
+    .trial-student-name {
+      background: #dff6ff;
+      border-radius: 4px;
+      padding: 2px 4px;
+    }
+
+    .level-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 5px;
+      background: #fff2be;
+      color: #765d00;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .notes-text {
+      color: #666;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ===================================================== */
+    @media (max-width: 1100px) {
+      .teacher-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .main-content {
+        padding: 16px;
+      }
+      .day-btn {
+        min-width: 60px;
+        padding: 8px 10px;
+      }
     }
   </style>
 </head>
 
 <body>
+  <div class="d-flex">
+    <div class="flex-grow-1 main-content">
+      <div class="mb-4">
+        <h2 class="section-title">
+          Teacher Schedules
+        </h2>
+      </div>
 
-  <div class="container-fluid py-4 px-4">
+      <!-- =====================================================
+           DAY SELECTOR
+      ===================================================== -->
+      <div class="day-selector">
+        {% for day in days %}
+        <a
+          href="{{ url_for('teacher_schedule', branch_name=branch_name, day=day) }}"
+          class="day-btn {% if selected_day == day %}active{% endif %}"
+        >
+          {{ day }}
+        </a>
+        {% endfor %}
+      </div>
 
-    <h2 class="page-title mb-4">
-      Teacher Schedule
-    </h2>
-
-    <!-- DATE PICKER -->
-    <div class="sticky-date-bar mb-4">
-
-      <form method="get">
-        <div id="dateDisplay" class="date-display mb-2"></div>
-        <input type="date" id="scheduleDate" name="date" value="{{ selected_date }}" class="custom-date-input"
-          onchange="this.form.submit()">
-
-      </form>
-
-    </div>
-
-    <!-- TEACHER TABLE -->
-    <div class="row">
-
-      {% for teacher_id, data in schedule_map.items() %}
-
-      <div class="col-12 col-md-6 mb-4">
-
-        <div class="card h-100 shadow-sm border-0">
-
-          <!-- HEADER -->
-          <div class="card-header text-center" style="
-            background: white;
-            color: #333;
-            border-bottom: 3px solid #f97316;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            font-family: Lexend;
-            font-weight: 700;
-            font-size: 15px;
-          ">
-            {{ data.teacher_name }}
+      <!-- =====================================================
+           TEACHER TABLES
+      ===================================================== -->
+      <div class="teacher-grid">
+        {% for teacher_id, teacher in schedule_map.items() %}
+        <div class="teacher-card">
+          <!-- =================================================
+               TEACHER NAME
+          ================================================= -->
+          <div class="teacher-header">
+            <div class="teacher-name">
+              {{ teacher.name }}
+            </div>
           </div>
-
-          <!-- TABLE -->
-          <div class="table-teacher">
-
-            <table class="table table-bordered text-center mb-0 bg-white">
-
+          <!-- =================================================
+               TABLE
+          ================================================= -->
+          <div class="schedule-wrapper">
+            <table class="schedule-table">
               <thead>
                 <tr>
-                  <th style="width:130px;">Time</th>
-                  <th>Student</th>
-                  <th>Level</th>
+                  <th class="time-column">Time</th>
+                  <th class="student-column">Student</th>
+                  <th class="level-column">Level</th>
+                  <th class="notes-column">Notes</th>
                 </tr>
               </thead>
-
               <tbody>
-
-                {% for start, end in time_slots %}
-
-                {% set slot = start ~ "-" ~ end %}
-                {% set students = data.slots[slot] %}
-
-                {% for i in range(6) %}
-
-                <tr class="slot-row
-                  {% if students|length > i and students[i].rescheduled_from %}
-                    rescheduled-class
-                  {% endif %}
-                ">
-
-                  {% if i == 0 %}
-                  <td rowspan="6" class="align-middle text-center">
-                    <span class="time-pill">
-                      {{ slot }}
+                {% for start_time, end_time in time_slots %}
+                {% set slot = (start_time, end_time) %}
+                {% set students = teacher.slots[slot] %}
+                {# Show one row even when slot is empty #}
+                {% set row_count =
+                    students|length if students|length > 0 else 1
+                %}
+                {% for row_index in range(row_count) %}
+                {% set student =
+                    students[row_index]
+                    if students|length > row_index
+                    else none
+                %}
+                <tr>
+                  <!-- TIME -->
+                  {% if row_index == 0 %}
+                  <td
+                    class="slot-time"
+                    rowspan="{{ row_count }}"
+                  >
+                    <span>
+                      {{ start_time }}-{{ end_time }}
                     </span>
                   </td>
                   {% endif %}
 
-                  {% if students|length > i %}
-
-                  <td class="
-                    name-box
-                    {% if students[i].is_trial %}
-                      trial-student
-                    {% endif %}
-                  ">
-
-                    {% if students[i].is_rescheduled %}
-                    🔁
-                    {% elif students[i].status == 'present' %}
-                    ✅
-                    {% elif students[i].status == 'absent' %}
-                    ❌
-                    {% endif %}
-
-                    {{ students[i].student_name }}
-                    {% if students[i].age %}
-                    ({{ students[i].age }})
-                    {% endif %}
+                  <!-- STUDENT -->
+                  {% if student %}
+                  <td class="student-cell">
+                    <div
+                      class="student-name-wrap
+                      {% if student.student_type == 'trial' %}
+                        trial-student
+                      {% endif %}"
+                    >
+                      <span class="student-name">
+                        {{ student.name }}
+                        {% if student.age %}
+                          ({{ student.age }})
+                        {% endif %}
+                      </span>
+                    </div>
                   </td>
 
+                  <!-- LEVEL -->
+                  <td class="text-center">
+                    <span class="level-badge">
+                      {{ student.level_name }}
+                    </span>
+                  </td>
+
+                  <!-- NOTES -->
                   <td>
-                    {{ students[i].level }}
+                    {% if student.notes %}
+                    <div class="notes-text-wrap">
+                      <span class="notes-text">
+                        {{ student.notes }}
+                      </span>
+                    </div>
+                    {% else %}
+                    <span class="empty-slot">
+                      —
+                    </span>
+                    {% endif %}
                   </td>
-
                   {% else %}
 
-                  <td>&nbsp;</td>
-                  <td>&nbsp;</td>
-
+                  <!-- EMPTY SLOT -->
+                  <td>
+                    <span class="empty-slot">—</span>
+                  </td>
+                  <td>
+                    <span class="empty-slot">—</span>
+                  </td>
+                  <td>
+                    <span class="empty-slot">—</span>
+                  </td>
                   {% endif %}
-
                 </tr>
-
                 {% endfor %}
                 {% endfor %}
-
               </tbody>
-
             </table>
-
           </div>
-
         </div>
-
+        {% endfor %}
       </div>
-
-      {% endfor %}
-
     </div>
-
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-  <script>
-    const dateInput = document.getElementById("scheduleDate");
-    const dateDisplay = document.getElementById("dateDisplay");
-
-    // =========================
-    // Detect iPhone / iPad
-    // =========================
-    function isIOS() {
-      return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-    }
-
-    // =========================
-    // Format Date
-    // Example:
-    // THURSDAY, 21 MAY 2026
-    // =========================
-    function formatDate(dateStr) {
-
-      if (!dateStr) return "";
-
-      const [year, month, day] = dateStr.split("-");
-
-      const date = new Date(
-        Number(year),
-        Number(month) - 1,
-        Number(day)
-      );
-
-      const weekday = date.toLocaleDateString("en-GB", {
-        weekday: "long"
-      });
-
-      const rest = date.toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "long",
-        year: "numeric"
-      });
-
-      return `${weekday}, ${rest}`.toUpperCase();
-    }
-
-    // =========================
-    // Update Display
-    // =========================
-    function updateDateDisplay() {
-
-      const selectedDate = dateInput.value;
-
-      if (!selectedDate) {
-        dateDisplay.textContent = "";
-        return;
-      }
-
-      const today = new Date();
-
-      const todayString =
-        today.getFullYear() + "-" +
-        String(today.getMonth() + 1).padStart(2, "0") + "-" +
-        String(today.getDate()).padStart(2, "0");
-
-      if (selectedDate === todayString) {
-        dateDisplay.textContent =
-          "TODAY - " + formatDate(selectedDate);
-      } else {
-        dateDisplay.textContent =
-          formatDate(selectedDate);
-      }
-    }
-
-    // Initial load
-    updateDateDisplay();
-
-    // Update when date changes
-    dateInput.addEventListener("change", updateDateDisplay);
-
-    // =========================
-    // Open Date Picker
-    // =========================
-    dateDisplay.addEventListener("click", () => {
-
-      // iPhone / iPad Safari
-      if (isIOS()) {
-
-        dateInput.style.position = "fixed";
-        dateInput.style.top = "0";
-        dateInput.style.left = "0";
-        dateInput.style.width = "1px";
-        dateInput.style.height = "1px";
-        dateInput.style.opacity = "0.01";
-        dateInput.style.pointerEvents = "auto";
-
-        dateInput.focus();
-
-        setTimeout(() => {
-          dateInput.click();
-        }, 0);
-
-        return;
-      }
-
-      // Chrome / Edge / Android
-      if (typeof dateInput.showPicker === "function") {
-        dateInput.showPicker();
-        return;
-      }
-
-      // Generic fallback
-      dateInput.focus();
-
-      try {
-        dateInput.click();
-      } catch (e) {
-        console.log(e);
-      }
-
-    });
-
-    // Keyboard accessibility
-    dateDisplay.setAttribute("tabindex", "0");
-
-    dateDisplay.addEventListener("keydown", (e) => {
-
-      if (e.key === "Enter" || e.key === " ") {
-
-        e.preventDefault();
-
-        dateDisplay.click();
-
-      }
-
-    });
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
   </script>
 
 </body>

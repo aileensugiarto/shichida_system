@@ -1,8 +1,14 @@
-from flask import Flask, render_template, redirect, url_for, request, flash, jsonify, session
-import os
+from flask import render_template, redirect, url_for, request, flash, jsonify, session
 from db import mysql
 from datetime import date, datetime, timedelta
-from zoneinfo import ZoneInfo
+import calendar
+
+
+# =========================================================
+# CONSTANTS
+# =========================================================
+
+DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT"]
 
 TIME_SLOTS = [
     ("09:00", "10:00"),
@@ -15,955 +21,65 @@ TIME_SLOTS = [
     ("16:00", "17:00"),
 ]
 
-def indo_time_today():
-    return datetime.now(
-        ZoneInfo("Asia/Jakarta")
-    ).date()
+TERM_MONTHS = {
+    1: [1, 2, 3],
+    2: [4, 5, 6],
+    3: [7, 8, 9],
+    4: [10, 11, 12]
+}
 
-# BUILD SCHEDULE MAP
-def build_schedule_map(selected_date):
 
-    cur = mysql.connection.cursor()
+# =========================================================
+# DATE / TERM HELPERS
+# =========================================================
 
-    # ============================
-    # GET TEACHERS
-    # ============================
-    cur.execute("""
-        SELECT id_teacher, name
-        FROM tbl_teacher
-        WHERE id_admin = %s
-        ORDER BY name
-    """, (session['id_admin'], ))
+def get_term_from_month(month):
+    if 1 <= month <= 3:
+        return 1
+    elif 4 <= month <= 6:
+        return 2
+    elif 7 <= month <= 9:
+        return 3
+    else:
+        return 4
 
-    teachers = cur.fetchall()
 
-    # ============================
-    # GET SCHEDULES
-    # ============================
-    cur.execute("""
-        SELECT
-            s.id_schedule,
-            s.start_time,
-            s.end_time,
-            s.id_teacher,
-            t.name AS teacher_name,
-            l.level_name,
+def get_current_year():
+    return date.today().year
 
-            st.name AS student_name,
-            st.dob AS student_dob,
-            st.is_trial AS old_trial,
 
-            ts.name AS trial_name,
-            ts.dob AS trial_dob,
+def get_current_month():
+    return date.today().month
 
-            a.status,
 
-            s.id_trial_student
+def get_current_term():
+    return get_term_from_month(get_current_month())
 
-        FROM tbl_schedule s
 
-        JOIN tbl_teacher t
-            ON s.id_teacher = t.id_teacher
+def month_to_word(month_number):
+    return calendar.month_name[int(month_number)]
 
-        LEFT JOIN tbl_level l
-            ON s.id_level = l.id_level
 
-        LEFT JOIN tbl_attendance a
-            ON s.id_schedule = a.id_schedule
-
-        LEFT JOIN tbl_student st
-            ON a.id_student = st.id_student
-
-        LEFT JOIN tbl_trial_student ts
-            ON s.id_trial_student = ts.id_trial_student
-
-        WHERE DATE(s.date) = %s
-        AND s.id_admin = %s
-
-        ORDER BY s.id_teacher, s.start_time
-    """, (selected_date, session['id_admin']))
-
-    schedule_rows = cur.fetchall()
-
-    # ============================
-    # BUILD EMPTY MAP
-    # ============================
-    schedule_map = {}
-
-    for teacher_id, teacher_name in teachers:
-
-        schedule_map[teacher_id] = {
-            "teacher_name": teacher_name,
-            "slots": {
-                f"{start}-{end}": []
-                for start, end in TIME_SLOTS
-            }
-        }
-
-    # ============================
-    # FILL SLOTS
-    # ============================
-    for r in schedule_rows:
-
-        slot_key = f"{r[1]}-{r[2]}"
-        teacher_id = r[3]
-
-        if teacher_id not in schedule_map:
-            continue
-
-        if slot_key not in schedule_map[teacher_id]["slots"]:
-            continue
-
-        # trial student?
-        is_new_trial = bool(r[12])
-        is_old_trial = bool(r[8])
-
-        is_trial = is_new_trial or is_old_trial
-
-        if is_new_trial:
-            student_name = r[9]
-            dob = r[10]
-        else:
-            student_name = r[6]
-            dob = r[7]
-
-        age = calculate_age(dob)
-
-        schedule_map[teacher_id]["slots"][slot_key].append({
-
-            "id_schedule": r[0],
-            "student_name": student_name,
-            "age": age,
-            "level": r[5],
-            "status": r[11],
-            "is_trial": is_trial
-
-        })
-
-    cur.close()
-
-    return schedule_map, teachers
-
-
-# SCHEDULE
-def model_schedule():
-
-    cur = mysql.connection.cursor()
-
-    # ============================
-    # SELECTED DATE
-    # ============================
-
-    selected_date = request.args.get("date")
-
-    if not selected_date:
-        selected_date = indo_time_today().strftime("%Y-%m-%d")
-
-    # ============================
-    # BUILD SCHEDULE MAP
-    # ============================
-
-    schedule_map, teachers = build_schedule_map(
-        selected_date
-    )
-
-    # ============================
-    # MASTER SCHEDULE TABLE
-    # ============================
-
-    term_filter = request.args.get("term")
-    student_filter = request.args.get("student")
-    day_filter = request.args.get("day")
-    level_filter = request.args.get("level")
-    teacher_filter = request.args.get("teacher")
-
-    query = """
-        SELECT 
-            m.id_master_schedule,
-            YEAR(m.start_date) AS year,
-            m.term,
-            m.start_date,
-            m.class_day,
-            m.start_time,
-            m.end_time,
-            l.level_name,
-            st.name,
-            t.name,
-            m.total_meetings
-        FROM tbl_master_schedule m
-        JOIN tbl_level l ON m.id_level = l.id_level
-        JOIN tbl_student st ON m.id_student = st.id_student
-        JOIN tbl_teacher t ON m.id_teacher = t.id_teacher
-        WHERE m.id_admin = %s
-    """
-
-    params = [session['id_admin']]
-
-    if term_filter:
-        query += " AND m.term = %s"
-        params.append(term_filter)
-
-    if student_filter:
-        query += " AND st.name LIKE %s"
-        params.append(f"%{student_filter}%")
-
-    if day_filter:
-        query += " AND m.class_day = %s"
-        params.append(day_filter)
-
-    if level_filter:
-        query += " AND m.id_level = %s"
-        params.append(level_filter)
-
-    if teacher_filter:
-        query += " AND m.id_teacher = %s"
-        params.append(teacher_filter)
-
-    query += """
-        ORDER BY FIELD(
-            m.class_day,
-            'MON','TUE','WED','THU','FRI','SAT'
-        ),
-        m.start_time
-    """
-
-    cur.execute(query, params)
-
-    data_master_schedule = cur.fetchall()
-
-    # ============================
-    # FILTER DROPDOWN DATA
-    # ============================
-
-    cur.execute("""
-        SELECT id_level, level_name, age_range,
-        CAST(
-            SUBSTRING_INDEX(age_range, '-', 1)
-            AS DECIMAL(4,2)
-        ) AS min_age
-        FROM tbl_level
-        WHERE id_admin=%s
-        ORDER BY min_age ASC
-    """, (session['id_admin'],))
-
-    levels = cur.fetchall()
-
-    cur.execute("""
-        SELECT id_teacher, name
-        FROM tbl_teacher
-        WHERE id_admin=%s
-    """, (session['id_admin'],))
-
-    teachers_filter = cur.fetchall()
-
-    # ============================
-    # ATTENDANCE TRACKER
-    # ============================
-
-    cur.execute("""
-        SELECT 
-            m.id_master_schedule,
-            YEAR(m.start_date) AS year,
-            m.term,
-            st.name,
-            s.date,
-            a.status,
-            a.id_attendance
-        FROM tbl_master_schedule m
-        JOIN tbl_schedule s
-            ON m.id_master_schedule = s.id_master_schedule
-        JOIN tbl_attendance a
-            ON s.id_schedule = a.id_schedule
-        JOIN tbl_student st
-            ON a.id_student = st.id_student
-        WHERE m.id_admin = %s
-        ORDER BY
-            m.id_master_schedule,
-            s.date
-    """, (session['id_admin'],))
-
-    attendance_rows = cur.fetchall()
-
-    attendance_tracker = {}
-
-    for r in attendance_rows:
-
-        master_id = r[0]
-        year = r[1]
-        term = r[2]
-        student = r[3]
-        class_date = r[4]
-        status = r[5]
-        id_attendance = r[6]
-
-        key = f"{master_id}_{student}"
-
-        if key not in attendance_tracker:
-
-            attendance_tracker[key] = {
-                "year": year,
-                "term": term,
-                "student": student,
-                "meetings": []
-            }
-
-        attendance_tracker[key]["meetings"].append({
-            "date": class_date.strftime("%d %b %Y"),
-            "status": status,
-            "id_attendance": id_attendance
-        })
-
-    attendance_tracker = list(
-        attendance_tracker.values()
-    )
-
-    cur.close()
-
-    return render_template(
-        "admin/schedule/schedule.html",
-        selected_date=selected_date,
-        schedule_map=schedule_map,
-        time_slots=TIME_SLOTS,
-        data_master_schedule=data_master_schedule,
-        attendance_tracker=attendance_tracker,
-        levels=levels,
-        teachers_filter=teachers_filter
-    )
-# ADD SCHEDULE
-def model_add_schedule():
-    cur = mysql.connection.cursor()
-
-    # Load dropdown data
-    cur.execute("SELECT * FROM tbl_teacher WHERE id_admin=%s", (session['id_admin'],))
-    teachers = cur.fetchall()
-
-    cur.execute("SELECT * FROM tbl_student WHERE id_admin=%s AND (is_trial IS NULL OR is_trial = 0)", (session['id_admin'],))
-    students = cur.fetchall()
-
-    updated_students = []
-    for student in students:
-        age = calculate_age(student[2])
-        updated_students.append((student[0], student[1], age))
-
-    cur.execute("SELECT * FROM tbl_level WHERE id_admin=%s", (session['id_admin'],))
-    levels = cur.fetchall()
-
-    if request.method == "POST":
-
-        term = request.form['form_term']
-
-        start_date = datetime.strptime(
-            request.form['form_start_date'],
-            "%Y-%m-%d"
-        ).date()
-
-        class_day = request.form['form_class_day'].upper().strip()
-
-        level = int(request.form['form_level'])
-
-        time_slot = request.form['form_time_slot']
-        start_time, end_time = time_slot.split("|")
-
-        teacher = int(request.form['form_teacher'])
-
-        student = None
-        id_trial_student = None
-
-        if term == "TRIAL":
-
-            term = 0
-            total_meetings = 1
-
-            student_name = request.form['form_trial_student_name']
-            dob = request.form['form_trial_dob']
-            parent_name = request.form['form_trial_parent_name']
-            parent_telp = request.form['form_trial_parent_telp']
-
-        else:
-
-            term = int(term)
-
-            student = int(
-                request.form['form_student']
-            )
-
-            total_meetings = int(
-                request.form['form_total_meetings']
-            )
-
-        day_map = {
-            'MON': 0,
-            'TUE': 1,
-            'WED': 2,
-            'THU': 3,
-            'FRI': 4,
-            'SAT': 5
-        }
-
-        target_weekday = day_map[class_day]
-
-        current_date = start_date
-
-        while current_date.weekday() != target_weekday:
-            current_date += timedelta(days=1)
-
-        first_class_date = current_date
-
-        # ==================================
-        # INSERT TRIAL STUDENT
-        # ==================================
-
-        if term == 0:
-
-            cur.execute("""
-                INSERT INTO tbl_trial_student
-                (
-                    name,
-                    dob,
-                    parent_name,
-                    parent_telp,
-                    trial_date,
-                    id_admin
-                )
-                VALUES (%s,%s,%s,%s,%s,%s)
-            """, (
-                student_name,
-                dob,
-                parent_name,
-                parent_telp,
-                first_class_date,
-                session['id_admin']
-            ))
-
-            id_trial_student = cur.lastrowid
-
-        # ==================================
-        # MASTER SCHEDULE
-        # ==================================
-
-        cur.execute("""
-            INSERT INTO tbl_master_schedule
-            (
-                term,
-                start_date,
-                class_day,
-                id_level,
-                start_time,
-                end_time,
-                id_teacher,
-                id_student,
-                id_trial_student,
-                total_meetings,
-                id_admin
-            )
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-        """, (
-            term,
-            start_date,
-            class_day,
-            level,
-            start_time,
-            end_time,
-            teacher,
-            student,
-            id_trial_student,
-            total_meetings,
-            session['id_admin']
-        ))
-
-        id_master_schedule = cur.lastrowid
-
-        # ==================================
-        # CREATE SCHEDULES
-        # ==================================
-
-        for _ in range(total_meetings):
-
-            cur.execute("""
-                INSERT INTO tbl_schedule
-                (
-                    date,
-                    start_time,
-                    end_time,
-                    id_teacher,
-                    id_level,
-                    id_master_schedule,
-                    id_trial_student,
-                    id_admin
-                )
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
-            """, (
-                current_date,
-                start_time,
-                end_time,
-                teacher,
-                level,
-                id_master_schedule,
-                id_trial_student,
-                session['id_admin']
-            ))
-
-            id_schedule = cur.lastrowid
-
-            # regular students only
-            if student is not None:
-
-                cur.execute("""
-                    INSERT INTO tbl_attendance
-                    (
-                        id_schedule,
-                        id_student,
-                        id_admin
-                    )
-                    VALUES (%s,%s,%s)
-                """, (
-                    id_schedule,
-                    student,
-                    session['id_admin']
-                ))
-
-            current_date += timedelta(days=7)
-
-        mysql.connection.commit()
-
-        cur.close()
-
-        flash(
-            "Schedule successfully added",
-            "success"
-        )
-
-        return redirect(
-            url_for(
-                'schedule',
-                date=first_class_date.strftime("%Y-%m-%d")
-            )
-        )
-
-    return render_template(
-        'admin/schedule/add_schedule.html',
-        data_teacher=teachers,
-        data_student=updated_students,
-        data_level=levels
-    )
-
-# EDIT SCHEDULE
-def model_edit_schedule(id):
-  cur = mysql.connection.cursor()
-  # Get Schedule Data
-  cur.execute("SELECT * FROM tbl_schedule WHERE id_schedule = %s AND id_admin = %s", (id, session['id_admin'], ))
-  schedule = cur.fetchone()
-
-  # Get Teachers
-  cur.execute("SELECT * FROM tbl_teacher WHERE id_admin=%s", (session['id_admin'], ))
-  teachers = cur.fetchall()
-
-  # Get Students
-  cur.execute("SELECT * FROM tbl_student WHERE id_admin=%s", (session['id_admin'], ))
-  students = cur.fetchall()
-  updated_students = []
-  for student in students:
-    age = calculate_age(student[2])
-    updated_students.append((student[0], student[1], age))
-
-  cur.execute("SELECT * FROM tbl_level WHERE id_admin=%s", (session['id_admin'], ))
-  levels = cur.fetchall()
-
-  # Get Current Students for this schedule
-  cur.execute("SELECT id_student FROM tbl_attendance WHERE id_schedule = %s AND id_admin=%s", (id, session['id_admin'], ))
-  current_students_data = cur.fetchall()
-  current_students = [row[0] for row in current_students_data]
-
-  cur.close()
-  return render_template('admin/schedule/edit_schedule.html', data_schedule=schedule, data_teacher=teachers, data_student=updated_students, data_current_student=current_students, data_level=levels, time_slots=TIME_SLOTS)
-
-# PROCESS EDIT SCHEDULE
-def model_process_edit_schedule():
-  id_schedule = request.form['form_id_schedule']
-  date = request.form['form_date']
-  level = request.form['form_level']
-  time_slot = request.form['form_time_slot']
-  start_time, end_time = time_slot.split('|')
-  teacher = request.form['form_teacher']
-  students = request.form.getlist('form_students')
-
-  cur = mysql.connection.cursor()
-  cur.execute("UPDATE tbl_schedule SET date=%s, id_level=%s, start_time=%s, end_time=%s, id_teacher=%s WHERE id_schedule=%s AND id_admin=%s",
-              (date, level, start_time, end_time, teacher, id_schedule, session['id_admin'], ))
-
-  cur.execute("SELECT id_student FROM tbl_attendance WHERE id_schedule = %s AND id_admin=%s", (id_schedule, session['id_admin'], ))
-  existing_rows = cur.fetchall()
-  existing_ids = set(row[0] for row in existing_rows)
-  new_ids = set(int(x) for x in students)
-
-  to_delete = existing_ids - new_ids
-  to_add = new_ids - existing_ids
-
-  for sid in to_delete:
-      cur.execute("DELETE FROM tbl_attendance WHERE id_schedule=%s AND id_student=%s AND id_admin=%s", (id_schedule, sid, session['id_admin'], ))
-
-  for sid in to_add:
-      cur.execute("INSERT INTO tbl_attendance (id_schedule, id_student, id_admin) VALUES (%s, %s, %s)", (id_schedule, sid, session['id_admin'], ))
-
-  mysql.connection.commit()
-  cur.close()
-
-  flash("Schedule successfully updated", "success")
-  return redirect(url_for("schedule", date=date))
-
-# EDIT MASTER SCHEDULE
-def model_edit_master_schedule(id_master_schedule):
-    cur = mysql.connection.cursor()
-
-    cur.execute("""
-        SELECT *
-        FROM tbl_master_schedule
-        WHERE id_master_schedule=%s AND id_admin=%s
-    """, (id_master_schedule, session['id_admin']))
-    master = cur.fetchone()
-
-    cur.execute("SELECT * FROM tbl_teacher WHERE id_admin=%s", (session['id_admin'],))
-    teachers = cur.fetchall()
-
-    cur.execute("SELECT * FROM tbl_student WHERE id_admin=%s", (session['id_admin'],))
-    raw_students = cur.fetchall()
-
-    students = []
-    for s in raw_students:
-        age = calculate_age(s[2])  # s[2] = DOB
-        students.append({
-            "id": s[0],
-            "name": s[1],
-            "age": age
-        })
-
-    cur.execute("SELECT * FROM tbl_level WHERE id_admin=%s", (session['id_admin'],))
-    levels = cur.fetchall()
-
-    cur.close()
-
-    return render_template(
-        'admin/schedule/edit_master_schedule.html',
-        data_master_schedule=master,
-        data_teacher=teachers,
-        data_student=students,
-        data_level=levels
-    )
-
-# PROCESS EDIT MASTER SCHEDULE
-def model_process_edit_master_schedule():
-    id_master = int(request.form['form_id_master_schedule'])
-    term = request.form['form_term']
-    start_date = datetime.strptime(
-        request.form['form_start_date'], "%Y-%m-%d"
-    ).date()
-    class_day = request.form['form_class_day'].upper()[:3]
-    level = int(request.form['form_level'])
-    time_slot = request.form['form_time_slot']
-    start_time, end_time = time_slot.split("|")
-    teacher = int(request.form['form_teacher'])
-    student = int(request.form['form_student'])
-    total_meetings = int(request.form['form_total_meetings'])
-
-    cur = mysql.connection.cursor()
-
-    # =========================
-    # 1️⃣ UPDATE MASTER
-    # =========================
-    cur.execute("""
-        UPDATE tbl_master_schedule
-        SET term=%s,
-            start_date=%s,
-            class_day=%s,
-            id_level=%s,
-            start_time=%s,
-            end_time=%s,
-            id_teacher=%s,
-            id_student=%s,
-            total_meetings=%s
-        WHERE id_master_schedule=%s AND id_admin=%s
-    """, (
-        term, start_date, class_day, level,
-        start_time, end_time, teacher,
-        student, total_meetings,
-        id_master, session['id_admin']
-    ))
-
-    # =========================
-    # 2️⃣ GET EXISTING SCHEDULES
-    # =========================
-    cur.execute("""
-        SELECT id_schedule, date
-        FROM tbl_schedule
-        WHERE id_master_schedule=%s AND id_admin=%s
-        ORDER BY date ASC, id_schedule ASC
-    """, (id_master, session['id_admin']))
-
-    schedules = cur.fetchall()
-
-    enriched = []
-    for s in schedules:
-        enriched.append({
-            "id": s[0],
-            "date": s[1]
-        })
-
-    current_count = len(enriched)
-
-    # =========================
-    # 3️⃣ HANDLE REDUCE
-    # =========================
-    if total_meetings < current_count:
-
-        to_delete = enriched[total_meetings:]
-
-        for s in to_delete:
-            sched_id = s["id"]
-
-            cur.execute("""
-                DELETE FROM tbl_attendance
-                WHERE id_schedule=%s AND id_admin=%s
-            """, (sched_id, session['id_admin']))
-
-            cur.execute("""
-                DELETE FROM tbl_schedule
-                WHERE id_schedule=%s AND id_admin=%s
-            """, (sched_id, session['id_admin']))
-
-    # =========================
-    # 4️⃣ HANDLE ADD
-    # =========================
-    elif total_meetings > current_count:
-
-        # map day
-        day_map = {
-            'MON': 0,
-            'TUE': 1,
-            'WED': 2,
-            'THU': 3,
-            'FRI': 4,
-            'SAT': 5
-        }
-
-        target_weekday = day_map[class_day]
-
-        # determine last date
-        if enriched:
-            last_date = enriched[-1]["date"]
-        else:
-            last_date = start_date
-            while last_date.weekday() != target_weekday:
-                last_date += timedelta(days=1)
-
-        new_needed = total_meetings - current_count
-
-        for _ in range(new_needed):
-
-            last_date += timedelta(days=7)
-
-            cur.execute("""
-                INSERT INTO tbl_schedule
-                (date, start_time, end_time, id_teacher,
-                 id_level, id_master_schedule, id_admin)
-                VALUES (%s,%s,%s,%s,%s,%s,%s)
-            """, (
-                last_date,
-                start_time,
-                end_time,
-                teacher,
-                level,
-                id_master,
-                session['id_admin']
-            ))
-
-            new_schedule_id = cur.lastrowid
-
-            cur.execute("""
-                INSERT INTO tbl_attendance
-                (id_schedule, id_student, id_admin)
-                VALUES (%s,%s,%s)
-            """, (new_schedule_id, student, session['id_admin']))
-
-    # =========================
-    # 5️⃣ REGENERATE DATES
-    # =========================
-
-    # map day
-    day_map = {
-        'MON': 0,
-        'TUE': 1,
-        'WED': 2,
-        'THU': 3,
-        'FRI': 4,
-        'SAT': 5
-    }
-
-    target_weekday = day_map[class_day]
-
-    # find first valid class date
-    current_date = start_date
-
-    while current_date.weekday() != target_weekday:
-        current_date += timedelta(days=1)
-
-    # get all schedules again
-    cur.execute("""
-        SELECT id_schedule
-        FROM tbl_schedule
-        WHERE id_master_schedule=%s
-        AND id_admin=%s
-        ORDER BY date ASC, id_schedule ASC
-    """, (id_master, session['id_admin']))
-
-    schedule_ids = cur.fetchall()
-
-    # update every schedule sequentially
-    for row in schedule_ids:
-
-        sched_id = row[0]
-
-        cur.execute("""
-            UPDATE tbl_schedule
-            SET
-                date=%s,
-                start_time=%s,
-                end_time=%s,
-                id_teacher=%s,
-                id_level=%s
-            WHERE id_schedule=%s
-            AND id_admin=%s
-        """, (
-            current_date,
-            start_time,
-            end_time,
-            teacher,
-            level,
-            sched_id,
-            session['id_admin']
-        ))
-
-        # ✅ RESET ATTENDANCE STATUS
-        # cur.execute("""
-        #     UPDATE tbl_attendance
-        #     SET status = NULL
-        #     WHERE id_schedule=%s
-        #     AND id_admin=%s
-        # """, (
-        #     sched_id,
-        #     session['id_admin']
-        # ))
-
-        current_date += timedelta(days=7)
-
-    mysql.connection.commit()
-    cur.close()
-
-    flash("Master schedule updated successfully", "success")
-    return redirect(url_for("schedule"))
-
-def model_delete_schedule(id):
-    cur = mysql.connection.cursor()
-
-    # =========================
-    # 1️⃣ GET STUDENT LINKED TO THIS SCHEDULE
-    # =========================
-    cur.execute("""
-        SELECT st.id_student, st.is_trial
-        FROM tbl_attendance a
-        JOIN tbl_student st ON a.id_student = st.id_student
-        WHERE a.id_schedule = %s
-        AND a.id_admin = %s
-    """, (id, session['id_admin']))
-
-    student_data = cur.fetchone()
-
-    # =========================
-    # 2️⃣ DELETE ATTENDANCE FIRST
-    # =========================
-    cur.execute("""
-        DELETE FROM tbl_attendance 
-        WHERE id_schedule = %s 
-        AND id_admin = %s
-    """, (id, session['id_admin']))
-
-    # =========================
-    # 3️⃣ DELETE SCHEDULE
-    # =========================
-    cur.execute("""
-        DELETE FROM tbl_schedule 
-        WHERE id_schedule = %s 
-        AND id_admin=%s
-    """, (id, session['id_admin']))
-
-    # =========================
-    # 4️⃣ DELETE TRIAL STUDENT (ONLY IF TRIAL)
-    # =========================
-    if student_data:
-        student_id, is_trial = student_data
-
-        if is_trial == 1:
-            cur.execute("""
-                DELETE FROM tbl_student
-                WHERE id_student = %s
-                AND id_admin = %s
-            """, (student_id, session['id_admin']))
-
-    mysql.connection.commit()
-    cur.close()
-
-    flash("Schedule successfully deleted", "success")
-    return redirect(url_for("schedule"))
-
-# DELETE MASTER SCHEDULE
-def model_delete_master_schedule(id_master_schedule):
-    cur = mysql.connection.cursor()
-
-    # 1️⃣ GET ALL SCHEDULE IDS UNDER THIS MASTER
-    cur.execute("""
-        SELECT id_schedule
-        FROM tbl_schedule
-        WHERE id_master_schedule=%s AND id_admin=%s
-    """, (id_master_schedule, session['id_admin']))
-
-    schedule_ids = [row[0] for row in cur.fetchall()]
-
-    # 2️⃣ DELETE ATTENDANCE FIRST (VERY IMPORTANT)
-    if schedule_ids:
-        cur.execute("""
-            DELETE FROM tbl_attendance
-            WHERE id_schedule IN %s AND id_admin=%s
-        """, (tuple(schedule_ids), session['id_admin']))
-
-    # 3️⃣ DELETE ALL SCHEDULES UNDER MASTER
-    cur.execute("""
-        DELETE FROM tbl_schedule
-        WHERE id_master_schedule=%s AND id_admin=%s
-    """, (id_master_schedule, session['id_admin']))
-
-    # 4️⃣ DELETE MASTER SCHEDULE ITSELF
-    cur.execute("""
-        DELETE FROM tbl_master_schedule
-        WHERE id_master_schedule=%s AND id_admin=%s
-    """, (id_master_schedule, session['id_admin']))
-
-    mysql.connection.commit()
-    cur.close()
-
-    flash("Student schedule and all related classes deleted successfully", "success")
-    return redirect(url_for("schedule"))
-
-# CALCULATE AGE BASED ON DOB
 def calculate_age(dob):
+    if not dob:
+        return ""
+
+    if isinstance(dob, datetime):
+        dob = dob.date()
+    elif isinstance(dob, str):
+        parsed = None
+        for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y", "%Y/%m/%d"):
+            try:
+                parsed = datetime.strptime(dob.strip(), fmt).date()
+                break
+            except ValueError:
+                pass
+        dob = parsed
 
     if not dob:
-        return "-"
+        return ""
 
-    if isinstance(dob, str):
-        if dob.strip() == "":
-            return "-"
-        dob = datetime.strptime(dob, "%Y-%m-%d").date()
-
-    today = indo_time_today()
+    today = date.today()
     years = today.year - dob.year
     months = today.month - dob.month
 
@@ -975,120 +91,1370 @@ def calculate_age(dob):
         months += 12
 
     return f"{years}.{months:02d}"
+# =========================================================
+# STUDENT STATUS
+# =========================================================
 
-# GET ATTENDANCE
-def model_get_attendance(id):
-  cur = mysql.connection.cursor()
+def get_effective_student_period(cur, id_student, year, month):
+    """
+    Get the latest student period that is effective
+    for the selected year + month.
+    """
 
-  cur.execute("""
-    SELECT
-        tbl_attendance.id_attendance,
-        tbl_student.name,
-        tbl_attendance.status,
-        tbl_schedule.date
-    FROM tbl_attendance
-    JOIN tbl_student
-        ON tbl_attendance.id_student = tbl_student.id_student
-    JOIN tbl_schedule
-        ON tbl_attendance.id_schedule = tbl_schedule.id_schedule
-    WHERE tbl_attendance.id_schedule=%s
-    AND tbl_attendance.id_admin=%s
-    """, (id, session['id_admin']))
+    cur.execute("""
+        SELECT
+            sp.id_teacher,
+            sp.status,
+            sp.id_level,
+            sp.class_type,
+            sp.year,
+            sp.month,
+            t.name
+        FROM tbl_student_period sp
+        LEFT JOIN tbl_teacher t
+            ON sp.id_teacher = t.id_teacher
+        WHERE sp.id_student = %s
+          AND (
+                sp.year < %s
+                OR (sp.year = %s AND sp.month <= %s)
+              )
+        ORDER BY sp.year DESC, sp.month DESC
+        LIMIT 1
+    """, (
+        id_student,
+        year,
+        year,
+        month
+    ))
 
-  data = cur.fetchall()
-  cur.close()
+    return cur.fetchone()
 
-  # convert to list of dicts for json
-  students = []
-  for row in data:
-    students.append({
-      'id_ss': row[0],
-      'name': row[1],
-      'status': row[2],
-      'date': row[3].strftime("%A, %d %B %Y")
-    })
-  return jsonify(students)
 
-# GET ATTENDANCE BY ATTENDANCE ID
-def model_get_attendance_by_attendance(id_attendance):
+def is_current_student(cur, id_student, year, month):
+    """
+    Returns True only when the student's effective status
+    for the selected year/month is 'Current Student'.
+    """
+
+    period = get_effective_student_period(
+        cur,
+        id_student,
+        year,
+        month
+    )
+
+    if not period:
+        return False
+
+    status = period[1]
+
+    return str(status).strip().lower() == "current student"
+
+
+# =========================================================
+# BUILD TEACHER SCHEDULE MAP
+# =========================================================
+
+def build_teacher_schedule_map(selected_day):
+    """
+    Build the recurring teacher schedule for one day.
+
+    Structure:
+
+    {
+        teacher_id: {
+            "id_teacher": ...,
+            "name": ...,
+            "slots": {
+                ("09:00", "10:00"): [
+                    student rows...
+                ]
+            }
+        }
+    }
+    """
+
+    cur = mysql.connection.cursor()
+
+    admin_id = session["id_admin"]
+
+    # -----------------------------------------------------
+    # GET ALL TEACHERS
+    # -----------------------------------------------------
+
+    cur.execute("""
+        SELECT
+            id_teacher,
+            name
+        FROM tbl_teacher
+        WHERE id_admin = %s
+        ORDER BY name
+    """, (admin_id,))
+
+    teacher_rows = cur.fetchall()
+
+    teacher_map = {}
+
+    for teacher_id, teacher_name in teacher_rows:
+
+        teacher_map[teacher_id] = {
+            "id_teacher": teacher_id,
+            "name": teacher_name,
+            "slots": {}
+        }
+
+        for start_time, end_time in TIME_SLOTS:
+            teacher_map[teacher_id]["slots"][
+                (start_time, end_time)
+            ] = []
+
+    # -----------------------------------------------------
+    # GET RECURRING SCHEDULE
+    # -----------------------------------------------------
+
+    cur.execute("""
+        SELECT
+            ts.id_teacher_schedule,
+            ts.id_teacher,
+            ts.class_day,
+            ts.start_time,
+            ts.end_time,
+            ts.id_student,
+            ts.id_trial_student,
+            ts.id_level,
+            ts.notes,
+
+            st.name AS student_name,
+            st.dob AS student_dob,
+            tr.name AS trial_name,
+            tr.dob AS trial_dob,
+            l.level_name
+
+        FROM tbl_teacher_schedule ts
+
+        LEFT JOIN tbl_student st
+            ON ts.id_student = st.id_student
+
+        LEFT JOIN tbl_trial_student tr
+            ON ts.id_trial_student = tr.id_trial_student
+
+        LEFT JOIN tbl_level l
+            ON ts.id_level = l.id_level
+
+        WHERE ts.id_admin = %s
+          AND ts.class_day = %s
+
+        ORDER BY
+            ts.id_teacher,
+            ts.start_time,
+            COALESCE(st.name, tr.name)
+    """, (
+        admin_id,
+        selected_day
+    ))
+
+    schedule_rows = cur.fetchall()
+
+    for row in schedule_rows:
+
+        (
+            id_teacher_schedule,
+            id_teacher,
+            class_day,
+            start_time,
+            end_time,
+            id_student,
+            id_trial_student,
+            id_level,
+            notes,
+            student_name,
+            student_dob,
+            trial_name,
+            trial_dob,
+            level_name
+        ) = row
+
+        if id_teacher not in teacher_map:
+            continue
+
+        slot_key = (
+            str(start_time)[:5],
+            str(end_time)[:5]
+        )
+
+        if slot_key not in teacher_map[id_teacher]["slots"]:
+            teacher_map[id_teacher]["slots"][slot_key] = []
+
+        # -------------------------------------------------
+        # STUDENT TYPE
+        # -------------------------------------------------
+
+        if id_student:
+            student_type = "current"
+            display_name = student_name
+        else:
+            student_type = "trial"
+            display_name = trial_name
+
+        teacher_map[id_teacher]["slots"][slot_key].append({
+            "id_teacher_schedule": id_teacher_schedule,
+            "id_student": id_student,
+            "id_trial_student": id_trial_student,
+            "student_type": student_type,
+            "name": display_name or "",
+            "age": calculate_age(student_dob if id_student else trial_dob),
+            "id_level": id_level,
+            "level_name": level_name or "",
+            "notes": notes or ""
+        })
+
+    cur.close()
+
+    return teacher_map
+
+
+# =========================================================
+# MAIN SCHEDULE PAGE
+# =========================================================
+
+def model_schedule():
+    today = date.today()
+    selected_day = request.args.get("day", "").upper()
+
+    if selected_day not in DAYS:
+        selected_day = today.strftime("%a").upper()
+        if selected_day not in DAYS:
+            selected_day = "MON"
+
+    # -----------------------------------------------------
+    # ATTENDANCE FILTER
+    # -----------------------------------------------------
+
+    today = date.today()
+
+    try:
+        attendance_year = int(
+            request.args.get("attendance_year", today.year)
+        )
+    except (TypeError, ValueError):
+        attendance_year = today.year
+
+    try:
+        attendance_term = int(
+            request.args.get(
+                "attendance_term",
+                get_term_from_month(today.month)
+            )
+        )
+    except (TypeError, ValueError):
+        attendance_term = get_term_from_month(today.month)
+
+    if attendance_term not in (1, 2, 3, 4):
+        attendance_term = get_term_from_month(today.month)
+
+    # -----------------------------------------------------
+    # LOAD SCHEDULE
+    # -----------------------------------------------------
+
+    schedule_map = build_teacher_schedule_map(selected_day)
+
+    # -----------------------------------------------------
+    # LOAD LEVELS
+    # -----------------------------------------------------
 
     cur = mysql.connection.cursor()
 
     cur.execute("""
         SELECT
-            tbl_attendance.id_attendance,
-            tbl_student.name,
-            tbl_attendance.status,
-            tbl_schedule.date
-        FROM tbl_attendance
-        JOIN tbl_student
-            ON tbl_attendance.id_student = tbl_student.id_student
-        JOIN tbl_schedule
-            ON tbl_attendance.id_schedule = tbl_schedule.id_schedule
-        WHERE tbl_attendance.id_attendance=%s
-        AND tbl_attendance.id_admin=%s
-    """, (id_attendance, session['id_admin']))
+            id_level,
+            level_name,
+            age_range
+        FROM tbl_level
+        WHERE id_admin = %s
+        ORDER BY
+            CAST(
+                SUBSTRING_INDEX(age_range, '-', 1)
+                AS DECIMAL(4,2)
+            )
+    """, (session["id_admin"],))
 
-    data = cur.fetchall()
+    levels = cur.fetchall()
 
     cur.close()
+
+    # -----------------------------------------------------
+    # LOAD ATTENDANCE STUDENTS
+    # -----------------------------------------------------
+
+    attendance_students = get_attendance_students(
+        attendance_year,
+        attendance_term
+    )
+
+    # -----------------------------------------------------
+    # LOAD ATTENDANCE RECORDS
+    # -----------------------------------------------------
+
+    attendance_records = get_attendance_records(
+        attendance_year,
+        attendance_term
+    )
+
+    return render_template(
+        "admin/schedule/schedule.html",
+
+        # Teacher schedule
+        selected_day=selected_day,
+        days=DAYS,
+        time_slots=TIME_SLOTS,
+        schedule_map=schedule_map,
+
+        # Dropdowns
+        levels=levels,
+
+        # Attendance
+        attendance_year=attendance_year,
+        attendance_term=attendance_term,
+        attendance_students=attendance_students,
+        attendance_records=attendance_records
+    )
+
+
+# =========================================================
+# GET CURRENT STUDENTS FOR ADD STUDENT MODAL
+# =========================================================
+
+def get_current_students():
+
+    cur = mysql.connection.cursor()
+
+    admin_id = session["id_admin"]
+
+    today = date.today()
+
+    cur.execute("""
+        SELECT
+            id_student,
+            name,
+            dob
+        FROM tbl_student
+        WHERE id_admin = %s
+          AND (is_trial = 0 OR is_trial IS NULL)
+        ORDER BY name
+    """, (admin_id,))
+
+    rows = cur.fetchall()
 
     students = []
 
-    for row in data:
-        students.append({
-            'id_ss': row[0],
-            'name': row[1],
-            'status': row[2],
-            'date': row[3].strftime("%A, %d %B %Y")
-        })
+    for student_id, name, dob in rows:
 
-    return jsonify(students)
+        if is_current_student(
+            cur,
+            student_id,
+            today.year,
+            today.month
+        ):
+            students.append({
+                "id_student": student_id,
+                "name": name,
+                "age": calculate_age(dob)
+            })
 
-# UPDATE ATTENDANCE
-def model_update_attendance():
-  if request.method == 'POST':
-    data = request.get_json()
-    attendance_list = data.get('attendance')
+    cur.close()
+
+    return students
+
+
+# =========================================================
+# GET TRIAL STUDENTS
+# =========================================================
+
+def get_trial_students():
 
     cur = mysql.connection.cursor()
-    for item in attendance_list:
-      cur.execute("UPDATE tbl_attendance SET status=%s WHERE id_attendance=%s AND id_admin=%s", (item['status'], item['id_ss'], session['id_admin'], ))
-    mysql.connection.commit()
+
+    cur.execute("""
+        SELECT
+            id_trial_student,
+            name,
+            dob,
+            trial_date
+        FROM tbl_trial_student
+        WHERE id_admin = %s
+        ORDER BY
+            trial_date DESC,
+            name
+    """, (session["id_admin"],))
+
+    rows = cur.fetchall()
+
     cur.close()
-    return jsonify({'message': 'Attendance successfully updated'})
-  return jsonify({'error': 'invalid request'}), 400
 
-# PRINT SCHEDULE
-def model_print_schedule():
-    selected_date = request.args.get('date')
+    return [
+        {
+            "id_trial_student": row[0],
+            "name": row[1],
+            "age": calculate_age(row[2]),
+            "trial_date": row[3].strftime("%Y-%m-%d")
+                if row[3] else ""
+        }
+        for row in rows
+    ]
 
-    if not selected_date:
-        selected_date = indo_time_today().strftime("%Y-%m-%d")
-    
-    print_type = request.args.get(
-        "print_type",
-        "all"
+
+# =========================================================
+# API: GET STUDENTS FOR ADD MODAL
+# =========================================================
+
+def model_get_schedule_students():
+
+    try:
+
+        current_students = get_current_students()
+        trial_students = get_trial_students()
+
+        return jsonify({
+            "success": True,
+            "current_students": current_students,
+            "trial_students": trial_students
+        })
+
+    except Exception as e:
+
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
+
+# =========================================================
+# ADD STUDENT TO RECURRING TEACHER SCHEDULE
+# =========================================================
+
+def model_add_teacher_schedule():
+
+    cur = mysql.connection.cursor()
+
+    try:
+
+        admin_id = session["id_admin"]
+
+        # -------------------------------------------------
+        # FORM DATA
+        # -------------------------------------------------
+
+        id_teacher = request.form.get("id_teacher")
+        class_day = request.form.get("class_day", "").upper()
+        start_time = request.form.get("start_time")
+        end_time = request.form.get("end_time")
+
+        student_type = request.form.get("student_type")
+
+        id_student = request.form.get("id_student")
+        id_trial_student = request.form.get("id_trial_student")
+
+        id_level = request.form.get("id_level")
+        notes = request.form.get("notes", "").strip()
+
+        # -------------------------------------------------
+        # BASIC VALIDATION
+        # -------------------------------------------------
+
+        if not id_teacher:
+            raise Exception("Teacher is required.")
+
+        if class_day not in DAYS:
+            raise Exception("Invalid class day.")
+
+        if not start_time or not end_time:
+            raise Exception("Start time and end time are required.")
+
+        if student_type not in ("current", "trial"):
+            raise Exception("Invalid student type.")
+
+        if not id_level:
+            raise Exception("Level is required.")
+
+        # -------------------------------------------------
+        # VERIFY TEACHER
+        # -------------------------------------------------
+
+        cur.execute("""
+            SELECT id_teacher
+            FROM tbl_teacher
+            WHERE id_teacher = %s
+              AND id_admin = %s
+            LIMIT 1
+        """, (
+            id_teacher,
+            admin_id
+        ))
+
+        if not cur.fetchone():
+            raise Exception("Teacher not found.")
+
+        # -------------------------------------------------
+        # DETERMINE STUDENT
+        # -------------------------------------------------
+
+        if student_type == "current":
+
+            if not id_student:
+                raise Exception("Please select a student.")
+
+            id_student = int(id_student)
+
+            # Make sure student belongs to this admin
+            cur.execute("""
+                SELECT id_student
+                FROM tbl_student
+                WHERE id_student = %s
+                  AND id_admin = %s
+                  AND (is_trial = 0 OR is_trial IS NULL)
+                LIMIT 1
+            """, (
+                id_student,
+                admin_id
+            ))
+
+            if not cur.fetchone():
+                raise Exception("Student not found.")
+
+            # Check CURRENT status
+            today = date.today()
+
+            if not is_current_student(
+                cur,
+                id_student,
+                today.year,
+                today.month
+            ):
+                raise Exception(
+                    "Only Current Students can be added "
+                    "to the teacher schedule."
+                )
+
+            id_trial_student = None
+
+        else:
+
+            if not id_trial_student:
+                raise Exception("Please select a trial student.")
+
+            id_trial_student = int(id_trial_student)
+
+            # Make sure trial belongs to this admin
+            cur.execute("""
+                SELECT id_trial_student
+                FROM tbl_trial_student
+                WHERE id_trial_student = %s
+                  AND id_admin = %s
+                LIMIT 1
+            """, (
+                id_trial_student,
+                admin_id
+            ))
+
+            if not cur.fetchone():
+                raise Exception("Trial student not found.")
+
+            id_student = None
+
+        # -------------------------------------------------
+        # CHECK SLOT LIMIT
+        # -------------------------------------------------
+
+        cur.execute("""
+            SELECT COUNT(*)
+            FROM tbl_teacher_schedule
+            WHERE id_teacher = %s
+              AND class_day = %s
+              AND start_time = %s
+              AND end_time = %s
+              AND id_admin = %s
+        """, (
+            id_teacher,
+            class_day,
+            start_time,
+            end_time,
+            admin_id
+        ))
+
+        slot_count = cur.fetchone()[0]
+
+        if slot_count >= 6:
+            raise Exception(
+                "This time slot already has 6 students."
+            )
+
+        # -------------------------------------------------
+        # CHECK DUPLICATE CURRENT STUDENT
+        # -------------------------------------------------
+
+        if id_student:
+
+            cur.execute("""
+                SELECT id_teacher_schedule
+                FROM tbl_teacher_schedule
+                WHERE id_teacher = %s
+                  AND class_day = %s
+                  AND start_time = %s
+                  AND end_time = %s
+                  AND id_student = %s
+                  AND id_admin = %s
+                LIMIT 1
+            """, (
+                id_teacher,
+                class_day,
+                start_time,
+                end_time,
+                id_student,
+                admin_id
+            ))
+
+            if cur.fetchone():
+                raise Exception(
+                    "This student is already assigned "
+                    "to this time slot."
+                )
+
+        # -------------------------------------------------
+        # CHECK DUPLICATE TRIAL STUDENT
+        # -------------------------------------------------
+
+        if id_trial_student:
+
+            cur.execute("""
+                SELECT id_teacher_schedule
+                FROM tbl_teacher_schedule
+                WHERE id_teacher = %s
+                  AND class_day = %s
+                  AND start_time = %s
+                  AND end_time = %s
+                  AND id_trial_student = %s
+                  AND id_admin = %s
+                LIMIT 1
+            """, (
+                id_teacher,
+                class_day,
+                start_time,
+                end_time,
+                id_trial_student,
+                admin_id
+            ))
+
+            if cur.fetchone():
+                raise Exception(
+                    "This trial student is already assigned "
+                    "to this time slot."
+                )
+
+        # -------------------------------------------------
+        # VERIFY LEVEL
+        # -------------------------------------------------
+
+        cur.execute("""
+            SELECT id_level
+            FROM tbl_level
+            WHERE id_level = %s
+              AND id_admin = %s
+            LIMIT 1
+        """, (
+            id_level,
+            admin_id
+        ))
+
+        if not cur.fetchone():
+            raise Exception("Invalid level.")
+
+        # -------------------------------------------------
+        # INSERT RECURRING SCHEDULE
+        # -------------------------------------------------
+
+        cur.execute("""
+            INSERT INTO tbl_teacher_schedule
+            (
+                id_teacher,
+                class_day,
+                start_time,
+                end_time,
+                id_student,
+                id_trial_student,
+                id_level,
+                notes,
+                id_admin
+            )
+            VALUES
+            (
+                %s,%s,%s,%s,%s,%s,%s,%s,%s
+            )
+        """, (
+            id_teacher,
+            class_day,
+            start_time,
+            end_time,
+            id_student,
+            id_trial_student,
+            id_level,
+            notes,
+            admin_id
+        ))
+
+        mysql.connection.commit()
+
+        flash(
+            "Student successfully added to the schedule.",
+            "success"
+        )
+
+    except Exception as e:
+
+        mysql.connection.rollback()
+
+        flash(
+            f"Error adding student: {str(e)}",
+            "danger"
+        )
+
+    finally:
+
+        cur.close()
+
+    return redirect(url_for("schedule",day=class_day))
+
+
+# =========================================================
+# EDIT STUDENT FROM RECURRING TEACHER SCHEDULE
+# =========================================================
+
+def model_edit_teacher_schedule(schedule_id):
+    if request.method != "POST":
+        return redirect(url_for("schedule"))
+
+    id_teacher = request.form.get("id_teacher")
+    class_day = request.form.get("class_day")
+    start_time = request.form.get("start_time")
+    end_time = request.form.get("end_time")
+
+    student_type = request.form.get("student_type")
+
+    id_student = request.form.get("id_student") if student_type == "current" else None
+    id_trial_student = request.form.get("id_trial_student") if student_type == "trial" else None
+
+    id_level = request.form.get("id_level")
+    notes = request.form.get("notes", "").strip()
+
+    if not id_level:
+        flash("Please select a level.", "danger")
+        return redirect(url_for("schedule", day=class_day))
+
+    cursor = mysql.connection.cursor()
+
+    cursor.execute("""
+        UPDATE tbl_teacher_schedule
+        SET
+            id_student = %s,
+            id_trial_student = %s,
+            id_level = %s,
+            notes = %s
+        WHERE id_teacher_schedule = %s
+    """, (
+        id_student or None,
+        id_trial_student or None,
+        id_level,
+        notes or None,
+        schedule_id
+    ))
+
+    mysql.connection.commit()
+    cursor.close()
+
+    flash("Student schedule updated successfully.", "success")
+
+    return redirect(
+        url_for(
+            "schedule",
+            day=class_day
+        )
     )
 
-    selected_teacher = request.args.get("teacher")
+# =========================================================
+# DELETE STUDENT FROM RECURRING SCHEDULE
+# =========================================================
 
-    schedule_map, teachers = build_schedule_map(selected_date)
+def model_delete_teacher_schedule(id):
 
-    # Filter single teacher
-    if (print_type == "single" and selected_teacher):
-        id_teacher = int(selected_teacher)
-        filtered_map = {}
-        if id_teacher in schedule_map:
-            filtered_map[id_teacher] = schedule_map[id_teacher]
-        schedule_map = filtered_map
+    cur = mysql.connection.cursor()
+
+    try:
+
+        # -------------------------------------------------
+        # VERIFY OWNERSHIP
+        # -------------------------------------------------
+
+        cur.execute("""
+            SELECT
+                class_day
+            FROM tbl_teacher_schedule
+            WHERE id_teacher_schedule = %s
+              AND id_admin = %s
+            LIMIT 1
+        """, (
+            id,
+            session["id_admin"]
+        ))
+
+        row = cur.fetchone()
+
+        if not row:
+            raise Exception("Schedule entry not found.")
+
+        class_day = row[0]
+
+        # -------------------------------------------------
+        # DELETE
+        # -------------------------------------------------
+
+        cur.execute("""
+            DELETE FROM tbl_teacher_schedule
+            WHERE id_teacher_schedule = %s
+              AND id_admin = %s
+        """, (
+            id,
+            session["id_admin"]
+        ))
+
+        mysql.connection.commit()
+
+        flash(
+            "Student removed from the schedule.",
+            "success"
+        )
+
+    except Exception as e:
+
+        mysql.connection.rollback()
+
+        flash(
+            f"Error deleting schedule: {str(e)}",
+            "danger"
+        )
+
+        class_day = request.args.get("day", "MON")
+
+    finally:
+
+        cur.close()
+
+    return redirect(
+        url_for(
+            "schedule",
+            day=class_day
+        )
+    )
+
+
+
+
+
+# =========================================================
+# ATTENDANCE — GET CURRENT STUDENTS
+# =========================================================
+
+def get_attendance_students(year, term):
+
+    cur = mysql.connection.cursor()
+
+    admin_id = session["id_admin"]
+
+    # -----------------------------------------------------
+    # TERM → USE THE LAST MONTH OF THE TERM
+    # -----------------------------------------------------
+
+    months = TERM_MONTHS[term]
+    reference_month = months[-1]
+
+    # -----------------------------------------------------
+    # GET STUDENTS
+    # -----------------------------------------------------
+
+    cur.execute("""
+        SELECT
+            id_student,
+            name,
+            dob
+        FROM tbl_student
+        WHERE id_admin = %s
+          AND (is_trial = 0 OR is_trial IS NULL)
+        ORDER BY name
+    """, (admin_id,))
+
+    rows = cur.fetchall()
+
+    students = []
+
+    for student_id, name, dob in rows:
+
+        period = get_effective_student_period(
+            cur,
+            student_id,
+            year,
+            reference_month
+        )
+
+        if not period:
+            continue
+
+        status = period[1]
+
+        if (
+            status
+            and str(status).strip().lower()
+            == "current student"
+        ):
+            students.append({
+                "id_student": student_id,
+                "name": name,
+                "age": calculate_age(dob)
+            })
+
+    cur.close()
+
+    return students
+
+
+# =========================================================
+# ATTENDANCE — GET RECORDS
+# =========================================================
+
+def get_attendance_records(year, term):
+
+    cur = mysql.connection.cursor()
+
+    cur.execute("""
+        SELECT
+            id_student_attendance,
+            id_student,
+            meeting_number,
+            class_date,
+            status
+        FROM tbl_student_attendance
+        WHERE year = %s
+          AND term = %s
+          AND id_admin = %s
+        ORDER BY
+            id_student,
+            meeting_number
+    """, (
+        year,
+        term,
+        session["id_admin"]
+    ))
+
+    rows = cur.fetchall()
+
+    cur.close()
+
+    records = {}
+
+    for row in rows:
+
+        (
+            attendance_id,
+            student_id,
+            meeting_number,
+            class_date,
+            status
+        ) = row
+
+        student_key = str(student_id)
+        meeting_key = str(meeting_number)
+
+        if student_key not in records:
+            records[student_key] = {}
+
+        records[student_key][meeting_key] = {
+            "id_student_attendance": attendance_id,
+            "class_date": (
+                class_date.strftime("%Y-%m-%d")
+                if class_date
+                else None
+            ),
+            "status": status
+        }
+
+    return records
+
+
+# =========================================================
+# API — GET ATTENDANCE
+# =========================================================
+
+def model_get_student_attendance():
+
+    try:
+
+        year = int(request.args.get("year"))
+        term = int(request.args.get("term"))
+
+        if term not in (1, 2, 3, 4):
+            raise Exception("Invalid term.")
+
+        students = get_attendance_students(
+            year,
+            term
+        )
+
+        records = get_attendance_records(
+            year,
+            term
+        )
+
+        return jsonify({
+            "success": True,
+            "students": students,
+            "records": records
+        })
+
+    except Exception as e:
+
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
+
+# =========================================================
+# API — GET ONE ATTENDANCE RECORD
+# =========================================================
+
+def model_get_student_attendance_record():
+
+    try:
+
+        attendance_id = request.args.get(
+            "id_student_attendance"
+        )
+
+        if not attendance_id:
+            raise Exception(
+                "Attendance ID is required."
+            )
+
+        cur = mysql.connection.cursor()
+
+        cur.execute("""
+            SELECT
+                id_student_attendance,
+                id_student,
+                year,
+                term,
+                meeting_number,
+                class_date,
+                status
+            FROM tbl_student_attendance
+            WHERE id_student_attendance = %s
+              AND id_admin = %s
+            LIMIT 1
+        """, (
+            attendance_id,
+            session["id_admin"]
+        ))
+
+        row = cur.fetchone()
+
+        cur.close()
+
+        if not row:
+            raise Exception(
+                "Attendance record not found."
+            )
+
+        return jsonify({
+            "success": True,
+            "attendance": {
+                "id_student_attendance": row[0],
+                "id_student": row[1],
+                "year": row[2],
+                "term": row[3],
+                "meeting_number": row[4],
+                "class_date": (
+                    row[5].strftime("%Y-%m-%d")
+                    if row[5]
+                    else ""
+                ),
+                "status": row[6]
+            }
+        })
+
+    except Exception as e:
+
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
+
+# =========================================================
+# SAVE ATTENDANCE
+# =========================================================
+
+def model_save_student_attendance():
+
+    cur = mysql.connection.cursor()
+
+    try:
+
+        admin_id = session["id_admin"]
+
+        data = request.get_json()
+
+        if not data:
+            raise Exception("No data received.")
+
+        id_student = data.get("id_student")
+        year = data.get("year")
+        term = data.get("term")
+        meeting_number = data.get("meeting_number")
+        class_date = data.get("class_date")
+        status = data.get("status", "None")
+
+        # -------------------------------------------------
+        # VALIDATION
+        # -------------------------------------------------
+
+        if not id_student:
+            raise Exception("Student is required.")
+
+        if not year:
+            raise Exception("Year is required.")
+
+        if term not in (1, 2, 3, 4):
+            term = int(term)
+
+        if term not in (1, 2, 3, 4):
+            raise Exception("Invalid term.")
+
+        meeting_number = int(meeting_number)
+
+        if meeting_number < 1 or meeting_number > 10:
+            raise Exception(
+                "Meeting number must be between 1 and 10."
+            )
+
+        if status not in (
+            "None",
+            "Absent",
+            "Present"
+        ):
+            raise Exception("Invalid attendance status.")
+
+        # -------------------------------------------------
+        # VERIFY STUDENT
+        # -------------------------------------------------
+
+        cur.execute("""
+            SELECT id_student
+            FROM tbl_student
+            WHERE id_student = %s
+              AND id_admin = %s
+            LIMIT 1
+        """, (
+            id_student,
+            admin_id
+        ))
+
+        if not cur.fetchone():
+            raise Exception("Student not found.")
+
+        # -------------------------------------------------
+        # NORMALIZE DATE
+        # -------------------------------------------------
+
+        if class_date:
+
+            try:
+                parsed_date = datetime.strptime(
+                    class_date,
+                    "%Y-%m-%d"
+                ).date()
+
+            except ValueError:
+                raise Exception(
+                    "Invalid class date."
+                )
+
+        else:
+            parsed_date = None
+
+        # -------------------------------------------------
+        # UPSERT ATTENDANCE
+        # -------------------------------------------------
+
+        cur.execute("""
+            SELECT id_student_attendance
+            FROM tbl_student_attendance
+            WHERE id_student = %s
+              AND year = %s
+              AND term = %s
+              AND meeting_number = %s
+              AND id_admin = %s
+            LIMIT 1
+        """, (
+            id_student,
+            year,
+            term,
+            meeting_number,
+            admin_id
+        ))
+
+        existing = cur.fetchone()
+
+        if existing:
+
+            cur.execute("""
+                UPDATE tbl_student_attendance
+                SET
+                    class_date = %s,
+                    status = %s
+                WHERE id_student_attendance = %s
+                  AND id_admin = %s
+            """, (
+                parsed_date,
+                status,
+                existing[0],
+                admin_id
+            ))
+
+        else:
+
+            cur.execute("""
+                INSERT INTO tbl_student_attendance
+                (
+                    id_student,
+                    year,
+                    term,
+                    meeting_number,
+                    class_date,
+                    status,
+                    id_admin
+                )
+                VALUES
+                (
+                    %s,%s,%s,%s,%s,%s,%s
+                )
+            """, (
+                id_student,
+                year,
+                term,
+                meeting_number,
+                parsed_date,
+                status,
+                admin_id
+            ))
+
+        mysql.connection.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Attendance saved successfully."
+        })
+
+    except Exception as e:
+
+        mysql.connection.rollback()
+
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
+    finally:
+
+        cur.close()
+
+
+# =========================================================
+# DELETE / CLEAR ATTENDANCE
+# =========================================================
+
+def model_delete_student_attendance():
+
+    cur = mysql.connection.cursor()
+
+    try:
+
+        data = request.get_json()
+
+        if not data:
+            raise Exception("No data received.")
+
+        id_student = data.get("id_student")
+        year = int(data.get("year"))
+        term = int(data.get("term"))
+        meeting_number = int(
+            data.get("meeting_number")
+        )
+
+        cur.execute("""
+            DELETE FROM tbl_student_attendance
+            WHERE id_student = %s
+              AND year = %s
+              AND term = %s
+              AND meeting_number = %s
+              AND id_admin = %s
+        """, (
+            id_student,
+            year,
+            term,
+            meeting_number,
+            session["id_admin"]
+        ))
+
+        mysql.connection.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Attendance cleared."
+        })
+
+    except Exception as e:
+
+        mysql.connection.rollback()
+
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
+    finally:
+
+        cur.close()
+
+
+# =========================================================
+# PRINT SCHEDULE
+# =========================================================
+
+def model_print_schedule():
+
+    selected_day = request.args.get(
+        "day",
+        "MON"
+    ).upper()
+
+    if selected_day not in DAYS:
+        selected_day = "MON"
+
+    schedule_map = build_teacher_schedule_map(
+        selected_day
+    )
 
     return render_template(
         "admin/schedule/print_schedule.html",
-        selected_date=selected_date,
-        schedule_map=schedule_map,
-        teachers=teachers,
+        selected_day=selected_day,
+        days=DAYS,
         time_slots=TIME_SLOTS,
-        print_type=print_type,
-        selected_teacher=selected_teacher
+        schedule_map=schedule_map
     )

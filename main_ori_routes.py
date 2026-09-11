@@ -23,7 +23,7 @@ from model.director.payment import model_director_payment
 from model.director.schedule import model_director_schedule
 from model.director.account import model_edit_director_account, model_process_edit_director_account
 
-from model.teacher.teacher_schedule import model_teacher_schedule
+from model.teacher.teacher_schedule_ori import model_teacher_schedule
 
 app = Flask(__name__)
 
