@@ -662,9 +662,8 @@
                 {% for slot_key, students in teacher.slots.items() %}
                 {% set start_time = slot_key[0] %}
                 {% set end_time = slot_key[1] %}
-                {% set row_count = students|length + (1 if students|length < 6 else 0) %}
-                {% for row_index in range(row_count) %}
-                {% set student = students[row_index] if row_index < students|length else none %}
+                {% set row_count = students|length + (1 if students|length < 6 else 0) %} {% for row_index in
+                  range(row_count) %} {% set student=students[row_index] if row_index < students|length else none %}
                 <tr>
                   {% if row_index == 0 %}
                   <td class="slot-time" rowspan="{{ row_count }}">
@@ -771,7 +770,7 @@
             </span>
             <select id="attendanceYear">
               {% for year in range(attendance_year - 1, attendance_year + 2) %}
-              <option value="{{ year }}" {% if year == attendance_year %} selected {% endif %}>
+              <option value="{{ year }}" {% if year==attendance_year %} selected {% endif %}>
                 {{ year }}
               </option>
               {% endfor %}
@@ -785,7 +784,7 @@
             </span>
             <select id="attendanceTerm">
               {% for term in [1, 2, 3, 4] %}
-              <option value="{{ term }}" {% if term == attendance_term %} selected {% endif %}>
+              <option value="{{ term }}" {% if term==attendance_term %} selected {% endif %}>
                 Term {{ term }}
               </option>
               {% endfor %}
@@ -826,9 +825,9 @@
                   {% set student_id = student.id_student|string %}
                   {% set meeting_id = meeting|string %}
                   {% set record = attendance_records
-                                                    .get(student_id, {})
-                                                    .get(meeting_id)
-                                                %}
+                  .get(student_id, {})
+                  .get(meeting_id)
+                  %}
                   {% if record %}
                   {% set status = record.status %}
                   {% set class_date = record.class_date %}
@@ -1596,28 +1595,73 @@
       PRESERVE PAGE SCROLL POSITION
     ===================================================== */
     const scheduleScrollKey = "scheduleScrollY";
+    const attendanceSearchKey = "attendanceSearch";
 
     function saveScheduleScroll() {
       sessionStorage.setItem(
         scheduleScrollKey,
         window.scrollY
       );
+
+      const searchInput = document.getElementById("attendanceSearch");
+
+      if (searchInput) {
+        sessionStorage.setItem(
+          attendanceSearchKey,
+          searchInput.value
+        );
+      }
     }
 
     window.addEventListener("load", function () {
+
       const savedScroll =
         sessionStorage.getItem(scheduleScrollKey);
 
+      const savedSearch =
+        sessionStorage.getItem(attendanceSearchKey);
+
+      if (savedSearch !== null) {
+
+        const searchInput =
+          document.getElementById("attendanceSearch");
+
+        if (searchInput) {
+          searchInput.value = savedSearch;
+
+          const search =
+            savedSearch.trim().toLowerCase();
+
+          document
+            .querySelectorAll("#attendanceBody tr")
+            .forEach(row => {
+
+              const name =
+                row.dataset.studentName || "";
+
+              row.style.display =
+                name.includes(search) ? "" : "none";
+            });
+        }
+
+        sessionStorage.removeItem(attendanceSearchKey);
+      }
+
       if (savedScroll !== null) {
+
         sessionStorage.removeItem(scheduleScrollKey);
 
         requestAnimationFrame(() => {
+
           window.scrollTo(
             0,
             Number(savedScroll)
           );
+
         });
+
       }
+
     });
 
     document
