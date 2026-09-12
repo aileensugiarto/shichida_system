@@ -229,10 +229,38 @@
       display: inline-block;
       padding: 4px 8px;
       border-radius: 5px;
-      background: #fff2be;
-      color: #765d00;
       font-size: 12px;
       font-weight: 600;
+    }
+
+    .level-chick {
+      background: #ffd6d6;
+      color: #c62828;
+    }
+
+    .level-bunny {
+      background: #ffd9e8;
+      color: #c2185b;
+    }
+
+    .level-kitty {
+      background: #fff2be;
+      color: #765d00;
+    }
+
+    .level-puppy {
+      background: #d9f2d9;
+      color: #2e7d32;
+    }
+
+    .level-bear {
+      background: #d9ebff;
+      color: #1565c0;
+    }
+
+    .level-giraffe {
+      background: #eadcff;
+      color: #6a1b9a;
     }
 
     .notes-text {
@@ -262,16 +290,16 @@
       }
 
       .slot-time span {
-      display: block;
-      width: 100%;
-      box-sizing: border-box;
-      padding: 0;
-      border: 0;
-      border-radius: 18px;
-      background: none;
-      white-space: nowrap;
-      font-size: 10.5px;
-    }
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0;
+        border: 0;
+        border-radius: 18px;
+        background: none;
+        white-space: nowrap;
+        font-size: 10.5px;
+      }
     }
   </style>
 </head>
@@ -366,7 +394,20 @@
 
                   <!-- LEVEL -->
                   <td class="text-center">
-                    <span class="level-badge">
+                    <span class="level-badge
+                      {% if student.level_name|lower == 'chick' %}
+                        level-chick
+                      {% elif student.level_name|lower == 'bunny' %}
+                        level-bunny
+                      {% elif student.level_name|lower == 'kitty' %}
+                        level-kitty
+                      {% elif student.level_name|lower == 'puppy' %}
+                        level-puppy
+                      {% elif student.level_name|lower == 'bear' %}
+                        level-bear
+                      {% elif student.level_name|lower == 'giraffe' %}
+                        level-giraffe
+                      {% endif %}">
                       {{ student.level_name }}
                     </span>
                   </td>
