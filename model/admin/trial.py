@@ -137,7 +137,7 @@ def model_add_trial():
         dob = request.form['form_dob']
         parent_name = request.form['form_parent_name']
         parent_telp = request.form['form_parent_telp']
-        trial_date = request.form['form_trial_date']
+        trial_date = request.form.get('form_trial_date') or None
 
         age = calculate_age(dob)
 
@@ -185,7 +185,7 @@ def model_process_edit_trial():
     dob = request.form['form_dob']
     parent_name = request.form['form_parent_name']
     parent_telp = request.form['form_parent_telp']
-    trial_date = request.form['form_trial_date']
+    trial_date = request.form.get('form_trial_date') or None
 
     cur = mysql.connection.cursor()
 
