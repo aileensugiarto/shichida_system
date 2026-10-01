@@ -213,7 +213,7 @@
           <i class="fa-solid fa-circle-check me-2"></i>
           {% elif category == "danger" %}
           <i class="fa-solid fa-circle-xmark me-2"></i>
-          {% elif category == "warning" %}  
+          {% elif category == "warning" %}
           <i class="fa-solid fa-triangle-exclamation me-2"></i>
           {% else %}
           <i class="fa-solid fa-circle-info me-2"></i>
@@ -256,8 +256,8 @@
             <i class="fa-solid fa-search"></i>
           </span>
           <input type="text" id="searchInput" class="form-control w-25" placeholder="Search student">
-        </div>        
-        
+        </div>
+
       </div>
 
       <a href="/add_payment" class="btn fw-bold mb-3" style="background-color: #ff682d; color: white;">Add Payment</a>
@@ -416,6 +416,38 @@
       const termFilter = document.getElementById("termFilter");
       const searchInput = document.getElementById("searchInput");
 
+      function savePaymentFilters() {
+        localStorage.setItem(
+          "paymentPageFilters",
+          JSON.stringify({
+            year: yearFilter.value,
+            term: termFilter.value,
+            search: searchInput.value
+          })
+        );
+      }
+
+      function loadPaymentFilters() {
+        const saved = localStorage.getItem("paymentPageFilters");
+
+        if (!saved) return;
+
+        try {
+          const filters = JSON.parse(saved);
+
+          if (filters.year) {
+            renderYears(parseInt(filters.year));
+            yearFilter.value = filters.year;
+          }
+
+          termFilter.value = filters.term || "";
+          searchInput.value = filters.search || "";
+
+        } catch (error) {
+          console.error("Unable to restore payment filters:", error);
+        }
+      }
+
       // ================= YEAR DYNAMIC =================
       // start from current year (from backend OR JS fallback)
       let currentYear = new Date().getFullYear();
@@ -489,6 +521,7 @@
           // APPLY
           row.style.display = match ? "" : "none";
         });
+        savePaymentFilters();
       }
 
       // ================= EVENTS =================
@@ -497,6 +530,7 @@
       searchInput.addEventListener("input", filterTable);
 
       // ================= INITIAL LOAD =================
+      loadPaymentFilters();
       filterTable();
 
     });

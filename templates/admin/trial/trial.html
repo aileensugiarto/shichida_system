@@ -342,9 +342,35 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
+        const TRIAL_FILTER_STORAGE_KEY = "trialPageFilters";
+
+        function getTrialFilters() {
+            try {
+                return JSON.parse(localStorage.getItem(TRIAL_FILTER_STORAGE_KEY)) || {};
+            } catch (error) {
+                console.error("Unable to read saved trial filters:", error);
+                return {};
+            }
+        }
+
+        function saveTrialFilters() {
+            const year = document.getElementById("yearFilter").value;
+            const month = document.getElementById("monthFilter").value;
+            const search = document.getElementById("searchInput").value;
+
+            localStorage.setItem(
+                TRIAL_FILTER_STORAGE_KEY,
+                JSON.stringify({
+                    year: year,
+                    month: month,
+                    search: search
+                })
+            );
+        }
+
         function searchTable() {
             let input = document.getElementById("searchInput");
-            let filter = input.value.toLowerCase();
+            let filter = input.value.toLowerCase().trim();
             let table = document.querySelector("table tbody");
             let rows = table.getElementsByTagName("tr");
 
@@ -361,21 +387,44 @@
                     }
                 }
             }
-        }
-    </script>
 
-    <script>
+            saveTrialFilters();
+        }
+
         function applyFilters() {
+            const year = document.getElementById("yearFilter").value;
+            const month = document.getElementById("monthFilter").value;
 
-            const year =
-                document.getElementById("yearFilter").value;
+            saveTrialFilters();
 
-            const month =
-                document.getElementById("monthFilter").value;
-
-            window.location =
-                `/trial?year=${year}&month=${month}`;
+            window.location = `/trial?year=${year}&month=${month}`;
         }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const savedFilters = getTrialFilters();
+            const yearFilter = document.getElementById("yearFilter");
+            const monthFilter = document.getElementById("monthFilter");
+            const searchInput = document.getElementById("searchInput");
+
+            // Restore the saved year/month first. These filters are server-side,
+            // so the page must reload with the saved values.
+            if (
+                savedFilters.year &&
+                savedFilters.month &&
+                (yearFilter.value !== savedFilters.year ||
+                    monthFilter.value !== savedFilters.month)
+            ) {
+                window.location = `/trial?year=${encodeURIComponent(savedFilters.year)}&month=${encodeURIComponent(savedFilters.month)}`;
+                return;
+            }
+
+            // Restore the search after the correct year/month page is loaded.
+            searchInput.value = savedFilters.search || "";
+            searchTable();
+
+            // Keep the current server-side filters saved even when the search is empty.
+            saveTrialFilters();
+        });
     </script>
 </body>
 

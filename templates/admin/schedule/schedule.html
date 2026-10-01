@@ -538,6 +538,77 @@
       visibility: visible;
     }
 
+
+    /* =====================================================
+           MEETING SETUP / ATTENDANCE ACTIONS
+        ===================================================== */
+    .meetings-cell {
+      min-width: 220px;
+    }
+
+    .meeting-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .add-meeting-btn {
+      border: 1px solid #ff9b76;
+      background: #fff7f2;
+      color: #ff682d;
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .add-meeting-btn:hover {
+      background: #fff0e8;
+    }
+
+    .attendance-actions {
+      width: 120px;
+    }
+
+    .attendance-row-actions {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .meeting-action {
+      width: 30px;
+      height: 30px;
+      border: none;
+      border-radius: 5px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .edit-meetings-btn {
+      background: #ffc107;
+      color: #111;
+    }
+
+    .edit-meetings-btn:hover {
+      background: #e0a800;
+    }
+
+    .delete-meetings-btn {
+      background: #e9344f;
+      color: #fff;
+    }
+
+    .delete-meetings-btn:hover {
+      background: #c8233d;
+    }
+
     /* =====================================================
            NO ATTENDANCE
     ===================================================== */
@@ -802,114 +873,121 @@
       <div class="attendance-section mb-3">
         <h2 class="mb-4 fw-bold">Attendance</h2>
 
-        <!-- Filters -->
         <div class="d-flex gap-2 mb-3 w-100">
-          <!-- Year Filter -->
           <div class="input-group filter-input">
-            <span class="input-group-text">
-              <i class="fa-solid fa-calendar-days"></i>
-            </span>
+            <span class="input-group-text"><i class="fa-solid fa-calendar-days"></i></span>
             <select id="attendanceYear">
               {% for year in range(attendance_year - 1, attendance_year + 2) %}
-              <option value="{{ year }}" {% if year==attendance_year %} selected {% endif %}>
-                {{ year }}
-              </option>
+              <option value="{{ year }}" {% if year == attendance_year %}selected{% endif %}>{{ year }}</option>
               {% endfor %}
             </select>
           </div>
 
-          <!-- Term Filter -->
           <div class="input-group filter-input">
-            <span class="input-group-text">
-              <i class="fa-solid fa-book-open"></i>
-            </span>
+            <span class="input-group-text"><i class="fa-solid fa-book-open"></i></span>
             <select id="attendanceTerm">
               {% for term in [1, 2, 3, 4] %}
-              <option value="{{ term }}" {% if term==attendance_term %} selected {% endif %}>
-                Term {{ term }}
-              </option>
+              <option value="{{ term }}" {% if term == attendance_term %}selected{% endif %}>Term {{ term }}</option>
               {% endfor %}
             </select>
           </div>
 
-          <!-- Search Filter -->
           <div class="input-group filter-input">
-            <span class="input-group-text">
-              <i class="fa-solid fa-search"></i>
-            </span>
+            <span class="input-group-text"><i class="fa-solid fa-search"></i></span>
             <input type="text" id="attendanceSearch" placeholder="Search student">
           </div>
         </div>
 
-        <!-- ATTENDANCE CARD -->
         <div class="attendance-card">
-          <!-- Attendance Table -->
           <div class="attendance-table-wrapper">
             {% if attendance_students %}
             <table class="attendance-table">
               <thead>
                 <tr>
                   <th class="attendance-name">Student</th>
-
-                  {% for meeting in range(1, 11) %}
-                  <th>M{{ meeting }}</th>
-                  {% endfor %}
+                  <th>Meetings</th>
+                  <th class="attendance-actions-column">Action</th>
                 </tr>
               </thead>
               <tbody id="attendanceBody">
                 {% for student in attendance_students %}
+                {% set student_id = student.id_student|string %}
+                {% set meetings = attendance_records.get(student_id, {}) %}
                 <tr data-student-name="{{ student.name|lower }}">
-                  <td class="attendance-name">
-                    {{ student.name }}
-                  </td>
-                  {% for meeting in range(1, 11) %}
-                  {% set student_id = student.id_student|string %}
-                  {% set meeting_id = meeting|string %}
-                  {% set record = attendance_records
-                  .get(student_id, {})
-                  .get(meeting_id)
-                  %}
-                  {% if record %}
-                  {% set status = record.status %}
-                  {% set class_date = record.class_date %}
-                  {% else %}
-                  {% set status = "None" %}
-                  {% set class_date = None %}
-                  {% endif %}
-                  <td>
-
-                    <div class="meeting-box
-                                                            {% if status == 'Present' %}
-                                                                present
-                                                            {% elif status == 'Absent' %}
-                                                                absent
-                                                            {% else %}
-                                                                none
-                                                            {% endif %}
-                                                            {% if class_date %}
-                                                                has-date
-                                                            {% endif %}
-                                                        " data-student-id="{{ student.id_student }}"
-                      data-student-name="{{ student.name }}" data-meeting="{{ meeting }}"
-                      data-year="{{ attendance_year }}" data-term="{{ attendance_term }}" data-status="{{ status }}"
-                      data-date="{{ class_date or '' }}"
-                      data-tooltip="{% if class_date %}Class: {{ class_date }}{% endif %}"
-                      onclick="openAttendanceModal(this)">
-                      M{{ meeting }}
+                  <td class="attendance-name">{{ student.name }}</td>
+                  <td class="meetings-cell">
+                    {% if meetings %}
+                    <div class="meeting-list">
+                      {% for meeting_number, record in meetings.items() %}
+                      {% set status = record.status or "None" %}
+                      <div
+                        class="meeting-box {% if status == 'Present' %}present{% elif status == 'Absent' %}absent{% else %}none{% endif %}{% if record.class_date %} has-date{% endif %}"
+                        data-student-id="{{ student.id_student }}" data-student-name="{{ student.name }}"
+                        data-meeting="{{ meeting_number }}" data-year="{{ attendance_year }}"
+                        data-term="{{ attendance_term }}" data-status="{{ status }}"
+                        data-date="{{ record.class_date or '' }}"
+                        data-tooltip="{% if record.class_date %}Class: {{ record.class_date }}{% endif %}"
+                        onclick="openAttendanceModal(this)">
+                        M{{ meeting_number }}
+                      </div>
+                      {% endfor %}
                     </div>
+                    {% else %}
+                    <button type="button" class="add-meeting-btn" data-bs-toggle="modal"
+                      data-bs-target="#meetingSetupModal" onclick='openMeetingSetupModal(
+                      "add",
+                      {{ student.id_student|tojson }},
+                      {{ student.name|tojson }},
+                      {{ attendance_year|tojson }},
+                      {{ attendance_term|tojson }}
+                      )'>
+                      <i class="fa-solid fa-plus me-1"></i>Add Meeting
+                    </button>
+                    {% endif %}
                   </td>
-                  {% endfor %}
+                  <td class="attendance-actions">
+                    {% if meetings %}
+                    <div class="attendance-row-actions">
+                      <!-- Edit Meetings Button -->
+                      <button type="button"
+                        class="meeting-action edit-meetings-btn"
+                        title="Edit Meetings"
+                        data-bs-toggle="modal"
+                        data-bs-target="#meetingSetupModal"
+                        onclick='openMeetingSetupModal(
+                          "edit",
+                          {{ student.id_student|tojson }},
+                          {{ student.name|tojson }},
+                          {{ attendance_year|tojson }},
+                          {{ attendance_term|tojson }},
+                          {{ meetings|length }},
+                          {{ (meetings.get("1") or {}).get("class_date")|tojson }}
+                        )'>
+                        <i class="fa-solid fa-pen"></i>
+                      </button>
+                      <!-- Delete Meetings Button -->
+                      <button type="button"
+                        class="meeting-action delete-meetings-btn"
+                        title="Delete All Meetings"
+                        onclick='deleteAllMeetings(
+                          {{ student.id_student|tojson }},
+                          {{ student.name|tojson }},
+                          {{ attendance_year|tojson }},
+                          {{ attendance_term|tojson }}
+                        )'>
+                        <i class="fa-solid fa-trash"></i>
+                      </button>
+                    </div>
+                    {% endif %}
+                  </td>
                 </tr>
                 {% endfor %}
               </tbody>
             </table>
             {% else %}
-
             <div class="no-attendance">
               <i class="fa-solid fa-user-slash mb-2" style="font-size: 24px;"></i>
-              <div>
-                No current students found for this term.
-              </div>
+              <div>No current students found for this term.</div>
             </div>
             {% endif %}
           </div>
@@ -1017,15 +1095,57 @@
               <i class="fa-solid fa-plus me-1"></i>
               <span id="teacherScheduleSubmitText">Add Student</span>
             </button>
-
           </div>
-
         </form>
 
       </div>
 
     </div>
 
+  </div>
+
+  <!-- =====================================================
+         MEETING SETUP MODAL
+    ===================================================== -->
+  <div class="modal fade" id="meetingSetupModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title fw-bold ps-2" id="meetingSetupModalTitle">Add Meetings</h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="meetingSetupStudentId">
+          <input type="hidden" id="meetingSetupYear">
+          <input type="hidden" id="meetingSetupTerm">
+          <div class="mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">
+              Student
+            </label>
+            <input type="text" class="form-control" id="meetingSetupStudentName" readonly
+              style="width: 100%; border-radius: 8px; font-size: 14px; background: #f4f6f8;">
+          </div>
+          <!-- Start Date -->
+          <div class="mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Start Date</label>
+            <input type="date" class="form-control" id="meetingSetupStartDate" required
+              style="width: 100%; border-radius: 8px; font-size: 14px;">
+          </div>
+          <!-- Total Meetings -->
+          <div class="mb-3">
+            <label style="font-weight: 500; font-size: 15px;" class="mb-1">Total Meetings</label>
+            <input type="number" class="form-control" id="meetingSetupTotal" min="1" step="1" required
+              style="width: 100%; border-radius: 8px; font-size: 14px;" placeholder="Enter the total meetings">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn-add" onclick="saveMeetingSetup()">
+            <i class="fa-solid fa-check me-1"></i><span id="meetingSetupSubmitText">Add Meetings</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- =====================================================
@@ -1097,19 +1217,14 @@
   </div>
 
 
-
   <!-- =====================================================
          DELETE FORM
     ===================================================== -->
-
   <form id="deleteScheduleForm" method="POST" style="display:none;">
   </form>
 
-
-
   <!-- Bootstrap -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 
 
   <script>
@@ -1126,6 +1241,146 @@
         document.getElementById("attendanceModal")
       );
 
+    let meetingSetupMode = "add";
+
+    // OPEN MEETING SETUP MODAL
+    function openMeetingSetupModal(mode, studentId, studentName, year, term, totalMeetings = "", startDate = "") {
+      meetingSetupMode = mode;
+      document.getElementById("meetingSetupStudentId").value = studentId;
+      document.getElementById("meetingSetupYear").value = year;
+      document.getElementById("meetingSetupTerm").value = term;
+      document.getElementById("meetingSetupStudentName").value = studentName;
+
+      document.getElementById("meetingSetupModalTitle").textContent =
+        mode === "edit" ?
+        `Edit Meetings` :
+        `Add Meetings`;
+
+      document.getElementById("meetingSetupSubmitText").textContent =
+        mode === "edit" ? "Save Changes" : "Add Meetings";
+
+      document.getElementById("meetingSetupStartDate").value = startDate || "";
+      document.getElementById("meetingSetupTotal").value = totalMeetings || "";
+
+      const modalElement = document.getElementById("meetingSetupModal");
+      const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+      modal.show();
+    }
+
+    // SAVE MEETING SETUP
+    function saveMeetingSetup() {
+      const studentIdRaw = document.getElementById("meetingSetupStudentId").value;
+      const yearRaw = document.getElementById("meetingSetupYear").value;
+      const termRaw = document.getElementById("meetingSetupTerm").value;
+      const startDate = document.getElementById("meetingSetupStartDate").value;
+      const totalRaw = document.getElementById("meetingSetupTotal").value;
+
+      const studentId = Number(studentIdRaw);
+      console.log("Student ID:", studentIdRaw);
+      console.log("Student ID converted:", studentId);
+      const year = Number(yearRaw);
+      const term = Number(termRaw);
+      const totalMeetings = Number(totalRaw);
+
+      if (!studentId) {
+        showAttendanceMessage("Student is required.", "danger");
+        return;
+      }
+
+      if (!year) {
+        showAttendanceMessage("Year is required.", "danger");
+        return;
+      }
+
+      if (![1, 2, 3, 4].includes(term)) {
+        showAttendanceMessage("Invalid term.", "danger");
+        return;
+      }
+
+      if (!startDate) {
+        showAttendanceMessage("Please select a start date.", "danger");
+        return;
+      }
+
+      if (!totalMeetings || totalMeetings < 1) {
+        showAttendanceMessage("Total meetings must be at least 1.", "danger");
+        return;
+      }
+
+      const endpoint = meetingSetupMode === "edit" ?
+        "{{ url_for('edit_student_meetings') }}" :
+        "{{ url_for('add_student_meetings') }}";
+
+      const payload = {
+        id_student: studentId,
+        year: year,
+        term: term,
+        start_date: startDate,
+        total_meetings: totalMeetings
+      };
+
+      fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (!data.success) {
+            throw new Error(data.message || "Unable to save meetings.");
+          }
+
+          saveScheduleScroll();
+
+          bootstrap.Modal
+            .getOrCreateInstance(document.getElementById("meetingSetupModal"))
+            .hide();
+
+          const day = "{{ selected_day }}";
+
+          window.location.href =
+            `{{ url_for('schedule') }}?day=${day}&attendance_year=${year}&attendance_term=${term}`;
+        })
+        .catch(error => {
+          showAttendanceMessage(
+            error.message || "Something went wrong.",
+            "danger"
+          );
+        });
+    }
+
+    // DELETE ALL MEETINGS
+    function deleteAllMeetings(studentId, studentName, year, term) {
+      if (!confirm(
+          `Are you sure you want to delete ALL meetings for ${studentName}?`))
+        return;
+
+      fetch("{{ url_for('delete_student_meetings') }}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            id_student: studentId,
+            year: year,
+            term: term
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (!data.success) throw new Error(data.message || "Unable to delete meetings.");
+          saveScheduleScroll();
+          const day = "{{ selected_day }}";
+          window.location.href =
+            `{{ url_for('schedule') }}?day=${day}&attendance_year=${year}&attendance_term=${term}`;
+        })
+        .catch(error => showAttendanceMessage(error.message || "Something went wrong.", "danger"));
+    }
+
+    // SET TEACHER SCHEDULE MODAL MODE
     function setTeacherScheduleModalMode(mode) {
       const form = document.getElementById("teacherScheduleForm");
       const title = document.getElementById("teacherScheduleModalTitle");
@@ -1184,7 +1439,6 @@
     /* =====================================================
        EDIT STUDENT
     ===================================================== */
-
     function openEditStudentModal(
       scheduleId,
       teacherId,
@@ -1352,7 +1606,6 @@
       scheduleId,
       day
     ) {
-
       if (
         !confirm(
           "Are you sure you want to remove this student from the schedule?"
@@ -1360,12 +1613,9 @@
       ) {
         return;
       }
+      const form = document.getElementById("deleteScheduleForm");
 
-      const form =
-        document.getElementById("deleteScheduleForm");
-
-      form.action =
-        `/delete_teacher_schedule/${scheduleId}?day=${encodeURIComponent(day)}`;
+      form.action = `/delete_teacher_schedule/${scheduleId}?day=${encodeURIComponent(day)}`;
 
       saveScheduleScroll();
 
@@ -1376,59 +1626,21 @@
        ATTENDANCE MODAL
     ===================================================== */
     function openAttendanceModal(box) {
+      const studentId = box.dataset.studentId;
+      const studentName = box.dataset.studentName;
+      const meeting = box.dataset.meeting;
+      const year = box.dataset.year;
+      const term = box.dataset.term;
+      const status = box.dataset.status || "None";
+      const classDate = box.dataset.date || "";
 
-      const studentId =
-        box.dataset.studentId;
-
-      const studentName =
-        box.dataset.studentName;
-
-      const meeting =
-        box.dataset.meeting;
-
-      const year =
-        box.dataset.year;
-
-      const term =
-        box.dataset.term;
-
-      const status =
-        box.dataset.status ||
-        "None";
-
-      const classDate =
-        box.dataset.date ||
-        "";
-
-      document.getElementById(
-        "attendanceStudentId"
-      ).value = studentId;
-
-      document.getElementById(
-        "attendanceMeeting"
-      ).value = meeting;
-
-      document.getElementById(
-        "attendanceYearValue"
-      ).value = year;
-
-      document.getElementById(
-        "attendanceTermValue"
-      ).value = term;
-
-      document.getElementById(
-          "attendanceModalTitle"
-        ).textContent =
-        `MEETING ${meeting} — ${studentName.toUpperCase()}`;
-
-      document.getElementById(
-        "attendanceDate"
-      ).value = classDate;
-
-      document.getElementById(
-        "attendanceStatus"
-      ).value = status;
-
+      document.getElementById("attendanceStudentId").value = studentId;
+      document.getElementById("attendanceMeeting").value = meeting;
+      document.getElementById("attendanceYearValue").value = year;
+      document.getElementById("attendanceTermValue").value = term;
+      document.getElementById("attendanceModalTitle").textContent = `MEETING ${meeting} — ${studentName.toUpperCase()}`;
+      document.getElementById("attendanceDate").value = classDate;
+      document.getElementById("attendanceStatus").value = status;
       attendanceModal.show();
     }
 
@@ -1436,104 +1648,61 @@
        SAVE ATTENDANCE
     ===================================================== */
     function saveAttendance() {
+      const studentId = parseInt(document.getElementById("attendanceStudentId").value);
+      const meeting = parseInt(document.getElementById("attendanceMeeting").value);
+      const year = parseInt(document.getElementById("attendanceYearValue").value);
+      const term = parseInt(document.getElementById("attendanceTermValue").value);
+      const classDate = document.getElementById("attendanceDate").value;
+      const status = document.getElementById("attendanceStatus").value;
 
-      const studentId =
-        document.getElementById(
-          "attendanceStudentId"
-        ).value;
+      if (!classDate) {
+        showAttendanceMessage("Please select a date.", "danger");
+        return;
+      }
 
-      const meeting =
-        document.getElementById(
-          "attendanceMeeting"
-        ).value;
-
-      const year =
-        parseInt(
-          document.getElementById(
-            "attendanceYearValue"
-          ).value
-        );
-
-      const term =
-        parseInt(
-          document.getElementById(
-            "attendanceTermValue"
-          ).value
-        );
-
-      const classDate =
-        document.getElementById(
-          "attendanceDate"
-        ).value;
-
-      const status =
-        document.getElementById(
-          "attendanceStatus"
-        ).value;
-
-      fetch(
-          "{{ url_for('save_student_attendance') }}", {
-            method: "POST",
-
-            headers: {
-              "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-
-              id_student: parseInt(studentId),
-
-              year: year,
-
-              term: term,
-
-              meeting_number: parseInt(meeting),
-
-              class_date: classDate || null,
-
-              status: status
-
-            })
-
-          }
-        )
-
-        .then(response =>
-          response.json()
-        )
-
-        .then(data => {
-
-          if (!data.success) {
-
-            throw new Error(
-              data.message ||
-              "Unable to save attendance."
-            );
-
-          }
-
-          attendanceModal.hide();
-
-          saveScheduleScroll();
-
-          const currentDay =
-            "{{ selected_day }}";
-
-          saveScheduleScroll();
-
-          window.location.href =
-            `{{ url_for('schedule') }}?day=${currentDay}` +
-            `&attendance_year=${year}` +
-            `&attendance_term=${term}`;
+      fetch("{{ url_for('save_student_attendance') }}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            id_student: studentId,
+            year: year,
+            term: term,
+            meeting_number: meeting,
+            class_date: classDate,
+            status: status
+          })
         })
+        .then(response => response.json())
+        .then(data => {
+          if (!data.success) throw new Error(data.message || "Unable to save attendance.");
+          attendanceModal.hide();
+          saveScheduleScroll();
+          const currentDay = "{{ selected_day }}";
+          window.location.href =
+            `{{ url_for('schedule') }}?day=${currentDay}&attendance_year=${year}&attendance_term=${term}`;
+        })
+        .catch(error => showAttendanceMessage(error.message || "Something went wrong.", "danger"));
+    }
 
-        .catch(error => {
-          alert(
-            error.message ||
-            "Something went wrong."
-          );
-        });
+    function showAttendanceMessage(message, type = "danger") {
+      const existing = document.getElementById("attendanceMessage");
+      if (existing) existing.remove();
+      const messageBox = document.createElement("div");
+      messageBox.id = "attendanceMessage";
+      messageBox.className = `custom-alert ${type}`;
+      messageBox.style.position = "fixed";
+      messageBox.style.top = "20px";
+      messageBox.style.right = "20px";
+      messageBox.style.zIndex = "2000";
+      messageBox.style.minWidth = "280px";
+      messageBox.innerHTML =
+        `<div>${message}</div><button type="button" class="alert-close" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>`;
+      document.body.appendChild(messageBox);
+      setTimeout(() => {
+        if (messageBox.isConnected) messageBox.remove();
+      }, 4000);
     }
 
     /* =====================================================
@@ -1555,20 +1724,15 @@
               "#attendanceBody tr"
             );
 
-
           rows.forEach(row => {
-
             const name =
               row.dataset.studentName ||
               "";
-
             row.style.display =
               name.includes(search) ?
               "" :
               "none";
-
           });
-
         }
       );
 
@@ -1655,7 +1819,6 @@
     }
 
     window.addEventListener("load", function () {
-
       const savedScroll =
         sessionStorage.getItem(scheduleScrollKey);
 
@@ -1684,25 +1847,18 @@
                 name.includes(search) ? "" : "none";
             });
         }
-
         sessionStorage.removeItem(attendanceSearchKey);
       }
 
       if (savedScroll !== null) {
-
         sessionStorage.removeItem(scheduleScrollKey);
-
         requestAnimationFrame(() => {
-
           window.scrollTo(
             0,
             Number(savedScroll)
           );
-
         });
-
       }
-
     });
 
     document

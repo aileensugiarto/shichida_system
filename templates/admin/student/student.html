@@ -257,7 +257,7 @@
           <i class="fa-solid fa-circle-check me-2"></i>
           {% elif category == "danger" %}
           <i class="fa-solid fa-circle-xmark me-2"></i>
-          {% elif category == "warning" %}  
+          {% elif category == "warning" %}
           <i class="fa-solid fa-triangle-exclamation me-2"></i>
           {% else %}
           <i class="fa-solid fa-circle-info me-2"></i>
@@ -329,57 +329,57 @@
         </div>
 
         <div class="row g-2 align-items-end">
-            <!-- LEVEL FILTER -->
-            <div class="col">
-              <div class="input-group filter-input">
-                <span class="input-group-text">
-                  <i class="fa-solid fa-level-up"></i>
-                </span>
-                <select id="levelFilter" class="form-select">
-                  <option value="">All Levels</option>
-                  {% for lvl in levels %}
-                  <option value="{{ lvl }}">{{ lvl }}</option>
-                  {% endfor %}
-                </select>
-              </div>
+          <!-- LEVEL FILTER -->
+          <div class="col">
+            <div class="input-group filter-input">
+              <span class="input-group-text">
+                <i class="fa-solid fa-level-up"></i>
+              </span>
+              <select id="levelFilter" class="form-select">
+                <option value="">All Levels</option>
+                {% for lvl in levels %}
+                <option value="{{ lvl }}">{{ lvl }}</option>
+                {% endfor %}
+              </select>
             </div>
-
-            <!-- STATUS -->
-            <div class="col">
-              <div class="input-group filter-input">
-                <span class="input-group-text">
-                  <i class="fa-solid fa-circle-dot"></i>
-                </span>
-                <select id="statusFilter" class="form-select">
-                  <option value="">All Status</option>
-                  <option value="current student">Current Student</option>
-                  <option value="waiting list">Waiting List</option>
-                  <option value="past student">Past Student</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- SEARCH NAME -->
-            <div class="col">
-              <div class="input-group filter-input">
-                <span class="input-group-text">
-                  <i class="fa-solid fa-search"></i>
-                </span>
-                <input type="text" id="searchInput" class="form-control" placeholder="Search name">
-              </div>
-            </div>
-
-            <!-- AGE SEARCH -->
-            <div class="col">
-              <div class="input-group filter-input">
-                <span class="input-group-text">
-                  <i class="fa-solid fa-hashtag"></i>
-                </span>
-                <input type="number" id="ageSearch" class="form-control" placeholder="Search age">
-              </div>
-            </div>
-
           </div>
+
+          <!-- STATUS -->
+          <div class="col">
+            <div class="input-group filter-input">
+              <span class="input-group-text">
+                <i class="fa-solid fa-circle-dot"></i>
+              </span>
+              <select id="statusFilter" class="form-select">
+                <option value="">All Status</option>
+                <option value="current student">Current Student</option>
+                <option value="waiting list">Waiting List</option>
+                <option value="past student">Past Student</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- SEARCH NAME -->
+          <div class="col">
+            <div class="input-group filter-input">
+              <span class="input-group-text">
+                <i class="fa-solid fa-search"></i>
+              </span>
+              <input type="text" id="searchInput" class="form-control" placeholder="Search name">
+            </div>
+          </div>
+
+          <!-- AGE SEARCH -->
+          <div class="col">
+            <div class="input-group filter-input">
+              <span class="input-group-text">
+                <i class="fa-solid fa-hashtag"></i>
+              </span>
+              <input type="number" id="ageSearch" class="form-control" placeholder="Search age">
+            </div>
+          </div>
+
+        </div>
 
       </form>
 
@@ -635,10 +635,51 @@
 
     const rows = document.querySelectorAll("table tbody tr");
 
+    // -----------------------------------------
+    // SAVE FILTERS
+    // -----------------------------------------
+    function saveStudentFilters() {
+      localStorage.setItem(
+        "studentPageFilters",
+        JSON.stringify({
+          level: levelFilter.value,
+          age: ageSearch.value,
+          status: statusFilter.value,
+          search: searchInput.value
+        })
+      );
+    }
+
+    // -----------------------------------------
+    // LOAD FILTERS
+    // -----------------------------------------
+    function loadStudentFilters() {
+      const saved = localStorage.getItem("studentPageFilters");
+
+      if (!saved) {
+        return;
+      }
+
+      try {
+        const filters = JSON.parse(saved);
+
+        levelFilter.value = filters.level || "";
+        ageSearch.value = filters.age || "";
+        statusFilter.value = filters.status || "";
+        searchInput.value = filters.search || "";
+
+      } catch (error) {
+        console.error("Unable to restore student filters:", error);
+      }
+    }
+
     function normalize(val) {
       return (val || "").toString().trim().toLowerCase();
     }
 
+    // -----------------------------------------
+    // FILTER TABLE
+    // -----------------------------------------
     function filterTable() {
       const selectedLevel = normalize(levelFilter.value);
       const ageValue = ageSearch.value.trim();
@@ -651,29 +692,32 @@
         const status = normalize(row.dataset.status);
 
         const nameCell = row.querySelector("td[data-student-name]");
-        const studentName = nameCell ? normalize(nameCell.dataset.studentName) : "";
+        const studentName = nameCell ?
+          normalize(nameCell.dataset.studentName) :
+          "";
 
         let show = true;
 
-        // 🔍 SEARCH NAME
+        // NAME SEARCH
         if (searchValue && !studentName.includes(searchValue)) {
           show = false;
         }
 
-        // 🎯 LEVEL FILTER
+        // LEVEL
         if (selectedLevel && level !== selectedLevel) {
           show = false;
         }
 
-        // 🎂 AGE FILTER
+        // AGE
         if (ageValue) {
           const ageYear = age.split(".")[0];
+
           if (ageYear !== ageValue) {
             show = false;
           }
         }
 
-        // 🟢 STATUS FILTER (NEW)
+        // STATUS
         if (selectedStatus && status !== selectedStatus) {
           show = false;
         }
@@ -681,62 +725,76 @@
         row.style.display = show ? "" : "none";
       });
 
+      // Renumber visible rows
       let visibleIndex = 1;
+
       rows.forEach(row => {
         if (row.style.display !== "none") {
           const numberCell = row.querySelector(".row-number");
+
           if (numberCell) {
             numberCell.textContent = visibleIndex++;
           }
         }
       });
+
+      // Save current filters
+      saveStudentFilters();
     }
 
+    // -----------------------------------------
     // EVENTS
+    // -----------------------------------------
     levelFilter.addEventListener("change", filterTable);
     ageSearch.addEventListener("input", filterTable);
     statusFilter.addEventListener("change", filterTable);
     searchInput.addEventListener("input", filterTable);
+
+    // -----------------------------------------
+    // RESTORE WHEN PAGE LOADS
+    // -----------------------------------------
+    loadStudentFilters();
+    filterTable();
   </script>
 
   <!-- Year -->
-   <script>
-  const yearSelect = document.getElementById("yearSelect");
+  <script>
+    const yearSelect = document.getElementById("yearSelect");
 
-  // Get current selected year from backend
-  let currentYear = parseInt("{{ filter_year }}") || new Date().getFullYear();
+    // Get current selected year from backend
+    let currentYear = parseInt("{{ filter_year }}") || new Date().getFullYear();
 
-  function populateYears(centerYear) {
-    yearSelect.innerHTML = "";
+    function populateYears(centerYear) {
+      yearSelect.innerHTML = "";
 
-    const years = [
-      centerYear - 1,
-      centerYear,
-      centerYear + 1
-    ];
+      const years = [
+        centerYear - 1,
+        centerYear,
+        centerYear + 1
+      ];
 
-    years.forEach(y => {
-      const opt = document.createElement("option");
-      opt.value = y;
-      opt.textContent = y;
+      years.forEach(y => {
+        const opt = document.createElement("option");
+        opt.value = y;
+        opt.textContent = y;
 
-      if (y === centerYear) {
-        opt.selected = true;
-      }
+        if (y === centerYear) {
+          opt.selected = true;
+        }
 
-      yearSelect.appendChild(opt);
+        yearSelect.appendChild(opt);
+      });
+    }
+
+    // When user changes year
+    yearSelect.addEventListener("change", () => {
+      const selectedYear = parseInt(yearSelect.value);
+      populateYears(selectedYear);
     });
-  }
 
-  // When user changes year
-  yearSelect.addEventListener("change", () => {
-    const selectedYear = parseInt(yearSelect.value);
-    populateYears(selectedYear);
-  });
-
-  // INIT on load
-  populateYears(currentYear);
-</script>
+    // INIT on load
+    populateYears(currentYear);
+  </script>
 </body>
 
 </html>

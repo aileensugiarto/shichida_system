@@ -17,9 +17,11 @@ from model.admin.schedule import (
     model_get_schedule_students,
     model_get_student_attendance,
     model_get_student_attendance_record,
+    model_add_student_meetings,
+    model_edit_student_meetings,
     model_save_student_attendance,
+    model_delete_student_meetings,
     model_delete_student_attendance,
-    model_print_schedule
 )
 from model.admin.payment import model_payment, model_edit_payment, model_process_edit_payment, model_delete_payment, model_add_payment, check_registration_status
 from model.admin.level import model_level, model_add_level, model_edit_level, model_process_edit_level, model_delete_level
@@ -396,66 +398,6 @@ def delete_teacher(id):
   return model_delete_teacher(id)
 
 
-# # SCHEDULE
-# @app.route('/schedule')
-# @login_required
-# def schedule():
-#   return model_schedule()
-
-# @app.route ('/add_schedule', methods=['GET', 'POST'])
-# @login_required
-# def add_schedule():
-#   return model_add_schedule()
-
-# @app.route('/edit_schedule/<int:id>', methods=['GET'])
-# @login_required
-# def edit_schedule(id):
-#   return model_edit_schedule(id)
-
-# @app.route('/process_edit_schedule', methods=['POST'])
-# @login_required
-# def process_edit_schedule():
-#   return model_process_edit_schedule()
-
-# @app.route('/edit_master_schedule/<int:id>', methods=['GET'])
-# @login_required
-# def edit_master_schedule(id):
-#   return model_edit_master_schedule(id)
-
-# @app.route('/process_edit_master_schedule', methods=['POST'])
-# @login_required
-# def process_edit_master_schedule():
-#   return model_process_edit_master_schedule()
-
-# @app.route('/delete_schedule/<int:id>', methods=['GET'])
-# @login_required
-# def delete_schedule(id):
-#   return model_delete_schedule(id)
-
-# @app.route('/delete_master_schedule/<int:id>', methods=['GET'])
-# @login_required
-# def delete_master_student(id):
-#   return model_delete_master_schedule(id)
-
-# @app.route('/get_attendance/<int:id>', methods=['GET'])
-# @login_required
-# def get_attendance(id):
-#   return model_get_attendance(id)
-
-# @app.route('/update_attendance', methods=['POST'])
-# @login_required
-# def update_attendance():
-#   return model_update_attendance()
-
-# @app.route('/get_attendance_by_attendance/<int:id>')
-# @login_required
-# def get_attendance_by_attendance(id):
-#     return model_get_attendance_by_attendance(id)
-
-# @app.route('/print_schedule')
-# @login_required
-# def print_schedule():
-#   return model_print_schedule()
 # =========================================================
 # SCHEDULE
 # =========================================================
@@ -488,7 +430,6 @@ def edit_teacher_schedule(schedule_id):
 def delete_teacher_schedule(id):
     return model_delete_teacher_schedule(id)
 
-
 # =========================================================
 # GET STUDENTS FOR ADD STUDENT MODAL
 # =========================================================
@@ -496,7 +437,6 @@ def delete_teacher_schedule(id):
 @login_required
 def get_schedule_students():
     return model_get_schedule_students()
-
 
 # =========================================================
 # GET ATTENDANCE
@@ -506,7 +446,6 @@ def get_schedule_students():
 def get_student_attendance():
     return model_get_student_attendance()
 
-
 # =========================================================
 # GET ONE ATTENDANCE RECORD
 # =========================================================
@@ -515,7 +454,6 @@ def get_student_attendance():
 def get_student_attendance_record():
     return model_get_student_attendance_record()
 
-
 # =========================================================
 # SAVE ATTENDANCE
 # =========================================================
@@ -523,7 +461,6 @@ def get_student_attendance_record():
 @login_required
 def save_student_attendance():
     return model_save_student_attendance()
-
 
 # =========================================================
 # DELETE / CLEAR ATTENDANCE
@@ -534,13 +471,28 @@ def delete_student_attendance():
     return model_delete_student_attendance()
 
 # =========================================================
-# PRINT SCHEDULE
+# ADD STUDENT MEETINGS
 # =========================================================
-@app.route('/print_schedule')
+@app.route('/add_student_meetings', methods=['POST'])
 @login_required
-def print_schedule():
-    return model_print_schedule()
+def add_student_meetings():
+    return model_add_student_meetings()
 
+# =========================================================
+# EDIT STUDENT MEETINGS
+# =========================================================
+@app.route('/edit_student_meetings', methods=['POST'])
+@login_required
+def edit_student_meetings():
+    return model_edit_student_meetings()
+
+# =========================================================
+# DELETE ALL STUDENT MEETINGS
+# =========================================================
+@app.route('/delete_student_meetings', methods=['POST'])
+@login_required
+def delete_student_meetings():
+    return model_delete_student_meetings()
 
 # TEACHER SCHEDULE PAGE
 @app.route('/teacher_schedule/<branch_name>')

@@ -963,27 +963,15 @@ def model_delete_teacher_schedule(id):
 # =========================================================
 
 def get_attendance_students(year, term):
-
     cur = mysql.connection.cursor()
-
     admin_id = session["id_admin"]
 
-    # -----------------------------------------------------
-    # TERM → USE THE LAST MONTH OF THE TERM
-    # -----------------------------------------------------
-
-    months = TERM_MONTHS[term]
-    reference_month = months[-1]
-
-    # -----------------------------------------------------
-    # GET STUDENTS
-    # -----------------------------------------------------
+    # Use the last month of the selected term to determine
+    # whether the student is a Current Student for that term.
+    reference_month = TERM_MONTHS[term][-1]
 
     cur.execute("""
-        SELECT
-            id_student,
-            name,
-            dob
+        SELECT id_student, name, dob
         FROM tbl_student
         WHERE id_admin = %s
           AND (is_trial = 0 OR is_trial IS NULL)
@@ -991,27 +979,19 @@ def get_attendance_students(year, term):
     """, (admin_id,))
 
     rows = cur.fetchall()
-
     students = []
 
     for student_id, name, dob in rows:
-
         period = get_effective_student_period(
-            cur,
-            student_id,
-            year,
-            reference_month
+            cur, student_id, year, reference_month
         )
 
         if not period:
             continue
 
-        status = period[1]
-
         if (
-            status
-            and str(status).strip().lower()
-            == "current student"
+            period[1]
+            and str(period[1]).strip().lower() == "current student"
         ):
             students.append({
                 "id_student": student_id,
@@ -1020,16 +1000,14 @@ def get_attendance_students(year, term):
             })
 
     cur.close()
-
     return students
 
 
 # =========================================================
-# ATTENDANCE — GET RECORDS
+# ATTENDANCE — GET EXISTING MEETINGS
 # =========================================================
 
 def get_attendance_records(year, term):
-
     cur = mysql.connection.cursor()
 
     cur.execute("""
@@ -1043,9 +1021,7 @@ def get_attendance_records(year, term):
         WHERE year = %s
           AND term = %s
           AND id_admin = %s
-        ORDER BY
-            id_student,
-            meeting_number
+        ORDER BY id_student, meeting_number
     """, (
         year,
         term,
@@ -1053,38 +1029,84 @@ def get_attendance_records(year, term):
     ))
 
     rows = cur.fetchall()
-
     cur.close()
 
     records = {}
 
-    for row in rows:
-
-        (
-            attendance_id,
-            student_id,
-            meeting_number,
-            class_date,
-            status
-        ) = row
-
+    for (
+        attendance_id,
+        student_id,
+        meeting_number,
+        class_date,
+        status
+    ) in rows:
         student_key = str(student_id)
         meeting_key = str(meeting_number)
 
-        if student_key not in records:
-            records[student_key] = {}
-
-        records[student_key][meeting_key] = {
+        records.setdefault(student_key, {})[meeting_key] = {
             "id_student_attendance": attendance_id,
             "class_date": (
                 class_date.strftime("%Y-%m-%d")
-                if class_date
-                else None
+                if class_date else None
             ),
-            "status": status
+            "status": status or "None"
         }
 
     return records
+
+
+def _validate_student_for_attendance(cur, id_student, year, term):
+    """Verify that the student belongs to this admin and is current."""
+    cur.execute("""
+        SELECT id_student
+        FROM tbl_student
+        WHERE id_student = %s
+          AND id_admin = %s
+        LIMIT 1
+    """, (
+        id_student,
+        session["id_admin"]
+    ))
+
+    if not cur.fetchone():
+        raise Exception("Student not found.")
+
+    reference_month = TERM_MONTHS[term][-1]
+
+    if not is_current_student(
+        cur,
+        id_student,
+        year,
+        reference_month
+    ):
+        raise Exception(
+            "Only Current Students can have attendance meetings."
+        )
+
+
+def _parse_attendance_date(value):
+    if not value:
+        raise Exception("Start date is required.")
+
+    try:
+        return datetime.strptime(
+            value,
+            "%Y-%m-%d"
+        ).date()
+    except (TypeError, ValueError):
+        raise Exception("Invalid date.")
+
+
+def _parse_total_meetings(value):
+    try:
+        total = int(value)
+    except (TypeError, ValueError):
+        raise Exception("Total meetings must be a whole number.")
+
+    if total < 1:
+        raise Exception("Total meetings must be at least 1.")
+
+    return total
 
 
 # =========================================================
@@ -1092,24 +1114,15 @@ def get_attendance_records(year, term):
 # =========================================================
 
 def model_get_student_attendance():
-
     try:
-
         year = int(request.args.get("year"))
         term = int(request.args.get("term"))
 
         if term not in (1, 2, 3, 4):
             raise Exception("Invalid term.")
 
-        students = get_attendance_students(
-            year,
-            term
-        )
-
-        records = get_attendance_records(
-            year,
-            term
-        )
+        students = get_attendance_students(year, term)
+        records = get_attendance_records(year, term)
 
         return jsonify({
             "success": True,
@@ -1118,7 +1131,6 @@ def model_get_student_attendance():
         })
 
     except Exception as e:
-
         return jsonify({
             "success": False,
             "message": str(e)
@@ -1130,17 +1142,11 @@ def model_get_student_attendance():
 # =========================================================
 
 def model_get_student_attendance_record():
-
     try:
-
-        attendance_id = request.args.get(
-            "id_student_attendance"
-        )
+        attendance_id = request.args.get("id_student_attendance")
 
         if not attendance_id:
-            raise Exception(
-                "Attendance ID is required."
-            )
+            raise Exception("Attendance ID is required.")
 
         cur = mysql.connection.cursor()
 
@@ -1163,13 +1169,10 @@ def model_get_student_attendance_record():
         ))
 
         row = cur.fetchone()
-
         cur.close()
 
         if not row:
-            raise Exception(
-                "Attendance record not found."
-            )
+            raise Exception("Attendance record not found.")
 
         return jsonify({
             "success": True,
@@ -1181,15 +1184,13 @@ def model_get_student_attendance_record():
                 "meeting_number": row[4],
                 "class_date": (
                     row[5].strftime("%Y-%m-%d")
-                    if row[5]
-                    else ""
+                    if row[5] else ""
                 ),
-                "status": row[6]
+                "status": row[6] or "None"
             }
         })
 
     except Exception as e:
-
         return jsonify({
             "success": False,
             "message": str(e)
@@ -1197,101 +1198,304 @@ def model_get_student_attendance_record():
 
 
 # =========================================================
-# SAVE ATTENDANCE
+# API — ADD MEETINGS FOR ONE STUDENT
 # =========================================================
 
-def model_save_student_attendance():
-
+def model_add_student_meetings():
     cur = mysql.connection.cursor()
 
     try:
+        data = request.get_json() or {}
 
-        admin_id = session["id_admin"]
-
-        data = request.get_json()
-
-        if not data:
-            raise Exception("No data received.")
-
-        id_student = data.get("id_student")
-        year = data.get("year")
-        term = data.get("term")
-        meeting_number = data.get("meeting_number")
-        class_date = data.get("class_date")
-        status = data.get("status", "None")
-
-        # -------------------------------------------------
-        # VALIDATION
-        # -------------------------------------------------
-
-        if not id_student:
-            raise Exception("Student is required.")
-
-        if not year:
-            raise Exception("Year is required.")
-
-        if term not in (1, 2, 3, 4):
-            term = int(term)
+        id_student = int(data.get("id_student"))
+        year = int(data.get("year"))
+        term = int(data.get("term"))
+        start_date = _parse_attendance_date(data.get("start_date"))
+        total_meetings = _parse_total_meetings(data.get("total_meetings"))
 
         if term not in (1, 2, 3, 4):
             raise Exception("Invalid term.")
 
-        meeting_number = int(meeting_number)
+        _validate_student_for_attendance(
+            cur,
+            id_student,
+            year,
+            term
+        )
 
-        if meeting_number < 1 or meeting_number > 10:
-            raise Exception(
-                "Meeting number must be between 1 and 10."
-            )
-
-        if status not in (
-            "None",
-            "Absent",
-            "Present"
-        ):
-            raise Exception("Invalid attendance status.")
-
-        # -------------------------------------------------
-        # VERIFY STUDENT
-        # -------------------------------------------------
-
+        # A student can have one meeting sequence per year/term.
         cur.execute("""
-            SELECT id_student
-            FROM tbl_student
+            SELECT meeting_number
+            FROM tbl_student_attendance
             WHERE id_student = %s
+              AND year = %s
+              AND term = %s
               AND id_admin = %s
-            LIMIT 1
+            ORDER BY meeting_number
         """, (
             id_student,
-            admin_id
+            year,
+            term,
+            session["id_admin"]
         ))
 
-        if not cur.fetchone():
-            raise Exception("Student not found.")
+        existing = cur.fetchall()
 
-        # -------------------------------------------------
-        # NORMALIZE DATE
-        # -------------------------------------------------
+        if existing:
+            raise Exception(
+                "Meetings already exist for this student. "
+                "Use Edit Meetings instead."
+            )
 
-        if class_date:
+        for meeting_number in range(1, total_meetings + 1):
+            class_date = start_date + timedelta(
+                days=7 * (meeting_number - 1)
+            )
 
-            try:
-                parsed_date = datetime.strptime(
+            cur.execute("""
+                INSERT INTO tbl_student_attendance
+                (
+                    id_student,
+                    year,
+                    term,
+                    meeting_number,
                     class_date,
-                    "%Y-%m-%d"
-                ).date()
+                    status,
+                    id_admin
+                )
+                VALUES (%s,%s,%s,%s,%s,%s,%s)
+            """, (
+                id_student,
+                year,
+                term,
+                meeting_number,
+                class_date,
+                "None",
+                session["id_admin"]
+            ))
 
-            except ValueError:
-                raise Exception(
-                    "Invalid class date."
+        mysql.connection.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Meetings added successfully."
+        })
+
+    except Exception as e:
+        mysql.connection.rollback()
+
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
+    finally:
+        cur.close()
+
+
+# =========================================================
+# API — EDIT MEETING SETUP FOR ONE STUDENT
+# =========================================================
+
+def model_edit_student_meetings():
+    cur = mysql.connection.cursor()
+
+    try:
+        data = request.get_json() or {}
+
+        id_student = int(data.get("id_student"))
+        year = int(data.get("year"))
+        term = int(data.get("term"))
+        new_start_date = _parse_attendance_date(
+            data.get("start_date")
+        )
+        new_total = _parse_total_meetings(
+            data.get("total_meetings")
+        )
+
+        if term not in (1, 2, 3, 4):
+            raise Exception("Invalid term.")
+
+        _validate_student_for_attendance(
+            cur,
+            id_student,
+            year,
+            term
+        )
+
+        cur.execute("""
+            SELECT
+                meeting_number,
+                class_date
+            FROM tbl_student_attendance
+            WHERE id_student = %s
+              AND year = %s
+              AND term = %s
+              AND id_admin = %s
+            ORDER BY meeting_number
+        """, (
+            id_student,
+            year,
+            term,
+            session["id_admin"]
+        ))
+
+        existing_rows = cur.fetchall()
+        old_total = len(existing_rows)
+
+        if old_total == 0:
+            raise Exception(
+                "No meetings exist for this student. "
+                "Use Add Meeting instead."
+            )
+
+        old_start_date = (
+            existing_rows[0][1]
+            if existing_rows[0][1]
+            else new_start_date
+        )
+
+        # If the overall start date changes, shift existing dates by
+        # the same number of days. This preserves manually adjusted
+        # dates relative to the meeting sequence.
+        date_shift = new_start_date - old_start_date
+
+        keep_total = min(old_total, new_total)
+
+        for meeting_number, old_class_date in existing_rows:
+            if meeting_number > new_total:
+                continue
+
+            if date_shift.days != 0 and old_class_date:
+                updated_date = old_class_date + date_shift
+            elif date_shift.days != 0:
+                updated_date = new_start_date + timedelta(
+                    days=7 * (meeting_number - 1)
+                )
+            else:
+                updated_date = old_class_date
+
+            cur.execute("""
+                UPDATE tbl_student_attendance
+                SET class_date = %s
+                WHERE id_student = %s
+                  AND year = %s
+                  AND term = %s
+                  AND meeting_number = %s
+                  AND id_admin = %s
+            """, (
+                updated_date,
+                id_student,
+                year,
+                term,
+                meeting_number,
+                session["id_admin"]
+            ))
+
+        # If the new total is smaller, remove only the meetings
+        # beyond the new total. Existing attendance markings stay.
+        if new_total < old_total:
+            cur.execute("""
+                DELETE FROM tbl_student_attendance
+                WHERE id_student = %s
+                  AND year = %s
+                  AND term = %s
+                  AND meeting_number > %s
+                  AND id_admin = %s
+            """, (
+                id_student,
+                year,
+                term,
+                new_total,
+                session["id_admin"]
+            ))
+
+        # If the new total is larger, append new weekly meetings.
+        if new_total > old_total:
+            for meeting_number in range(old_total + 1, new_total + 1):
+                class_date = new_start_date + timedelta(
+                    days=7 * (meeting_number - 1)
                 )
 
-        else:
-            parsed_date = None
+                cur.execute("""
+                    INSERT INTO tbl_student_attendance
+                    (
+                        id_student,
+                        year,
+                        term,
+                        meeting_number,
+                        class_date,
+                        status,
+                        id_admin
+                    )
+                    VALUES (%s,%s,%s,%s,%s,%s,%s)
+                """, (
+                    id_student,
+                    year,
+                    term,
+                    meeting_number,
+                    class_date,
+                    "None",
+                    session["id_admin"]
+                ))
 
-        # -------------------------------------------------
-        # UPSERT ATTENDANCE
-        # -------------------------------------------------
+        mysql.connection.commit()
 
+        return jsonify({
+            "success": True,
+            "message": "Meeting setup updated successfully."
+        })
+
+    except Exception as e:
+        mysql.connection.rollback()
+
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
+    finally:
+        cur.close()
+
+
+# =========================================================
+# API — SAVE INDIVIDUAL MEETING / ATTENDANCE
+# =========================================================
+def model_save_student_attendance():
+    cur = mysql.connection.cursor()
+
+    try:
+        admin_id = session["id_admin"]
+        data = request.get_json() or {}
+
+        id_student = int(data.get("id_student"))
+        year = int(data.get("year"))
+        term = int(data.get("term"))
+        meeting_number = int(data.get("meeting_number"))
+        class_date = data.get("class_date")
+        status = data.get("status", "None")
+
+        if term not in (1, 2, 3, 4):
+            raise Exception("Invalid term.")
+
+        if meeting_number < 1:
+            raise Exception("Invalid meeting number.")
+
+        if status not in ("None", "Absent", "Present"):
+            raise Exception("Invalid attendance status.")
+
+        _validate_student_for_attendance(
+            cur,
+            id_student,
+            year,
+            term
+        )
+
+        parsed_date = _parse_attendance_date(class_date)
+
+        # IMPORTANT:
+        # Individual editing only updates an existing meeting.
+        # It cannot create a new meeting box.
         cur.execute("""
             SELECT id_student_attendance
             FROM tbl_student_attendance
@@ -1311,48 +1515,25 @@ def model_save_student_attendance():
 
         existing = cur.fetchone()
 
-        if existing:
+        if not existing:
+            raise Exception(
+                "This meeting does not exist. "
+                "Use Add Meeting first."
+            )
 
-            cur.execute("""
-                UPDATE tbl_student_attendance
-                SET
-                    class_date = %s,
-                    status = %s
-                WHERE id_student_attendance = %s
-                  AND id_admin = %s
-            """, (
-                parsed_date,
-                status,
-                existing[0],
-                admin_id
-            ))
-
-        else:
-
-            cur.execute("""
-                INSERT INTO tbl_student_attendance
-                (
-                    id_student,
-                    year,
-                    term,
-                    meeting_number,
-                    class_date,
-                    status,
-                    id_admin
-                )
-                VALUES
-                (
-                    %s,%s,%s,%s,%s,%s,%s
-                )
-            """, (
-                id_student,
-                year,
-                term,
-                meeting_number,
-                parsed_date,
-                status,
-                admin_id
-            ))
+        cur.execute("""
+            UPDATE tbl_student_attendance
+            SET
+                class_date = %s,
+                status = %s
+            WHERE id_student_attendance = %s
+              AND id_admin = %s
+        """, (
+            parsed_date,
+            status,
+            existing[0],
+            admin_id
+        ))
 
         mysql.connection.commit()
 
@@ -1362,7 +1543,6 @@ def model_save_student_attendance():
         })
 
     except Exception as e:
-
         mysql.connection.rollback()
 
         return jsonify({
@@ -1371,31 +1551,77 @@ def model_save_student_attendance():
         }), 500
 
     finally:
-
         cur.close()
 
 
 # =========================================================
-# DELETE / CLEAR ATTENDANCE
+# API — DELETE ALL MEETINGS FOR ONE STUDENT
 # =========================================================
-
-def model_delete_student_attendance():
-
+def model_delete_student_meetings():
     cur = mysql.connection.cursor()
 
     try:
+        data = request.get_json() or {}
 
-        data = request.get_json()
-
-        if not data:
-            raise Exception("No data received.")
-
-        id_student = data.get("id_student")
+        id_student = int(data.get("id_student"))
         year = int(data.get("year"))
         term = int(data.get("term"))
-        meeting_number = int(
-            data.get("meeting_number")
+
+        if term not in (1, 2, 3, 4):
+            raise Exception("Invalid term.")
+
+        _validate_student_for_attendance(
+            cur,
+            id_student,
+            year,
+            term
         )
+
+        cur.execute("""
+            DELETE FROM tbl_student_attendance
+            WHERE id_student = %s
+              AND year = %s
+              AND term = %s
+              AND id_admin = %s
+        """, (
+            id_student,
+            year,
+            term,
+            session["id_admin"]
+        ))
+
+        mysql.connection.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "All meetings deleted successfully."
+        })
+
+    except Exception as e:
+        mysql.connection.rollback()
+
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
+    finally:
+        cur.close()
+
+
+# =========================================================
+# API — DELETE / CLEAR ONE ATTENDANCE RECORD
+# =========================================================
+def model_delete_student_attendance():
+    cur = mysql.connection.cursor()
+
+    try:
+        data = request.get_json() or {}
+
+        id_student = int(data.get("id_student"))
+        year = int(data.get("year"))
+        term = int(data.get("term"))
+        meeting_number = int(data.get("meeting_number"))
 
         cur.execute("""
             DELETE FROM tbl_student_attendance
@@ -1420,7 +1646,6 @@ def model_delete_student_attendance():
         })
 
     except Exception as e:
-
         mysql.connection.rollback()
 
         return jsonify({
@@ -1429,32 +1654,5 @@ def model_delete_student_attendance():
         }), 500
 
     finally:
-
         cur.close()
 
-
-# =========================================================
-# PRINT SCHEDULE
-# =========================================================
-
-def model_print_schedule():
-
-    selected_day = request.args.get(
-        "day",
-        "MON"
-    ).upper()
-
-    if selected_day not in DAYS:
-        selected_day = "MON"
-
-    schedule_map = build_teacher_schedule_map(
-        selected_day
-    )
-
-    return render_template(
-        "admin/schedule/print_schedule.html",
-        selected_day=selected_day,
-        days=DAYS,
-        time_slots=TIME_SLOTS,
-        schedule_map=schedule_map
-    )
