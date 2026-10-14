@@ -863,7 +863,7 @@ def model_edit_teacher_schedule(schedule_id):
         id_student or None,
         id_trial_student or None,
         id_level,
-        notes or None,
+        notes,
         schedule_id
     ))
 
