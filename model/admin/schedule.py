@@ -1296,7 +1296,6 @@ def model_add_student_meetings():
 # =========================================================
 # API — EDIT MEETING SETUP FOR ONE STUDENT
 # =========================================================
-
 def model_edit_student_meetings():
     cur = mysql.connection.cursor()
 
